@@ -29,6 +29,8 @@ This copies `src/projects/_template/` into a new folder and fills in the title, 
 | `cover` | no | Imported image. Without one, the card shows the title set in type. |
 | `coverAlt` | no | Alt text for the cover on the work page. |
 | `targets` | no | `[{ src: importedImage, label: 'Panel 1', alt: '...' }]`. Listed so people can try the work away from the site. |
+| `models` | no | 3D pieces this work adds to the floating background on every page. See "Floating models" below. |
+| `embedNote` | no | Caption under an embedded build. Default: "Enter to explore. On a phone, tap AR to open the camera." |
 | `tags` | no | Free-form, not shown yet. |
 | `order` | no | Higher numbers sit first within the same year. |
 | `slug` | no | Overrides the folder name. Leave it out. |
@@ -60,6 +62,14 @@ launch: { type: 'build', path: '/builds/wildlife-portals-xr/index.html' },
 
 Copy the build output into `public/builds/<slug>/`. Asset paths in the build must be relative; see `public/builds/README.md`. `npm run check` fails if `index.html` is missing, so a half-moved work cannot ship.
 
+Add `embed: true` to play the build inside the work page, with a full-screen link beside it:
+
+```js
+launch: { type: 'build', path: '/builds/trading-post-humanism/index.html', embed: true },
+```
+
+The frame passes camera, motion and XR permissions through. Phone browsers are unreliable with camera AR inside a frame, so a build that opens AR in a new tab when framed works best. Trading Post Humanism does this through its `TPH_FRAMED` check. While the embed is on screen, the floating background pauses so the two don't compete for the GPU.
+
 **`external`**: hosted somewhere else, such as the 8th.io link until February 28, 2027, a subdomain like `mcdonald-physics.noodin.studio`, or STYLY.
 
 ```js
@@ -72,6 +82,37 @@ legacy: { url: 'https://8th.io/997et', until: '2027-02-28' },
 ```js
 launch: { type: 'component', load: () => import('./Experience.jsx') },
 ```
+
+## Floating models
+
+Every work can add pieces to the background field. Put `.glb` files in `src/projects/<slug>/models/` and import them with `?url`:
+
+```js
+import birdModel from './models/thunderbird.glb?url';
+import sceneModel from './models/hyper-woodland.glb?url';
+
+models: [
+  { src: birdModel, hero: true, recolor: '--purple' },
+  { src: sceneModel, split: true, exclude: ['backdrop', 'hider', 'mask'] },
+],
+```
+
+| Option | What it does |
+|---|---|
+| `src` | The imported `.glb` URL. Draco-compressed files work. |
+| `split` | Breaks a scene into its separate meshes so each piece floats on its own. Good for AR scenes built from many objects. |
+| `exclude` | Mesh names to leave out when splitting (case-insensitive, partial match). Use it for backdrops, occluders and portal masks. |
+| `hero` | Always shown, larger, on the first screen beside the title. |
+| `recolor` | Replaces the materials with a glossy finish in a token colour, for example `'--purple'` or `'--forest'`. Use it when a material relies on a custom shader or reads poorly on the red ground. |
+| `scale` | Multiplies the piece's size. Default 1. |
+
+Keep each file under about 2 MB. Compress a heavy model before adding it:
+
+```bash
+npx @gltf-transform/cli draco in.glb out.glb
+```
+
+The field shows up to 22 pieces on desktop and 10 on phones, chosen from every work's models. It stays still for anyone with reduced motion turned on, and pauses when the tab is hidden.
 
 ## 4. Check and ship
 

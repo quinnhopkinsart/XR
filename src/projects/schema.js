@@ -43,6 +43,19 @@ export function validateProject(p, folder) {
     if (type === 'component' && typeof p.launch.load !== 'function') {
       errors.push(`${where}: launch.load must be () => import('./Experience.jsx')`);
     }
+    if (p.launch.embed && type !== 'build') {
+      errors.push(`${where}: launch.embed only works with type "build"`);
+    }
+  }
+  if (!Array.isArray(p.models)) {
+    errors.push(`${where}: models must be an array`);
+  } else {
+    p.models.forEach((m, i) => {
+      if (!m?.src) errors.push(`${where}: models[${i}] needs a src (import x from './models/x.glb?url')`);
+      if (m?.recolor && !String(m.recolor).startsWith('--')) {
+        errors.push(`${where}: models[${i}].recolor must name a token like '--purple'`);
+      }
+    });
   }
   return errors;
 }
@@ -56,6 +69,7 @@ export function normalizeProject(raw, folder) {
     credits: [],
     howTo: [],
     targets: [],
+    models: [],
     tags: [],
     order: 0,
     ...raw,

@@ -1,6 +1,9 @@
 import cover from './cover.jpg';
 import thunderbird from './targets/thunderbird.jpg';
 import shaman from './targets/shaman.jpg';
+import thunderbirdModel from './models/thunderbird.glb?url';
+import hyperWoodlandModel from './models/hyper-woodland.glb?url';
+import shamanPortalModel from './models/shaman-portal.glb?url';
 
 export default {
   title: 'Trading Post Humanism',
@@ -21,9 +24,9 @@ export default {
   ],
 
   howTo: [
-    'Open the work. It starts in a 3D view on any device.',
+    'Press Enter in the frame above. It opens in a 3D view on any device.',
     'On desktop, move your mouse to look inside and scroll to the next artwork.',
-    'On a phone, tap AR at the top right and allow camera access.',
+    'On a phone, tap AR at the top right. The camera opens in a new tab.',
     'Point your phone at the Thunderbird or Shaman piece, or at one of the targets below.',
   ],
 
@@ -32,7 +35,15 @@ export default {
     { role: 'With', name: 'JL Phillips Gallery and Highness' },
   ],
 
-  launch: { type: 'build', path: '/builds/trading-post-humanism/index.html' },
+  // embed: the build plays inside the work page, with a full-screen link beside it.
+  launch: { type: 'build', path: '/builds/trading-post-humanism/index.html', embed: true },
+
+  // Pieces this work adds to the floating background on every page.
+  models: [
+    { src: thunderbirdModel, hero: true, recolor: '--purple' },
+    { src: hyperWoodlandModel, split: true, exclude: ['backdrop'] },
+    { src: shamanPortalModel, split: true, exclude: ['disc'] },
+  ],
 
   cover,
   coverAlt:

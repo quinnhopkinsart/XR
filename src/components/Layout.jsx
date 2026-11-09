@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { site } from '../brand/site.js';
+import FloatingField from '../field/FloatingField.jsx';
 
 export default function Layout() {
   const { pathname } = useLocation();
@@ -10,6 +11,7 @@ export default function Layout() {
 
   return (
     <div className="shell">
+      <FloatingField />
       <header className="masthead">
         <Link to="/" className="masthead__mark">
           Noodin Studio <span className="masthead__xr">XR</span>

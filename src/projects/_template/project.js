@@ -25,7 +25,7 @@ export default {
   ],
 
   // Pick one launch type, or set launch: null while the work has nothing to open.
-  // { type: 'build', path: '/builds/__SLUG__/index.html' }
+  // { type: 'build', path: '/builds/__SLUG__/index.html', embed: true }
   // { type: 'external', url: 'https://...' }
   // { type: 'component', load: () => import('./Experience.jsx') }
   launch: { type: 'component', load: () => import('./Experience.jsx') },
@@ -35,6 +35,10 @@ export default {
 
   // cover,
   // targets: [{ src: target1, label: 'Panel 1' }],
+
+  // Pieces for the floating background. import piece from './models/piece.glb?url';
+  // models: [{ src: piece, split: true, exclude: ['backdrop'] }],
+  models: [],
   tags: [],
   order: 0,
 };

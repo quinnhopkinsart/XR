@@ -1,21 +1,27 @@
 /*
-  Noodin Studio brand tokens.
-  Pulled from the live theme on noodinstudio.com (November 2026):
-  black ground, off-white text, red-orange accent, Sora display type set thin and uppercase.
-  Change the look of the whole site here. Components only read these variables.
+  Noodin Studio XR tokens.
+  Ground: the Noodin red-orange from noodinstudio.com. Accents: purple and forest green.
+  Sora set thin and uppercase for display, as on the main site.
+  The floating 3D field reads --ground, --purple, --purple-hi and --forest-hi too,
+  so changing a colour here changes the lighting on the models.
+
+  Contrast (WCAG): --ink on --ground 5.3:1, --heading on --ground 4.6:1,
+  --cream on --purple 12.3:1, --cream on --forest 9.2:1.
 */
 :root {
   /* Colour */
-  --ink: #000000;            /* page ground */
-  --ink-raised: #0d0d0d;     /* cards, panels */
-  --ink-line: #262626;       /* hairlines */
-  --paper: #f0f0f0;          /* body text */
-  --paper-dim: #b0b0b0;      /* secondary text */
-  --paper-faint: #727272;    /* captions, meta */
-  --accent: #ff3314;         /* Noodin red-orange: headings, links, launch */
-  --accent-hot: #fa4f00;     /* hover */
-  --live: #00c31d;           /* status: live */
-  --warn: #ffcb05;           /* status: migrating */
+  --ground: #ff3314;          /* page ground */
+  --ground-deep: #e8260a;     /* gradient floor, pressed states */
+  --ink: #1a0614;             /* body text on ground */
+  --heading: #2a0b4f;         /* deep purple, headings on ground */
+  --purple: #3e1470;          /* panels, cards */
+  --purple-hi: #8a3fd1;       /* light from above in the field, hover */
+  --forest: #1d4a2a;          /* launch, footer, active states */
+  --forest-hi: #3c8a4e;       /* light from below in the field */
+  --cream: #fff1e6;           /* text on purple and forest */
+  --line: rgb(26 6 20 / 0.28);
+  --line-cream: rgb(255 241 230 / 0.22);
+  --veil: rgb(255 51 20 / 0.78); /* frosted panels over the field */
 
   /* Type */
   --font-display: 'Sora', system-ui, sans-serif;
@@ -29,12 +35,12 @@
   --step-0: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
   --step-1: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
   --step-2: clamp(1.6rem, 1.3rem + 1.4vw, 2.4rem);
-  --step-3: clamp(2.4rem, 1.6rem + 4vw, 5rem);
+  --step-3: clamp(2.2rem, 1.4rem + 4vw, 5rem);
   --step-4: clamp(3.4rem, 1.8rem + 8.5vw, 10rem);
 
   /* Space and shape */
   --gutter: clamp(16px, 4vw, 48px);
   --max: 1280px;
-  --radius: 0px;             /* the site is square-edged */
+  --radius: 0px;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 }

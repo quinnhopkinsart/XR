@@ -2,7 +2,9 @@
 
 The home for my augmented reality and XR works. Each work is a self-contained module, so adding the next one means adding one folder.
 
-Built with React 19, Vite and React Router. Deployed on AWS Amplify.
+Built with React 19, Vite, React Router and three.js. Deployed on AWS Amplify.
+
+The models from each work float behind every page. They lean away from the pointer, swell when hovered and spin when tapped, and they rise with the page at different speeds by depth. Builds can play inside their work page.
 
 ## Run it
 
@@ -32,8 +34,11 @@ src/
     registry.js         finds every project.js, sorts, validates
     schema.js           field rules and defaults
     launch.js           where the Launch button goes
+  field/
+    FloatingField.jsx   gathers every work's models, loads three.js after first paint
+    field.js            the floating background: placement, drift, pointer, tap, scroll
   pages/                Home, work page, full-screen launch, 404
-  components/           card, QR code, launch button, targets, status
+  components/           card, QR code, launch button, targets, status, build embed
 public/
   builds/<slug>/        self-hosted 8th Wall builds, served as-is
 scripts/
@@ -68,4 +73,4 @@ Pitfall: if `noodin.studio` already serves another Amplify app at the apex, conn
 
 ## Change the look
 
-Edit `src/brand/tokens.css`. The palette and type were pulled from the live theme on noodinstudio.com: black ground, off-white text, red-orange `#FF3314`, Sora set thin and uppercase for display, Inter for body text (standing in for Wix's Madefor, which is not available outside Wix).
+Edit `src/brand/tokens.css`. The ground is the Noodin red-orange `#FF3314`, with deep purple and forest green as accents. Sora, set thin and uppercase, is the display type, as on noodinstudio.com. Body text is Inter, standing in for Wix's Madefor, which isn't available outside Wix. The floating field reads the same tokens, so the purple and green light on the models follows any change. Contrast ratios for each text pairing are noted at the top of the file.

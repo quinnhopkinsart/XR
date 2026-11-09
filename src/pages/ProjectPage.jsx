@@ -7,6 +7,7 @@ import LaunchButton from '../components/LaunchButton.jsx';
 import QRBlock from '../components/QRBlock.jsx';
 import StatusPill from '../components/StatusPill.jsx';
 import TargetGallery from '../components/TargetGallery.jsx';
+import BuildEmbed from '../components/BuildEmbed.jsx';
 import NotFound from './NotFound.jsx';
 
 const formatDate = (iso) =>
@@ -33,6 +34,8 @@ export default function ProjectPage() {
   const onLegacy = p.legacy?.url && p.launch?.url === p.legacy.url;
   const expired = onLegacy && legacyExpired(p);
   const canLaunch = p.launch && !expired;
+  const embedded = canLaunch && p.launch.type === 'build' && p.launch.embed;
+  const launchLabel = embedded ? 'Open full screen' : 'Open the work';
 
   return (
     <article className="work">
@@ -67,15 +70,19 @@ export default function ProjectPage() {
         {/* On phones, someone who just scanned a code gets the button first. */}
         {canLaunch && (
           <div className="work__launch-mobile">
-            <LaunchButton project={p} />
+            <LaunchButton project={p}>{launchLabel}</LaunchButton>
           </div>
         )}
       </header>
 
-      {p.cover && (
-        <figure className="work__cover">
-          <img src={p.cover} alt={p.coverAlt || ''} />
-        </figure>
+      {embedded ? (
+        <BuildEmbed project={p} />
+      ) : (
+        p.cover && (
+          <figure className="work__cover">
+            <img src={p.cover} alt={p.coverAlt || ''} />
+          </figure>
+        )
       )}
 
       <div className="work__body">
@@ -124,7 +131,7 @@ export default function ProjectPage() {
         <aside className="work__aside">
           {canLaunch ? (
             <div className="work__launch-desktop">
-              <LaunchButton project={p} />
+              <LaunchButton project={p}>{launchLabel}</LaunchButton>
             </div>
           ) : (
             <p className="note">This work is being rebuilt for self-hosting.</p>
