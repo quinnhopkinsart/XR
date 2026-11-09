@@ -1,0 +1,23 @@
+{
+  "type": "PLANAR",
+  "properties": {
+    "top": 0,
+    "left": 48,
+    "width": 3895,
+    "height": 5194,
+    "isRotated": true,
+    "originalWidth": 3992,
+    "originalHeight": 5194
+  },
+  "imagePath": "image-targets/Eagle-Song_luminance.jpg",
+  "metadata": null,
+  "name": "Eagle-Song",
+  "resources": {
+    "originalImage": "Eagle-Song_original.jpg",
+    "croppedImage": "Eagle-Song_cropped.jpg",
+    "thumbnailImage": "Eagle-Song_thumbnail.jpg",
+    "luminanceImage": "Eagle-Song_luminance.jpg"
+  },
+  "created": 1780668126392,
+  "updated": 1780668126392
+}

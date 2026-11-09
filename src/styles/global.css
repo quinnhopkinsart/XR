@@ -370,12 +370,16 @@ main {
 }
 
 .work__cover {
+  width: fit-content;
+  max-width: 100%;
   margin: 0 0 3rem;
   border: 1px solid var(--ink-line);
 }
 
 .work__cover img {
-  width: 100%;
+  width: auto;
+  max-width: 100%;
+  max-height: 80vh;
 }
 
 .work__body {

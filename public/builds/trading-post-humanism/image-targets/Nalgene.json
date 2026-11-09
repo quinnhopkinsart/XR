@@ -1,0 +1,23 @@
+{
+  "type": "PLANAR",
+  "properties": {
+    "top": 0,
+    "left": 416,
+    "width": 2562,
+    "height": 3416,
+    "isRotated": false,
+    "originalWidth": 3395,
+    "originalHeight": 3416
+  },
+  "imagePath": "image-targets/Nalgene_luminance.jpg",
+  "metadata": null,
+  "name": "Nalgene",
+  "resources": {
+    "originalImage": "Nalgene_original.jpg",
+    "croppedImage": "Nalgene_cropped.jpg",
+    "thumbnailImage": "Nalgene_thumbnail.jpg",
+    "luminanceImage": "Nalgene_luminance.jpg"
+  },
+  "created": 1780668134627,
+  "updated": 1780668134627
+}

@@ -1,0 +1,23 @@
+{
+  "type": "PLANAR",
+  "properties": {
+    "top": 9,
+    "left": 0,
+    "width": 3787,
+    "height": 5049,
+    "isRotated": true,
+    "originalWidth": 3787,
+    "originalHeight": 5068
+  },
+  "imagePath": "image-targets/RoundDancers_luminance.jpg",
+  "metadata": null,
+  "name": "RoundDancers",
+  "resources": {
+    "originalImage": "RoundDancers_original.jpg",
+    "croppedImage": "RoundDancers_cropped.jpg",
+    "thumbnailImage": "RoundDancers_thumbnail.jpg",
+    "luminanceImage": "RoundDancers_luminance.jpg"
+  },
+  "created": 1780668108477,
+  "updated": 1780668108477
+}

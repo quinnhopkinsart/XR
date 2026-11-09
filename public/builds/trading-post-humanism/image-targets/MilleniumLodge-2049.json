@@ -1,0 +1,23 @@
+{
+  "type": "PLANAR",
+  "properties": {
+    "top": 0,
+    "left": 436,
+    "width": 2619,
+    "height": 3492,
+    "isRotated": false,
+    "originalWidth": 3492,
+    "originalHeight": 3492
+  },
+  "imagePath": "image-targets/MilleniumLodge-2049_luminance.jpg",
+  "metadata": null,
+  "name": "MilleniumLodge-2049",
+  "resources": {
+    "originalImage": "MilleniumLodge-2049_original.jpg",
+    "croppedImage": "MilleniumLodge-2049_cropped.jpg",
+    "thumbnailImage": "MilleniumLodge-2049_thumbnail.jpg",
+    "luminanceImage": "MilleniumLodge-2049_luminance.jpg"
+  },
+  "created": 1780668152038,
+  "updated": 1780668152038
+}

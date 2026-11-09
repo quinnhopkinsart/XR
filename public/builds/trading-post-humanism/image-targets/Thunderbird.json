@@ -1,0 +1,23 @@
+{
+  "type": "PLANAR",
+  "properties": {
+    "top": 250,
+    "left": 0,
+    "width": 3000,
+    "height": 4000,
+    "isRotated": true,
+    "originalWidth": 3000,
+    "originalHeight": 4500
+  },
+  "imagePath": "image-targets/Thunderbird_luminance.jpg",
+  "metadata": null,
+  "name": "Thunderbird",
+  "resources": {
+    "originalImage": "Thunderbird_original.jpg",
+    "croppedImage": "Thunderbird_cropped.jpg",
+    "thumbnailImage": "Thunderbird_thumbnail.jpg",
+    "luminanceImage": "Thunderbird_luminance.jpg"
+  },
+  "created": 1780668560964,
+  "updated": 1780668577563
+}

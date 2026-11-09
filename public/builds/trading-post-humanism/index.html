@@ -1,0 +1,325 @@
+<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Trading Post Humanism | Noodin Studio AR</title><meta name="description" content="AR works by Quinn Hopkins for Trading Post Humanism at Worth Gallery, Toronto. Point your phone at the Thunderbird and Shaman pieces to open them. On desktop, explore them in 3D."><meta name="author" content="Quinn Hopkins"><meta name="theme-color" content="#FF3314"><link rel="canonical" href="https://noodin.studio/builds/trading-post-humanism/"><meta itemprop="name" content="Trading Post Humanism"><meta itemprop="description" content="AR works by Quinn Hopkins for Trading Post Humanism at Worth Gallery, Toronto. Point your phone at the Thunderbird and Shaman pieces to open them. On desktop, explore them in 3D."><meta itemprop="image" content="https://noodin.studio/builds/trading-post-humanism/assets/og-image.jpg"><meta property="og:type" content="website"><meta property="og:site_name" content="Noodin Studio"><meta property="og:title" content="Trading Post Humanism"><meta property="og:description" content="AR works by Quinn Hopkins for Trading Post Humanism at Worth Gallery, Toronto. Point your phone at the Thunderbird and Shaman pieces to open them. On desktop, explore them in 3D."><meta property="og:url" content="https://noodin.studio/builds/trading-post-humanism/"><meta property="og:image" content="https://noodin.studio/builds/trading-post-humanism/assets/og-image.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Trading Post Humanism billboard by Noodin Studio, Worth Gallery, June 9, 2026"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Trading Post Humanism"><meta name="twitter:description" content="AR works by Quinn Hopkins for Trading Post Humanism at Worth Gallery, Toronto. Point your phone at the Thunderbird and Shaman pieces to open them. On desktop, explore them in 3D."><meta name="twitter:image" content="https://noodin.studio/builds/trading-post-humanism/assets/og-image.jpg"><script>// Everyone lands in the 3D view (src/desktop/), which skips the ~6.5 MB AR engine download.
+    // Phones get an AR button top right that loads ?view=ar (src/common/ar-button.ts).
+    // ?view=ar or ?view=3d (also ?view=desktop) force a mode.
+    (function () {
+      var view = new URLSearchParams(location.search).get('view')
+      var mobile = /Android|iPhone|iPad|iPod|Mobile|Silk|Kindle/i.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+      var ar = view === 'ar'
+      var framed
+      try {
+        framed = window.self !== window.top
+      } catch (e) {
+        framed = true  // cross-origin parent blocked the check, so we are framed
+      }
+      window.TPH_MODE = ar ? 'ar' : '3d'
+      window.TPH_MOBILE = mobile
+      window.TPH_FRAMED = framed
+      var cl = document.documentElement.classList
+      cl.toggle('is-3d', !ar)
+      cl.toggle('is-ar', ar)
+      cl.toggle('is-mobile', mobile)
+      cl.toggle('is-desktop', !mobile)
+      cl.toggle('is-framed', framed)
+
+      // AR keeps the original red for the browser bar. Everything else uses #FF3314.
+      if (ar) document.querySelector('meta[name="theme-color"]').setAttribute('content', '#CC0000')
+
+      // Record every AudioContext so the first tap can resume any the browser held back
+      // (src/common/audio-unlock.ts). Must run before runtime.js creates one.
+      var NativeAudioContext = window.AudioContext || window.webkitAudioContext
+      var contexts = window.TPH_AUDIO_CONTEXTS = []
+      if (NativeAudioContext) {
+        var Tracked = class extends NativeAudioContext {
+          constructor(options) {
+            super(options)
+            contexts.push(this)
+          }
+        }
+        window.AudioContext = Tracked
+        if (window.webkitAudioContext) window.webkitAudioContext = Tracked
+      }
+
+      if (!ar) return
+      var xr = document.createElement('script')
+      xr.src = 'https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js'
+      xr.async = true
+      xr.crossOrigin = 'anonymous'
+      xr.setAttribute('data-preload-chunks', 'slam')
+      document.head.appendChild(xr)
+    })()</script><script crossorigin="anonymous" src="./external/runtime/runtime.js"></script><style>*, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    #splash-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background-color: #CC0000;
+      background-image: url('./assets/TPH-Splash.jpeg');
+      background-size: 100% auto;
+      background-position: top center;
+      background-repeat: no-repeat;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 10% 10vh;
+      transition: opacity 0.4s ease;
+    }
+
+    #loading-bar-container {
+      width: 100%;
+      max-width: 320px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.35);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 32px;
+    }
+
+    #loading-bar {
+      height: 100%;
+      width: 0%;
+      background: #ffffff;
+      border-radius: 2px;
+      transition: width 0.25s ease-out;
+    }
+
+    #start-btn {
+      display: none;
+      padding: 14px 52px;
+      background: #ffffff;
+      color: #CC0000;
+      border: none;
+      border-radius: 3px;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      margin-bottom: 32px;
+    }
+
+    #start-btn:active {
+      opacity: 0.85;
+    }
+
+    /* 3D view background, splash to scene. AR keeps #CC0000 on its loading splash.
+       Must match DESKTOP_BACKGROUND in src/desktop/device.ts. */
+    html.is-3d,
+    html.is-3d body,
+    .is-3d #splash-screen {
+      background-color: #FF3314;
+    }
+
+    /* Desktop: show the whole portrait splash instead of cropping it to the window width */
+    .is-desktop #splash-screen {
+      background-size: contain;
+      background-position: center;
+      padding-bottom: 26vh;  /* keep the button above the partner logos */
+    }
+
+    .is-desktop #start-btn:hover {
+      opacity: 0.9;
+    }
+
+    /* Logo and credit sit over the AR camera feed and the desktop view alike.
+       The drop shadow keeps them readable on bright camera scenes and on the red desktop. */
+    #brand-logo {
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top));
+      left: 50%;
+      transform: translateX(-50%);
+      width: clamp(120px, 28vw, 200px);
+      height: auto;
+      z-index: 1000;
+      pointer-events: none;
+      user-select: none;
+      filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.45));
+    }
+
+    #brand-credit {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: max(8px, env(safe-area-inset-bottom));
+      z-index: 1000;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.85);
+      font: 400 11px/1.3 system-ui, -apple-system, sans-serif;
+      letter-spacing: 0.04em;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+      pointer-events: none;
+    }
+
+    #desktop-hint {
+      display: none;
+      position: fixed;
+      left: 50%;
+      bottom: 40px;
+      transform: translateX(-50%);
+      padding: 10px 18px;
+      border-radius: 3px;
+      background: rgba(0, 0, 0, 0.55);
+      color: #fff;
+      font: 500 14px/1.3 system-ui, -apple-system, sans-serif;
+      letter-spacing: 0.04em;
+      pointer-events: none;
+      transition: opacity 0.6s ease;
+    }
+
+    .is-3d #desktop-hint {
+      display: block;
+    }
+
+    .is-mobile #desktop-hint .hint-mouse,
+    .is-desktop #desktop-hint .hint-touch {
+      display: none;
+    }
+
+    /* AR button: top right of the 3D view, phones and tablets only. */
+    #ar-btn {
+      display: none;
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top));
+      right: max(12px, env(safe-area-inset-right));
+      z-index: 1002;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0 18px;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      color: #CC0000;
+      border-radius: 3px;
+      font: 700 15px/1 system-ui, -apple-system, sans-serif;
+      letter-spacing: 0.12em;
+      text-decoration: none;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .is-3d.is-mobile #ar-btn {
+      display: inline-flex;
+    }
+
+    #ar-btn:active {
+      opacity: 0.85;
+    }
+
+    #ar-btn:focus-visible {
+      outline: 2px solid #ffffff;
+      outline-offset: 2px;
+    }
+
+    /* Shown only while the browser is holding the soundtrack back (audio-unlock.ts). */
+    #sound-hint {
+      display: none;
+      position: fixed;
+      left: 50%;
+      bottom: calc(max(8px, env(safe-area-inset-bottom)) + 32px);
+      transform: translateX(-50%);
+      z-index: 1002;
+      min-height: 44px;
+      padding: 0 20px;
+      border: 0;
+      border-radius: 3px;
+      background: rgba(0, 0, 0, 0.6);
+      color: #ffffff;
+      font: 500 14px/1 system-ui, -apple-system, sans-serif;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+    }
+
+    .needs-sound-tap #sound-hint {
+      display: block;
+    }
+
+    #desktop-hint .hint-scroll {
+      display: none;
+    }
+
+    .desktop-multi #desktop-hint .hint-scroll {
+      display: inline;
+    }
+
+    /* Hide the hint once it has done its job: first scroll, or first mouse move if only one artwork */
+    .desktop-scrolled #desktop-hint,
+    .desktop-pointer-moved:not(.desktop-multi) #desktop-hint {
+      opacity: 0;
+    }
+
+    /* Desktop scroll: the 3D canvas stays pinned while the page scrolls through one
+       full-height section per artwork. desktop-viewer.ts moves the camera with the scroll. */
+    html.desktop-scroll {
+      overflow-x: hidden;
+      overflow-y: auto;
+      scroll-snap-type: y mandatory;
+      scrollbar-width: none;
+    }
+
+    html.desktop-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    html.desktop-scroll canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      /* The runtime sets touch-action: none inline, which blocks swiping between artworks
+         on phones. pan-y hands vertical swipes to the page; horizontal drags still turn the art. */
+      touch-action: pan-y !important;
+    }
+
+    .desktop-scroll-section {
+      height: 100vh;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+    }
+
+    #desktop-dots {
+      position: fixed;
+      top: 50%;
+      right: 12px;
+      transform: translateY(-50%);
+      z-index: 1001;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #desktop-dots button {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      border: 0;
+      background: none;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+
+    #desktop-dots button::before {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    #desktop-dots button.active::before {
+      background: #fff;
+      transform: scale(1.15);
+    }
+
+    #desktop-dots button:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: -8px;
+      border-radius: 50%;
+    }</style></head><body><div id="splash-screen"><div id="loading-bar-container"><div id="loading-bar"></div></div><button id="start-btn">Start AR</button></div><img id="brand-logo" src="./assets/ui/noodin-logo.webp" alt="Noodin Studio"><p id="brand-credit">&copy; 2026 Quinn Hopkins &middot; Noodin Studio</p><a id="ar-btn" href="?view=ar" aria-label="Open in AR">AR</a> <button id="sound-hint" type="button">Tap for sound</button><div id="desktop-hint"><span class="hint-scroll"><span class="hint-mouse">Scroll</span><span class="hint-touch">Swipe up</span> for the next artwork. </span><span class="hint-mouse">Move your mouse</span><span class="hint-touch">Drag</span> to look inside.</div><script src="bundle.js"></script></body></html>

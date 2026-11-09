@@ -1,0 +1,23 @@
+{
+  "type": "PLANAR",
+  "properties": {
+    "top": 0,
+    "left": 0,
+    "width": 4320,
+    "height": 5760,
+    "isRotated": false,
+    "originalWidth": 4320,
+    "originalHeight": 5760
+  },
+  "imagePath": "image-targets/Collectible_Shaman_Artwork_luminance.jpg",
+  "metadata": null,
+  "name": "Collectible_Shaman_Artwork",
+  "resources": {
+    "originalImage": "Collectible_Shaman_Artwork_original.jpg",
+    "croppedImage": "Collectible_Shaman_Artwork_cropped.jpg",
+    "thumbnailImage": "Collectible_Shaman_Artwork_thumbnail.jpg",
+    "luminanceImage": "Collectible_Shaman_Artwork_luminance.jpg"
+  },
+  "created": 1780668119799,
+  "updated": 1780668119799
+}
