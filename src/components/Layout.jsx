@@ -1,8 +1,6 @@
 import { useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { site } from '../brand/site.js';
-import logo from '../brand/logo-on-red.png';
-import RoughFilters from '../brand/RoughFilters.jsx';
 import FloatingField from '../field/FloatingField.jsx';
 import MotionControls from '../field/MotionControls.jsx';
 
@@ -14,20 +12,14 @@ export default function Layout() {
 
   return (
     <div className="shell">
-      <RoughFilters />
       <FloatingField />
-      <div className="grain" aria-hidden="true" />
-
       <header className="masthead">
         <Link to="/" className="masthead__mark">
-          <img src={logo} alt="" className="masthead__logo" width="94" height="46" />
-          <span className="masthead__word">
-            noodin studio <span className="masthead__xr">xr</span>
-          </span>
+          Noodin Studio <span className="masthead__xr">XR</span>
         </Link>
         <nav className="masthead__nav" aria-label="Main">
-          <Link to="/">works</Link>
-          <a href={site.mainSite}>main site</a>
+          <Link to="/">Works</Link>
+          <a href={site.mainSite}>Main site</a>
         </nav>
       </header>
 
