@@ -92,7 +92,7 @@ import birdModel from './models/thunderbird.glb?url';
 import sceneModel from './models/hyper-woodland.glb?url';
 
 models: [
-  { src: birdModel, hero: true, recolor: '--purple' },
+  { src: birdModel, hero: true, recolor: '--black' },
   { src: sceneModel, split: true, exclude: ['backdrop', 'hider', 'mask'] },
 ],
 ```
@@ -103,7 +103,7 @@ models: [
 | `split` | Breaks a scene into its separate meshes so each piece floats on its own. Good for AR scenes built from many objects. |
 | `exclude` | Mesh names to leave out when splitting (case-insensitive, partial match). Use it for backdrops, occluders and portal masks. |
 | `hero` | Always shown, larger, on the first screen beside the title. |
-| `recolor` | Replaces the materials with a glossy finish in a token colour, for example `'--purple'` or `'--forest'`. Use it when a material relies on a custom shader or reads poorly on the red ground. |
+| `recolor` | Replaces the materials with a glossy finish in a token colour, for example `'--black'` or `'--saffron'`. Use it when a material relies on a custom shader or reads poorly on the red ground. |
 | `scale` | Multiplies the piece's size. Default 1. |
 
 Keep each file under about 2 MB. Compress a heavy model before adding it:

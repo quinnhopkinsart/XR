@@ -53,7 +53,7 @@ export function validateProject(p, folder) {
     p.models.forEach((m, i) => {
       if (!m?.src) errors.push(`${where}: models[${i}] needs a src (import x from './models/x.glb?url')`);
       if (m?.recolor && !String(m.recolor).startsWith('--')) {
-        errors.push(`${where}: models[${i}].recolor must name a token like '--purple'`);
+        errors.push(`${where}: models[${i}].recolor must name a token like '--black'`);
       }
     });
   }

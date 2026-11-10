@@ -43,7 +43,9 @@ export default function ProjectPage() {
         <Link to="/" className="back">
           ← Works
         </Link>
-        <h1 className="work__title">{breakable(p.title)}</h1>
+        <h1 className="work__title">
+          <span className="plate">{breakable(p.title)}</span>
+        </h1>
         <dl className="work__meta">
           <div>
             <dt>Year</dt>

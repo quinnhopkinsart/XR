@@ -75,6 +75,13 @@ Pitfall: if `noodin.studio` already serves another Amplify app at the apex, conn
 
 ## Change the look
 
-Edit `src/brand/tokens.css`. The ground is the Noodin red-orange `#FF3314`, with deep purple and forest green as accents. Sora, set thin and uppercase, is the display type, as on noodinstudio.com. Body text is Inter, standing in for Wix's Madefor, which isn't available outside Wix. The floating field reads the same tokens, so the purple and green light on the models follows any change. Contrast ratios for each text pairing are noted at the top of the file.
+Edit `src/brand/tokens.css`. The palette is built around the Noodin orange-red `#FF3314`:
 
-The header wordmark is set in Nova Round (`--font-wordmark`), self-hosted from `src/brand/fonts/` under the SIL Open Font License. The Noodin Studio logo sits in the centre of the header (`src/brand/logo-on-red.png`, the red-ground version of `logo.png`). Hero text carries a ground-coloured halo (`--halo`), so floating pieces never cross the letters.
+- **Black** carries the text, headings and panels.
+- **Saffron** `#FFB31A` is the one bright accent, on the launch button and active states.
+- **Oxblood** `#7A1004` sits in the shadows and lights the models from below.
+- **White** appears only in tiny touches: card titles, the QR code, focus rings inside black panels, and the marks in the logo.
+
+Sora, set thin and uppercase, is the display type, as on noodinstudio.com. Body text is Inter, standing in for Wix's Madefor, which isn't available outside Wix. The floating field reads the same tokens, so the saffron and oxblood light on the models follows any change. Contrast ratios for each text pairing are noted at the top of the file.
+
+The header wordmark and the landing title are set in Nova Round (`--font-wordmark`). The landing title (`src/components/WideTitle.jsx`) runs on one line, stretched horizontally to span the full page width at any screen size, and made bold with a text stroke, since Nova Round has a single weight. The font is self-hosted from `src/brand/fonts/` under the SIL Open Font License. The Noodin Studio logo sits in the centre of the header (`src/brand/logo-on-red.png`, the red-ground version of `logo.png`). Text that sits straight on the red ground has a solid red plate behind each line (`.plate`), so floating pieces pass behind the plate, never behind the letters. The description panel is solid red too.

@@ -93,7 +93,7 @@ function piecesFrom(gltf, spec) {
   }
 
   for (const p of pieces) {
-    if (spec.recolor) recolor(p, token(spec.recolor, '#3e1470'));
+    if (spec.recolor) recolor(p, token(spec.recolor, '#000000'));
     p.userData.hero = !!spec.hero;
     p.userData.scale = spec.scale || 1;
   }
@@ -114,8 +114,8 @@ export function createField(container, { models, reducedMotion }) {
   const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
   camera.position.set(0, 0, 14);
 
-  // Lit pieces take the site's palette: purple from above, forest from below.
-  scene.add(new THREE.HemisphereLight(token('--purple-hi', '#8a3fd1'), token('--forest-hi', '#3c8a4e'), 2.4));
+  // Lit pieces take the site's palette: saffron from above, oxblood from below.
+  scene.add(new THREE.HemisphereLight(token('--light-sky', '#ffb31a'), token('--light-floor', '#7a1004'), 2.4));
   const key = new THREE.DirectionalLight(0xfff1e6, 2.2);
   key.position.set(4, 6, 8);
   scene.add(key);

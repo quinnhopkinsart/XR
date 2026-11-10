@@ -40,7 +40,7 @@ export default {
 
   // Pieces this work adds to the floating background on every page.
   models: [
-    { src: thunderbirdModel, hero: true, recolor: '--purple' },
+    { src: thunderbirdModel, hero: true, recolor: '--black' },
     { src: hyperWoodlandModel, split: true, exclude: ['backdrop'] },
     { src: shamanPortalModel, split: true, exclude: ['disc'] },
   ],

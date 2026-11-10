@@ -10,31 +10,37 @@
 
 /*
   Noodin Studio XR tokens.
-  Ground: the Noodin red-orange from noodinstudio.com. Accents: purple and forest green.
-  Sora set thin and uppercase for display, as on the main site.
-  The floating 3D field reads --ground, --purple, --purple-hi and --forest-hi too,
-  so changing a colour here changes the lighting on the models.
+  The palette is built around the Noodin orange-red ground: bold and rich, with full
+  black doing most of the work, saffron as the one bright accent, oxblood in the
+  shadows, and white used only in tiny touches (card titles, QR, focus rings).
+  The floating 3D field reads --light-sky, --light-floor and --black too, so changing
+  a colour here changes the light on the models.
 
-  Contrast (WCAG): --ink on --ground 5.3:1, --heading on --ground 4.6:1,
-  --cream on --purple 12.3:1, --cream on --forest 9.2:1.
+  Contrast (WCAG): --black on --ground 5.7:1, --ground on --black 5.7:1,
+  --white on --black 21:1, --black on --saffron 11.7:1.
+  Never set --saffron or --white as text on --ground (2.0:1 and 3.7:1).
 */
 :root {
   /* Colour */
-  --ground: #ff3314;          /* page ground */
-  --ground-deep: #e8260a;     /* gradient floor, pressed states */
-  --ink: #1a0614;             /* body text on ground */
-  --heading: #2a0b4f;         /* deep purple, headings on ground */
-  --purple: #3e1470;          /* panels, cards */
-  --purple-hi: #8a3fd1;       /* light from above in the field, hover */
-  --forest: #1d4a2a;          /* launch, footer, active states */
-  --forest-hi: #3c8a4e;       /* light from below in the field */
-  --cream: #fff1e6;           /* text on purple and forest */
-  --line: rgb(26 6 20 / 0.28);
-  --line-cream: rgb(255 241 230 / 0.22);
-  --veil: rgb(255 51 20 / 0.78); /* frosted panels over the field */
-  /* A ground-coloured halo behind text that sits over the 3D field: it clears a
-     band of red around every letter, so pieces passing behind never touch the strokes. */
-  --halo: 0 0 1px var(--ground), 0 0 3px var(--ground), 0 0 8px var(--ground), 0 0 16px var(--ground), 0 0 28px var(--ground);
+  --ground: #ff3314;          /* the orange-red: page ground */
+  --ground-deep: #d92408;     /* pressed states, frame floor */
+  --black: #000000;           /* text, headings, panels */
+  --white: #ffffff;           /* tiny touches only */
+  --saffron: #ffb31a;         /* the one bright accent: launch, active states */
+  --oxblood: #7a1004;         /* shadows, image floors, light from below */
+
+  /* Roles */
+  --ink: var(--black);        /* body text on ground */
+  --heading: var(--black);    /* headings on ground */
+  --panel: var(--black);      /* cards, sidebar, footer, controls */
+  --on-panel: var(--ground);  /* text on black panels */
+  --on-panel-strong: var(--white); /* titles on black panels */
+  --accent: var(--saffron);
+  --on-accent: var(--black);
+  --light-sky: var(--saffron);    /* field light from above */
+  --light-floor: var(--oxblood);  /* field light from below */
+  --line: rgb(0 0 0 / 0.35);
+  --veil: rgb(255 51 20 / 0.78); /* masthead over the field */
 
   /* Type */
   --font-display: 'Sora', system-ui, sans-serif;

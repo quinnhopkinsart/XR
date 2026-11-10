@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ProjectCard from '../components/ProjectCard.jsx';
+import WideTitle from '../components/WideTitle.jsx';
 import { allKinds, projects } from '../projects/registry.js';
 
 export default function Home() {
@@ -9,20 +10,18 @@ export default function Home() {
   return (
     <>
       <section className="hero">
-        <h1 className="hero__title">
-          Noodin
-          <br />
-          XR
-        </h1>
+        <WideTitle>Noodin XR</WideTitle>
         <p className="hero__lede">
-          I build augmented reality works that layer Anishinaabe stories onto the places we live.
-          Scan a code at an installation, or open a work here.
+          <span className="plate">
+            I build augmented reality works that layer Anishinaabe stories onto the places we
+            live. Scan a code at an installation, or open a work here.
+          </span>
         </p>
       </section>
 
       <section className="works" aria-labelledby="works-heading">
         <div className="works__bar">
-          <h2 id="works-heading" className="label">
+          <h2 id="works-heading" className="label plate">
             Works <span className="count">{shown.length}</span>
           </h2>
           {allKinds.length > 1 && (

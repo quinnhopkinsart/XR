@@ -42,12 +42,12 @@ a:hover {
 }
 
 ::selection {
-  background: var(--purple);
-  color: var(--cream);
+  background: var(--black);
+  color: var(--white);
 }
 
 :focus-visible {
-  outline: 2px solid var(--heading);
+  outline: 2px solid var(--black);
   outline-offset: 3px;
 }
 
@@ -106,6 +106,7 @@ button {
 
 .shell {
   position: relative;
+  overflow-x: clip; /* the full-bleed title never adds a sideways scroll */
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
@@ -228,13 +229,13 @@ main {
   gap: 1rem;
   padding: 2rem var(--gutter);
   margin-top: 6rem;
-  background: var(--forest);
-  color: var(--cream);
+  background: var(--panel);
+  color: var(--on-panel);
   font-size: var(--step--1);
 }
 
 .footer a:hover {
-  color: var(--cream);
+  color: var(--on-panel-strong);
   text-decoration-thickness: 2px;
 }
 
@@ -264,7 +265,6 @@ main {
   letter-spacing: var(--tracking-display);
   text-transform: uppercase;
   color: var(--heading);
-  text-shadow: var(--halo);
 }
 
 .hero--small .hero__title {
@@ -276,7 +276,83 @@ main {
   margin: 2rem 0 0;
   font: 300 var(--step-1) / 1.45 var(--font-display);
   color: var(--ink);
-  text-shadow: var(--halo);
+}
+
+/* Red plates: text that sits straight on the red ground gets a solid red fill that
+   hugs each line, so the floating pieces pass behind the plate, never behind the
+   letters. Wrap the text in <span class="plate">, or add the class to a short label. */
+
+.plate {
+  background: var(--ground);
+  /* 0.1em top and bottom closes the gap between lines at the lede's 1.45 leading */
+  padding: 0.1em 0.3em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* One plate per line for tightly leaded display type, so a lower line's plate
+   never paints over the line above */
+.plate--line {
+  display: block;
+  width: fit-content;
+  padding: 0.04em 0.12em 0.06em;
+}
+
+.label.plate {
+  display: inline-block;
+  margin: 0;
+  padding: 0.2em 0.45em;
+}
+
+/* Short text on the ground in the work header and the meta row */
+.back,
+.work__meta dt,
+.work__meta dd,
+.work__head .pill {
+  width: fit-content;
+  background: var(--ground);
+  padding: 0.15em 0.4em;
+}
+
+.back {
+  margin-left: -0.4em;
+}
+
+.work__meta dt,
+.work__meta dd {
+  margin-left: -0.4em;
+}
+
+/* Inside black panels the focus ring turns white */
+.work__aside :focus-visible,
+.embed__bar :focus-visible,
+.footer :focus-visible,
+.stage__close:focus-visible {
+  outline-color: var(--white);
+}
+
+/* Landing title: Nova Round, one line, stretched across the full content width
+   (WideTitle.jsx sets the size and the stretch). Nova Round has a single weight,
+   so a stroke in the text colour makes it bold without a faked bold. */
+.wide-title {
+  /* Breaks out of the content column to span the window, inside the page gutters */
+  width: calc(100vw - 2 * var(--gutter));
+  margin: 0 0 0 calc((100% - 100vw) / 2 + var(--gutter));
+  font-family: var(--font-wordmark);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--heading);
+}
+
+.wide-title__text {
+  display: inline-block;
+  padding: 0.04em 0;
+  transform-origin: left top;
+  -webkit-text-stroke: 0.06em currentColor;
+  paint-order: stroke fill;
 }
 
 /* Works grid */
@@ -307,16 +383,16 @@ main {
   padding: 0.4rem 0.8rem;
   border: 1px solid var(--ink);
   border-radius: var(--radius);
-  background: transparent;
+  background: var(--ground);
   font: 500 var(--step--1) var(--font-display);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
 }
 
 .filter[aria-pressed='true'] {
-  background: var(--forest);
-  border-color: var(--forest);
-  color: var(--cream);
+  background: var(--black);
+  border-color: var(--black);
+  color: var(--white);
 }
 
 .grid {
@@ -328,22 +404,26 @@ main {
 .card {
   display: flex;
   flex-direction: column;
-  background: var(--purple);
-  color: var(--cream);
+  background: var(--panel);
+  color: var(--on-panel);
   text-decoration: none;
   transition: transform 0.4s var(--ease), box-shadow 0.4s var(--ease);
 }
 
 .card:hover {
-  color: var(--cream);
+  color: var(--on-panel);
   transform: translateY(-4px);
-  box-shadow: 0 18px 40px -18px rgb(26 6 20 / 0.6);
+  box-shadow: 0 18px 40px -18px rgb(0 0 0 / 0.7);
+}
+
+.card__title {
+  color: var(--on-panel-strong);
 }
 
 .card__media {
   aspect-ratio: 4 / 5;
   overflow: hidden;
-  background: var(--forest);
+  background: var(--oxblood);
 }
 
 .card__media img {
@@ -361,7 +441,7 @@ main {
   font: 100 clamp(2.2rem, 6vw, 3.4rem) / 0.9 var(--font-display);
   letter-spacing: var(--tracking-display);
   text-transform: uppercase;
-  color: var(--cream);
+  color: var(--ground);
   overflow-wrap: break-word;
 }
 
@@ -414,10 +494,10 @@ main {
 }
 
 .pill--live .pill__dot {
-  background: var(--forest-hi);
+  background: var(--saffron);
 }
 .pill--migrating .pill__dot {
-  background: var(--purple-hi);
+  background: var(--white);
 }
 
 /* Work page */
@@ -437,7 +517,7 @@ main {
 
 .work__title {
   margin: 0;
-  font: var(--weight-display) var(--step-3) / 0.95 var(--font-display);
+  font: var(--weight-display) var(--step-3) / 1.12 var(--font-display);
   letter-spacing: var(--tracking-display);
   text-transform: uppercase;
   color: var(--heading);
@@ -511,9 +591,7 @@ main {
 .prose {
   max-width: 68ch;
   padding: clamp(1.25rem, 3vw, 2.25rem);
-  background: var(--veil);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: var(--ground);
   border: 1px solid var(--line);
 }
 
@@ -588,12 +666,12 @@ main {
 
 .work__aside {
   padding: 1.25rem;
-  background: var(--purple);
-  color: var(--cream);
+  background: var(--panel);
+  color: var(--on-panel);
 }
 
 .work__aside .note {
-  color: var(--cream);
+  color: var(--on-panel);
 }
 
 /* Embedded build */
@@ -609,7 +687,7 @@ main {
   width: 100%;
   background: var(--ground-deep);
   border: 1px solid var(--ink);
-  box-shadow: 0 30px 60px -30px rgb(26 6 20 / 0.7);
+  box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.75);
 }
 
 @media (min-width: 760px) {
@@ -633,8 +711,8 @@ main {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  background: var(--purple);
-  color: var(--cream);
+  background: var(--panel);
+  color: var(--on-panel);
   font-size: var(--step--1);
 }
 
@@ -646,8 +724,8 @@ main {
   align-items: center;
   width: 100%;
   padding: 1.1rem 1.25rem;
-  background: var(--forest);
-  color: var(--cream);
+  background: var(--accent);
+  color: var(--on-accent);
   border-radius: var(--radius);
   text-decoration: none;
   font: 500 var(--step-0) var(--font-display);
@@ -657,8 +735,8 @@ main {
 }
 
 .launch:hover {
-  background: var(--forest-hi);
-  color: var(--cream);
+  background: var(--white);
+  color: var(--black);
 }
 
 .launch__arrow {
@@ -708,8 +786,8 @@ main {
   right: 1rem;
   z-index: 100;
   padding: 0.5rem 0.9rem;
-  background: var(--purple);
-  color: var(--cream);
+  background: var(--panel);
+  color: var(--on-panel);
   text-decoration: none;
   font: 500 var(--step--1) var(--font-display);
   letter-spacing: var(--tracking-label);
@@ -745,18 +823,20 @@ main {
   min-height: 44px;
   min-width: 44px;
   padding: 0 1rem;
-  border: 1px solid var(--cream);
+  border: 1px solid var(--ground); /* keeps its edge over the black footer */
   border-radius: 999px;
-  background: var(--purple);
-  color: var(--cream);
+  background: var(--panel);
+  color: var(--on-panel);
   font: 500 var(--step--1) var(--font-display);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
-  box-shadow: 0 8px 24px -10px rgb(26 6 20 / 0.6);
+  box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.6);
 }
 
 .motion__btn[aria-pressed='true'] {
-  background: var(--forest);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
 }
 
 .motion__btn:focus-visible {
@@ -772,8 +852,8 @@ main {
 .motion__note {
   flex-basis: 100%;
   padding: 0.5rem 0.75rem;
-  background: var(--purple);
-  color: var(--cream);
+  background: var(--panel);
+  color: var(--on-panel);
   font-size: var(--step--1);
   text-align: right;
 }
