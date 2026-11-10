@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { site } from '../brand/site.js';
 import logo from '../brand/logo-on-red.png';
-import RoughFilters from '../brand/RoughFilters.jsx';
+import SprayFilters from '../brand/SprayFilters.jsx';
 import FloatingField from '../field/FloatingField.jsx';
 import MotionControls from '../field/MotionControls.jsx';
 
@@ -14,7 +14,7 @@ export default function Layout() {
 
   return (
     <div className="shell">
-      <RoughFilters />
+      <SprayFilters />
       <FloatingField />
       <div className="grain" aria-hidden="true" />
 

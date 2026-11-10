@@ -77,9 +77,11 @@ Pitfall: if `noodin.studio` already serves another Amplify app at the apex, conn
 
 Edit `src/brand/tokens.css`. The ground is the Noodin red-orange `#FF3314`, with deep purple and forest green as accents. The floating field reads the same tokens, so the purple and green light on the models follows any change. Contrast ratios for each text pairing are noted at the top of the file.
 
-Type and texture follow the Noodin Studio logo:
+Type follows the Noodin Studio logo. Surfaces read like the city around the organic work:
 
 - **Type.** Comfortaa for display, a monoline face with a fully round lowercase n, set lowercase. Nunito for reading. Both are self-hosted through `@fontsource`, so there's no Google Fonts request.
-- **Grain.** `src/brand/grain.png` is a stipple tile laid over the page and inside every panel. It sits between the 3D field and the content, so the models take the grain and the text stays crisp.
-- **Edges.** `src/brand/RoughFilters.jsx` holds three SVG filters. `#rough` gives panels and buttons brush-pulled edges, `#rough-brush` turns dividers into dry-brush lines like the logo's underline, and `#rough-type` adds a slight hand-drawn wobble to large headings. Panels draw their fill on a filtered `::before` layer, never on the text itself.
+- **Glass.** Cards, the description, the sidebar, the embed bar, the footer and the controls are hard-edged translucent panels (`--glass-purple`, `--glass-forest`). They have a background blur, cream hairline edges and hard offset shadows (`--shadow-hard`), and the floating models show through them softly. The glass stays dark enough that cream text holds 8.5:1 or better whatever passes behind.
+- **Spray lines.** The one raw mark. `src/brand/SprayFilters.jsx` holds `#spray`: a thrown line with a crisp core and a speckled overspray. Section rules use it, and `SprayTag.jsx` draws a single tag under each big title.
+- **Plates.** The hero lede sits on hard-edged red plates (`.plate`), so it stays readable as pieces drift behind.
+- **Grain.** A light stipple over the page ground only (`src/brand/grain.png`).
 - **Logo.** `src/brand/logo.png` is the original artwork. `logo-on-red.png` is the version for the red ground, with grey strokes in cream and red marks in deep purple, and the grain untouched. The favicon is the central arch and spiral.

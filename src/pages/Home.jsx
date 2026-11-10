@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ProjectCard from '../components/ProjectCard.jsx';
+import SprayTag from '../brand/SprayTag.jsx';
 import { allKinds, projects } from '../projects/registry.js';
 
 export default function Home() {
@@ -14,9 +15,12 @@ export default function Home() {
           <br />
           XR
         </h1>
+        <SprayTag />
         <p className="hero__lede">
-          I build augmented reality works that layer Anishinaabe stories onto the places we live.
-          Scan a code at an installation, or open a work here.
+          <span className="plate">
+            I build augmented reality works that layer Anishinaabe stories onto the places we
+            live. Scan a code at an installation, or open a work here.
+          </span>
         </p>
       </section>
 

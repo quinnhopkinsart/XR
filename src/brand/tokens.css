@@ -1,14 +1,17 @@
 /*
   Noodin Studio XR tokens.
   Ground: the Noodin red-orange from noodinstudio.com. Accents: purple and forest green.
-  Type and texture follow the Noodin Studio logo: Comfortaa, a monoline face with a
-  fully round lowercase n, set lowercase; a stipple grain over the page; panels and
-  rules with brush-pulled edges (filters in RoughFilters.jsx).
+  Type follows the Noodin Studio logo: Comfortaa, a monoline face with a fully round
+  lowercase n, set lowercase. Surfaces read like the city around the organic work:
+  hard-edged translucent glass with hairline edges and hard offset shadows. Raw marks
+  come in as spray-paint lines only (filter in SprayFilters.jsx), over a light grain.
   The floating 3D field reads --ground, --purple, --purple-hi and --forest-hi too,
   so changing a colour here changes the lighting on the models.
 
   Contrast (WCAG): --ink on --ground 5.3:1, --heading on --ground 4.6:1,
   --cream on --purple 12.3:1, --cream on --forest 9.2:1.
+  Glass panels stay dark enough that --cream holds 8.5:1 or better even with the
+  palest model passing behind (worst case measured with --cream behind the glass).
 */
 :root {
   /* Colour */
@@ -24,6 +27,16 @@
   --line: rgb(26 6 20 / 0.28);
   --line-cream: rgb(255 241 230 / 0.22);
   --veil: rgb(255 51 20 / 0.92); /* masthead over the field; high enough that text holds contrast */
+
+  /* Glass and depth */
+  --glass-purple: rgb(62 20 112 / 0.86);
+  --glass-forest: rgb(29 74 42 / 0.88);
+  --hairline: rgb(255 241 230 / 0.38);    /* curtain-wall edge on glass */
+  --hairline-ink: rgb(26 6 20 / 0.55);    /* edge on the red ground */
+  --blur: blur(14px) saturate(1.3);
+  --shadow-hard: 10px 10px 0 rgb(26 6 20 / 0.3);
+  --shadow-hard-sm: 5px 5px 0 rgb(26 6 20 / 0.3);
+  --spray: var(--heading);                /* graffiti lines on the ground */
 
   /* Type */
   --font-display: 'Comfortaa', 'Nunito', system-ui, sans-serif;

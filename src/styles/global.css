@@ -136,7 +136,8 @@ main {
   align-items: center;
   gap: 1rem;
   padding: 1rem var(--gutter);
-  background: var(--grain), var(--veil);
+  background: var(--veil);
+  border-bottom: 1px solid var(--hairline-ink);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   font: 700 var(--step-0) var(--font-display);
@@ -227,7 +228,6 @@ main {
   letter-spacing: var(--tracking-display);
   text-transform: lowercase;
   color: var(--heading);
-  filter: url(#rough-type);
 }
 
 .hero--small .hero__title {
@@ -235,9 +235,16 @@ main {
 }
 
 .hero__lede {
-  max-width: 32ch;
+  max-width: 34ch;
   margin: 2rem 0 0;
-  font: 400 var(--step-1) / 1.5 var(--font-display);
+  font: 400 var(--step-1) / 1.75 var(--font-display);
+}
+
+.plate {
+  background: var(--ground);
+  padding: 0.12em 0.4em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 /* Works grid */
@@ -277,6 +284,7 @@ main {
   background: var(--forest);
   border-color: var(--forest);
   color: var(--cream);
+  box-shadow: var(--shadow-hard-sm);
 }
 
 .grid {
@@ -290,12 +298,13 @@ main {
   flex-direction: column;
   color: var(--cream);
   text-decoration: none;
-  transition: transform 0.4s var(--ease);
+  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
 }
 
 .card:hover {
   color: var(--cream);
-  transform: translateY(-4px) rotate(-0.4deg);
+  transform: translate(-3px, -3px);
+  box-shadow: 13px 13px 0 rgb(26 6 20 / 0.3);
 }
 
 .card__media {
@@ -401,7 +410,6 @@ main {
   text-transform: lowercase;
   color: var(--heading);
   overflow-wrap: break-word;
-  filter: url(#rough-type);
 }
 
 .work__meta {
@@ -477,11 +485,19 @@ main {
   margin: 0 0 1.25em;
 }
 
+.prose {
+  color: var(--cream);
+}
+
+.prose a:hover {
+  color: var(--cream);
+  text-decoration-thickness: 2px;
+}
+
 .prose > p:first-child {
   font-size: var(--step-1);
   line-height: 1.5;
-  font-weight: 300;
-  color: var(--heading);
+  font-weight: 400;
 }
 
 .section {
@@ -509,8 +525,8 @@ main {
 
 .steps li::before {
   content: counter(step, decimal-leading-zero);
-  font: 600 var(--step--1) / 2 var(--font-display);
-  color: var(--heading);
+  font: 700 var(--step--1) / 2 var(--font-display);
+  color: var(--cream);
 }
 
 .credits {
@@ -532,7 +548,7 @@ main {
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
-  border: 1px solid var(--line);
+  border: 1px solid var(--hairline);
 }
 
 .targets span {
@@ -554,6 +570,7 @@ main {
 
 .embed {
   margin: 0 0 3rem;
+  box-shadow: var(--shadow-hard);
 }
 
 .embed__frame {
@@ -561,7 +578,8 @@ main {
   aspect-ratio: 4 / 5;
   max-height: 82vh;
   width: 100%;
-  isolation: isolate;
+  background: var(--ground-deep);
+  border: 1px solid var(--hairline-ink);
 }
 
 @media (min-width: 760px) {
@@ -606,9 +624,23 @@ main {
   transition: background 0.2s var(--ease);
 }
 
+.launch {
+  background: var(--forest);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-hard-sm);
+  transition: background 0.2s var(--ease), transform 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+
 .launch:hover {
-  --panel: var(--forest-hi);
+  background: var(--forest-hi);
   color: var(--cream);
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0 rgb(26 6 20 / 0.3);
+}
+
+.launch:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 rgb(26 6 20 / 0.3);
 }
 
 .launch__arrow {
@@ -672,7 +704,9 @@ main {
   font-family: var(--font-display);
 }
 
-/* Grain and brush-pulled edges, after the logo */
+/* Glass, depth and spray lines.
+   Surfaces read like the city around the organic work: hard-edged translucent glass,
+   hairline edges, hard offset shadows. Raw marks come in as spray-paint lines only. */
 
 .grain {
   position: fixed;
@@ -680,77 +714,73 @@ main {
   z-index: 0;
   pointer-events: none;
   background: var(--grain);
+  opacity: 0.5;
 }
 
-/* Panels draw their fill on a filtered layer behind the content,
-   so edges go rough and grainy while the text on top stays crisp. */
 .card,
 .work__aside,
-.prose,
-.embed__bar,
-.footer,
-.launch,
-.motion__btn,
-.stage__close {
+.prose {
   position: relative;
-  isolation: isolate;
+  background: var(--glass-purple);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-hard);
 }
 
-.card { --panel: var(--purple); }
-.work__aside { --panel: var(--purple); }
-.prose { --panel: var(--ground); }
-.embed__bar { --panel: var(--purple); }
-.footer { --panel: var(--forest); }
-.launch { --panel: var(--forest); }
-.motion__btn { --panel: var(--purple); }
-.stage__close { --panel: var(--purple); }
-
-.card::before,
-.work__aside::before,
-.prose::before,
-.embed__bar::before,
-.footer::before,
-.launch::before,
-.motion__btn::before,
-.stage__close::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background: var(--grain), var(--panel);
-  filter: url(#rough);
-  pointer-events: none;
-  transition: background-color 0.2s var(--ease);
+.embed__bar {
+  background: var(--glass-purple);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border: 1px solid var(--hairline);
+  border-top: 0;
 }
 
-/* The embedded build sits on a rough purple mat */
-.embed__frame::before {
-  content: '';
-  position: absolute;
-  inset: -8px;
-  z-index: -1;
-  background: var(--grain), var(--purple);
-  filter: url(#rough);
+.footer {
+  background: var(--glass-forest);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border-top: 1px solid var(--hairline);
 }
 
-/* Dry-brush rules, like the underline in the logo */
+.stage__close {
+  background: var(--glass-purple);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border: 1px solid var(--hairline);
+}
+
+/* Spray-paint rules on the ground; cream spray on glass */
 .works__bar,
 .section {
   position: relative;
+}
+
+.prose {
+  --spray: var(--cream);
 }
 
 .works__bar::before,
 .section::before {
   content: '';
   position: absolute;
-  left: 0;
-  right: 0;
+  left: -2px;
+  right: 6%;
   top: 0;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--heading);
-  filter: url(#rough-brush);
+  height: 6px;
+  border-radius: 3px;
+  background: var(--spray);
+  filter: url(#spray);
+}
+
+/* A spray-painted tag under the big titles (SprayTag.jsx) */
+.tag {
+  display: block;
+  width: min(100%, 560px);
+  height: 44px;
+  margin: 0.5rem 0 0 -4px;
+  color: var(--forest);
+  overflow: visible;
 }
 
 /* Pause and tilt controls for the floating field */
@@ -775,17 +805,20 @@ main {
   min-height: 44px;
   min-width: 44px;
   padding: 0 1rem;
-  border: 0;
-  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  border-radius: 0;
+  background: var(--glass-purple);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
   color: var(--cream);
   font: 500 var(--step--1) var(--font-display);
   letter-spacing: var(--tracking-label);
   text-transform: lowercase;
-  box-shadow: 0 8px 24px -10px rgb(26 6 20 / 0.6);
+  box-shadow: var(--shadow-hard-sm);
 }
 
 .motion__btn[aria-pressed='true'] {
-  --panel: var(--forest);
+  background: var(--glass-forest);
 }
 
 .motion__btn:focus-visible {
