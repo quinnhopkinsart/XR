@@ -7,7 +7,8 @@ export const site = {
 
   // Canonical address the QR codes point at. Set VITE_SITE_URL in Amplify
   // (App settings > Environment variables) to change it without touching code.
-  url: (import.meta.env.VITE_SITE_URL || 'https://noodin.studio').replace(/\/$/, ''),
+  // The site is served from xr.noodin.studio. The bare noodin.studio does not serve it.
+  url: (import.meta.env.VITE_SITE_URL || 'https://xr.noodin.studio').replace(/\/$/, ''),
 
   // Route prefix for every work. /ar/<slug> also redirects here so codes
   // printed with the catalogue's noodin.studio/ar/<slug> pattern keep working.

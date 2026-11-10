@@ -61,7 +61,7 @@ Every QR code points at `/xr/<slug>` on this site, never at the hosting provider
 ## Deploy on Amplify
 
 1. Amplify console > Create new app > GitHub > `quinnhopkinsart/XR`, branch `main`. Amplify reads `amplify.yml`.
-2. App settings > Environment variables: set `VITE_SITE_URL` to the domain the site will live on (default `https://noodin.studio`). The QR codes use it.
+2. App settings > Environment variables: set `VITE_SITE_URL` to the domain the site will live on (default `https://xr.noodin.studio`). The QR codes use it.
 3. Hosting > Rewrites and redirects > Manage redirects, add this rule so React Router handles deep links:
 
    | Source address | Target address | Type |

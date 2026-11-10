@@ -13,19 +13,19 @@ import bibModel from './models/biboonkeonini.glb?url';
 
 export default {
   title: 'Stellar Narratives',
-  year: '2024 to 2025',
+  year: '2024 to present',
   kind: 'Augmented reality',
   status: 'live',
   venue: 'Koerner Gardens, Evergreen Brick Works',
   location: 'Tkaronto',
 
   summary:
-    'Two murals at Evergreen Brick Works open into four Anishinaabe constellations and the thirteen moons, one for each season of the sky.',
+    'Two murals on view at Evergreen Brick Works open into four Anishinaabe constellations and the thirteen moons.',
 
   description: [
-    'Stellar Narratives: An Urban Indigenous Odyssey was installed at Evergreen Brick Works from June 2024 to June 2025. Two murals hung on the brick walls of Koerner Gardens, one of the city and one of the bush. City light pushes the stars back. The work asks urban Indigenous people to look up anyway.',
+    'Stellar Narratives: An Urban Indigenous Odyssey is on view at Evergreen Brick Works, where it has stood since June 2024. Two murals hang on the brick walls of Koerner Gardens, one of the city and one of the bush. City light pushes the stars back. The work asks urban Indigenous people to look up anyway.',
     'On a phone, each mural opens into the night sky. The constellation changes with the season. Mishi Bizhiw, the great panther, rises in spring. Nanabozho stands in the summer sky. Mooz, the moose, comes in fall. Gaa-biboonikaan, the bringer of winter, holds the cold months.',
-    'The work also keeps the thirteen moons of the Anishinaabe year. Change the date and the moon, its phase and the season change with it.',
+    'The work also keeps the thirteen moons of the Anishinaabe year. Each moon runs from one new moon to the next, and its phase is drawn for the night you choose. Change the date and the moon, its phase and the season change with it.',
   ],
 
   howTo: [
@@ -33,7 +33,7 @@ export default {
     'Drag to look around. On a phone, drag or tap Tilt.',
     'Change the date, or use the arrows beside it, to move through the moons and the four seasonal constellations.',
     'Switch between the city mural and the bush mural with the buttons above the date.',
-    'For AR, tap AR at the top right on a phone, then point your camera at one of the targets below, on another screen or printed.',
+    'For AR, tap AR at the top right on a phone, then point your camera at the murals in Koerner Gardens. Away from the Brick Works, use one of the targets below, on another screen or printed.',
   ],
 
   embedNote: 'Enter to explore. Change the date to move through the seasons, or on a phone tap AR to open the camera.',
