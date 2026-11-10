@@ -130,17 +130,37 @@
 
     /* Logo and credit sit over the AR camera feed and the desktop view alike.
        The drop shadow keeps them readable on bright camera scenes and on the red desktop. */
-    #brand-logo {
+    /* The logo is a link back to the works page on noodin.studio.
+       target="_top" leaves the frame when the build is embedded in its work page. */
+    #brand-home {
       position: fixed;
       top: max(14px, env(safe-area-inset-top));
       left: 50%;
       transform: translateX(-50%);
+      z-index: 1000;
+      display: block;
+      padding: 4px;
+      border-radius: 6px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #brand-home:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+    }
+
+    #brand-logo {
+      display: block;
       width: clamp(120px, 28vw, 200px);
       height: auto;
-      z-index: 1000;
       pointer-events: none;
       user-select: none;
       filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.45));
+      transition: transform 0.25s ease;
+    }
+
+    #brand-home:hover #brand-logo {
+      transform: scale(1.05);
     }
 
     #brand-credit {
@@ -322,4 +342,4 @@
       outline: 2px solid #fff;
       outline-offset: -8px;
       border-radius: 50%;
-    }</style></head><body><div id="splash-screen"><div id="loading-bar-container"><div id="loading-bar"></div></div><button id="start-btn">Start AR</button></div><img id="brand-logo" src="./assets/ui/noodin-logo.webp" alt="Noodin Studio"><p id="brand-credit">&copy; 2026 Quinn Hopkins &middot; Noodin Studio</p><a id="ar-btn" href="?view=ar" aria-label="Open in AR">AR</a> <button id="sound-hint" type="button">Tap for sound</button><div id="desktop-hint"><span class="hint-scroll"><span class="hint-mouse">Scroll</span><span class="hint-touch">Swipe up</span> for the next artwork. </span><span class="hint-mouse">Move your mouse</span><span class="hint-touch">Drag</span> to look inside.</div><script src="bundle.js"></script></body></html>
+    }</style></head><body><div id="splash-screen"><div id="loading-bar-container"><div id="loading-bar"></div></div><button id="start-btn">Start AR</button></div><a id="brand-home" href="/" target="_top" aria-label="Noodin Studio XR, back to the works"><img id="brand-logo" src="./assets/ui/noodin-logo.webp" alt=""></a><p id="brand-credit">&copy; 2026 Quinn Hopkins &middot; Noodin Studio</p><a id="ar-btn" href="?view=ar" aria-label="Open in AR">AR</a> <button id="sound-hint" type="button">Tap for sound</button><div id="desktop-hint"><span class="hint-scroll"><span class="hint-mouse">Scroll</span><span class="hint-touch">Swipe up</span> for the next artwork. </span><span class="hint-mouse">Move your mouse</span><span class="hint-touch">Drag</span> to look inside.</div><script src="bundle.js"></script></body></html>

@@ -76,3 +76,5 @@ Pitfall: if `noodin.studio` already serves another Amplify app at the apex, conn
 ## Change the look
 
 Edit `src/brand/tokens.css`. The ground is the Noodin red-orange `#FF3314`, with deep purple and forest green as accents. Sora, set thin and uppercase, is the display type, as on noodinstudio.com. Body text is Inter, standing in for Wix's Madefor, which isn't available outside Wix. The floating field reads the same tokens, so the purple and green light on the models follows any change. Contrast ratios for each text pairing are noted at the top of the file.
+
+The wordmark and home hero are set in Nova Round (`--font-wordmark`), self-hosted from `src/brand/fonts/` under the SIL Open Font License. The Noodin Studio logo sits in the centre of the header (`src/brand/logo-on-red.png`, the red-ground version of `logo.png`). Hero text carries a ground-coloured halo (`--halo`), so floating pieces never cross the letters.

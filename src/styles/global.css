@@ -131,11 +131,11 @@ main {
   position: sticky;
   top: 0;
   z-index: 10;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 1rem;
-  padding: 1rem var(--gutter);
+  padding: 0.6rem var(--gutter);
   background: var(--veil);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -146,7 +146,63 @@ main {
 }
 
 .masthead__mark {
+  justify-self: start;
+  font: 400 var(--step-0) var(--font-wordmark);
+  letter-spacing: 0.04em;
   text-decoration: none;
+}
+
+.masthead__logo {
+  display: block;
+  justify-self: center;
+}
+
+.masthead__logo:focus-visible {
+  outline-offset: 4px;
+}
+
+.masthead__logo img {
+  display: block;
+  height: 48px;
+  width: auto;
+  transition: transform 0.3s var(--ease);
+}
+
+.masthead__logo:hover img {
+  transform: scale(1.06);
+}
+
+/* On phones the logo holds the centre and carries the name */
+@media (max-width: 560px) {
+  .masthead__mark {
+    display: none;
+  }
+  .masthead {
+    display: flex;
+    justify-content: flex-end;
+    min-height: 60px;
+  }
+  /* Pinned to the true centre of the bar, whatever the nav needs */
+  .masthead__logo {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .masthead__logo img {
+    height: 36px;
+  }
+  .masthead__nav {
+    gap: 0.75rem;
+    letter-spacing: 0.02em;
+  }
+}
+
+/* The narrowest phones: the logo already goes to the works page */
+@media (max-width: 379px) {
+  .masthead__works {
+    display: none;
+  }
 }
 
 .masthead__xr {
@@ -154,12 +210,15 @@ main {
 }
 
 .masthead__nav {
+  grid-column: 3;
+  justify-self: end;
   display: flex;
   gap: 1.5rem;
 }
 
 .masthead__nav a {
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .footer {
@@ -201,10 +260,11 @@ main {
 
 .hero__title {
   margin: 0;
-  font: var(--weight-display) var(--step-4) / 0.85 var(--font-display);
-  letter-spacing: var(--tracking-display);
+  font: 400 var(--step-4) / 0.92 var(--font-wordmark);
+  letter-spacing: 0.01em;
   text-transform: uppercase;
   color: var(--heading);
+  text-shadow: var(--halo);
 }
 
 .hero--small .hero__title {
@@ -212,9 +272,12 @@ main {
 }
 
 .hero__lede {
-  max-width: 32ch;
+  max-width: 30ch;
   margin: 2rem 0 0;
-  font: 300 var(--step-1) / 1.45 var(--font-display);
+  font: 400 var(--step-1) / 1.5 var(--font-wordmark);
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  text-shadow: var(--halo);
 }
 
 /* Works grid */

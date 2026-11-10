@@ -1,3 +1,13 @@
+/* Nova Round (SIL Open Font License, see fonts/NovaRound-OFL.txt): the wordmark and
+   hero. Its capital N is the same round arch as its lowercase n. Self-hosted. */
+@font-face {
+  font-family: 'Nova Round';
+  src: url('./fonts/NovaRound-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /*
   Noodin Studio XR tokens.
   Ground: the Noodin red-orange from noodinstudio.com. Accents: purple and forest green.
@@ -22,10 +32,14 @@
   --line: rgb(26 6 20 / 0.28);
   --line-cream: rgb(255 241 230 / 0.22);
   --veil: rgb(255 51 20 / 0.78); /* frosted panels over the field */
+  /* A ground-coloured halo behind text that sits over the 3D field: it clears a
+     band of red around every letter, so pieces passing behind never touch the strokes. */
+  --halo: 0 0 1px var(--ground), 0 0 3px var(--ground), 0 0 8px var(--ground), 0 0 16px var(--ground), 0 0 28px var(--ground);
 
   /* Type */
   --font-display: 'Sora', system-ui, sans-serif;
   --font-body: 'Inter', system-ui, sans-serif;
+  --font-wordmark: 'Nova Round', 'Sora', system-ui, sans-serif;
   --weight-display: 200;
   --tracking-display: -0.02em;
   --tracking-label: 0.08em;

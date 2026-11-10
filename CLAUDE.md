@@ -9,3 +9,6 @@
 - 8th.io links stop working on February 28, 2027. Use `legacy` on any work still pointing at one.
 - The floating background (`src/field/`) collects `models` from every project.js. Add 3D pieces there, never in the field code. Keep each .glb under about 2 MB (Draco via `npx @gltf-transform/cli draco`).
 - Text on `--ground` uses `--ink` or `--heading`; text on `--purple` or `--forest` uses `--cream`. Check contrast before adding a new pairing.
+- The wordmark and home hero use Nova Round (`--font-wordmark`, self-hosted in src/brand/fonts, SIL OFL). Everything else keeps Sora and Inter.
+- Text that sits over the 3D field gets `text-shadow: var(--halo)` so pieces never touch the strokes.
+- The Trading Post Humanism build's logo (`#brand-home` in its index.html) links to `/` with target="_top". Re-exporting the build from 8th Wall overwrites index.html, so carry that change into the source project.

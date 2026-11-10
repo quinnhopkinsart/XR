@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { site } from '../brand/site.js';
+import logo from '../brand/logo-on-red.png';
 import FloatingField from '../field/FloatingField.jsx';
 import MotionControls from '../field/MotionControls.jsx';
 
@@ -14,11 +15,18 @@ export default function Layout() {
     <div className="shell">
       <FloatingField />
       <header className="masthead">
-        <Link to="/" className="masthead__mark">
+        {/* The centred logo is the home link for everyone. The wordmark repeats it
+            for pointers only, so screen readers and keyboards meet one home link. */}
+        <Link to="/" className="masthead__mark" tabIndex={-1} aria-hidden="true">
           Noodin Studio <span className="masthead__xr">XR</span>
         </Link>
+        <Link to="/" className="masthead__logo">
+          <img src={logo} alt="Noodin Studio XR, home" width="98" height="48" />
+        </Link>
         <nav className="masthead__nav" aria-label="Main">
-          <Link to="/">Works</Link>
+          <Link to="/" className="masthead__works">
+            Works
+          </Link>
           <a href={site.mainSite}>Main site</a>
         </nav>
       </header>
