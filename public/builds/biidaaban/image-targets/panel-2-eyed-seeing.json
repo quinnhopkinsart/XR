@@ -1,0 +1,23 @@
+{
+  "imagePath": "image-targets/panel-2-eyed-seeing_luminance.jpg",
+  "metadata": null,
+  "name": "panel-2-eyed-seeing",
+  "type": "PLANAR",
+  "properties": {
+    "left": 0,
+    "top": 97,
+    "width": 1440,
+    "height": 1920,
+    "isRotated": true,
+    "originalWidth": 1440,
+    "originalHeight": 2113
+  },
+  "resources": {
+    "originalImage": "panel-2-eyed-seeing_original.jpg",
+    "croppedImage": "panel-2-eyed-seeing_cropped.jpg",
+    "thumbnailImage": "panel-2-eyed-seeing_thumbnail.jpg",
+    "luminanceImage": "panel-2-eyed-seeing_luminance.jpg"
+  },
+  "created": 1777384449715,
+  "updated": 1777384449715
+}

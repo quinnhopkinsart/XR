@@ -1,0 +1,201 @@
+<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#000000"><title>Biidaaban | Noodin Studio</title><meta itemprop="name" content="Biidaaban | Noodin Studio"><meta name="twitter:title" content="Biidaaban | Noodin Studio"><meta property="og:title" content="Biidaaban | Noodin Studio"><meta property="og:site_name" content="Noodin Studio"><meta name="description" content="An augmented reality triptych exploring the idea of two-eyed seeing. An XR experience built by Noodin Studio for the McDonald Astroparticle Physics Research Institute."><meta itemprop="description" content="An augmented reality triptych exploring the idea of two-eyed seeing. An XR experience built by Noodin Studio for the McDonald Astroparticle Physics Research Institute."><meta property="og:description" content="An augmented reality triptych exploring the idea of two-eyed seeing. An XR experience built by Noodin Studio for the McDonald Astroparticle Physics Research Institute."><meta name="twitter:description" content="An augmented reality triptych exploring the idea of two-eyed seeing. An XR experience built by Noodin Studio for the McDonald Astroparticle Physics Research Institute."><meta name="author" content="Noodin Studio"><meta property="og:type" content="website"><style>* { box-sizing: border-box; margin: 0; padding: 0; }
+
+    @keyframes lp-twA { 0%,100%{opacity:.9}  45%{opacity:.04} }
+    @keyframes lp-twB { 0%,100%{opacity:.65} 60%{opacity:.06} }
+    @keyframes lp-twC { 0%,100%{opacity:.45} 50%{opacity:.02} }
+    @keyframes lp-blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+    @keyframes lp-glow  {
+      0%,100% { box-shadow: 0 0 8px  rgba(0,255,204,.2); }
+      50%     { box-shadow: 0 0 22px rgba(0,255,204,.5); }
+    }
+    @keyframes lp-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+    #lp-root {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 9999;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.7s ease;
+    }
+
+    #lp-terminal {
+      position: relative;
+      z-index: 1;
+      font-family: 'Courier New', Courier, monospace;
+      color: #00ffcc;
+      width: min(520px, 90vw);
+      animation: lp-fade-in 0.6s ease both;
+    }
+
+    #lp-cursor {
+      display: inline-block;
+      color: #00ffcc;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 15px;
+      animation: lp-blink 0.85s step-end infinite;
+      margin-top: 4px;
+    }
+
+    #lp-enter {
+      display: none;
+      margin-top: 32px;
+      background: rgba(0, 18, 16, 0.93);
+      color: #00ffcc;
+      border: 1px solid #00ffcc;
+      border-radius: 0;
+      padding: 15px 44px;
+      font-size: 15px;
+      font-family: 'Courier New', Courier, monospace;
+      letter-spacing: 0.13em;
+      cursor: pointer;
+      outline: none;
+      animation: lp-glow 2.4s ease-in-out infinite;
+      -webkit-tap-highlight-color: transparent;
+    }</style><script crossorigin="anonymous" src="./external/runtime/runtime.js"></script><script crossorigin="anonymous" src="./external/xr/xr.js" async="true" data-preload-chunks="face, slam"></script></head><body><div id="lp-root"><div id="lp-terminal"><div id="lp-lines"></div><div><span id="lp-cursor">_</span></div><div style="text-align:center;"><button id="lp-enter">[ &gt; ENTER ]</button></div></div></div><script src="bundle.js"></script><script>(function () {
+    var BRIGHT = '#00ffcc'
+    var MED    = '#00c9a7'
+    var DIM    = '#00a896'  // 7.05:1 on black — meets WCAG AA 4.5:1 minimum
+    var FONT   = "'Courier New', Courier, monospace"
+
+    // ── ASCII star field ────────────────────────────────────────────────
+    var root   = document.getElementById('lp-root')
+    var chars  = ['*', '+', '.', "'", '*', '.', '*', '+']
+    var anims  = ['lp-twA', 'lp-twB', 'lp-twC']
+    var rnd    = Math.random
+
+    for (var i = 0; i < 54; i++) {
+      var s = document.createElement('span')
+      s.textContent = chars[Math.floor(rnd() * chars.length)]
+      s.style.cssText =
+        'position:absolute;pointer-events:none;line-height:1;' +
+        'left:'   + (rnd() * 97 + 1).toFixed(1) + '%;' +
+        'top:'    + (rnd() * 97 + 1).toFixed(1) + '%;' +
+        'color:'  + BRIGHT + ';' +
+        'font-family:' + FONT + ';' +
+        'font-size:' + (8 + rnd() * 11).toFixed(1) + 'px;' +
+        'animation:' + anims[Math.floor(rnd() * 3)] + ' ' +
+          (1.1 + rnd() * 4).toFixed(2) + 's ease-in-out ' +
+          (rnd() * 5).toFixed(2) + 's infinite'
+      root.appendChild(s)
+    }
+
+    // ── Typing sequence ─────────────────────────────────────────────────
+    // Each entry is typed character-by-character.
+    // { text, css, delay (ms/char), pause (ms after line), hr }
+    var SEQ = [
+      {
+        text:  '// SYSTEM READY',
+        css:   'font-size:14px;color:' + MED + ';letter-spacing:0.12em;margin-bottom:22px;line-height:1.5',
+        delay: 45,
+        pause: 300
+      },
+      {
+        text:  'BIIDAABAN',
+        css:   'font-size:clamp(22px,6vw,28px);color:' + BRIGHT +
+               ';letter-spacing:0.14em;margin-bottom:6px',
+        delay: 60,
+        pause: 600
+      },
+      { hr: true },
+      {
+        text:  '> An augmented reality triptych exploring the dialogue',
+        css:   'font-size:13px;color:' + MED + ';letter-spacing:0.06em;margin:4px 0;line-height:1.5',
+        delay: 22,
+        pause: 0
+      },
+      {
+        text:  '  between Indigenous knowledge and the science of the cosmos.',
+        css:   'font-size:13px;color:' + MED + ';letter-spacing:0.06em;margin-bottom:20px;line-height:1.5',
+        delay: 22,
+        pause: 500
+      },
+      {
+        text:  '> ARTWORK',
+        css:   'font-size:13px;color:' + DIM + ';letter-spacing:0.12em;margin-bottom:5px;line-height:1.5',
+        delay: 40,
+        pause: 100
+      },
+      {
+        text:  '  QUINN HOPKINS  +  WILL MORIN',
+        css:   'font-size:14px;color:' + BRIGHT + ';letter-spacing:0.1em;margin-bottom:20px',
+        delay: 38,
+        pause: 500
+      },
+      { hr: true },
+      {
+        text:  '> FOR THE ARTHUR B. MCDONALD CANADIAN ASTROPARTICLE PHYSICS RESEARCH INSTITUTE',
+        css:   'font-size:13px;color:' + DIM + ';letter-spacing:0.06em;margin-top:4px;line-height:1.5',
+        delay: 14,
+        pause: 0
+      },
+      {
+        text:  '  IN PARTNERSHIP WITH THE QUEEN\'S UNIVERSITY OFFICE OF INDIGENOUS INITIATIVES',
+        css:   'font-size:13px;color:' + DIM + ';letter-spacing:0.06em;line-height:1.5',
+        delay: 14,
+        pause: 0
+      },
+      {
+        text:  '  AND QUEEN\'S DEPARTMENT OF PHYSICS, ENGINEERING PHYSICS AND ASTRONOMY.',
+        css:   'font-size:13px;color:' + DIM + ';letter-spacing:0.06em;margin-bottom:4px;line-height:1.5',
+        delay: 14,
+        pause: 700
+      }
+    ]
+
+    var linesEl  = document.getElementById('lp-lines')
+    var cursorEl = document.getElementById('lp-cursor')
+    var enterBtn = document.getElementById('lp-enter')
+
+    function runSeq(idx, done) {
+      if (idx >= SEQ.length) { done(); return }
+
+      var item  = SEQ[idx]
+      var after = item.pause != null ? item.pause : 200
+
+      // Horizontal rule
+      if (item.hr) {
+        var hr = document.createElement('div')
+        hr.style.cssText =
+          'border:none;border-top:1px solid ' + DIM +
+          ';margin:14px 0'
+        linesEl.appendChild(hr)
+        setTimeout(function () { runSeq(idx + 1, done) }, 80)
+        return
+      }
+
+      // Text line
+      var div = document.createElement('div')
+      div.style.cssText = item.css || ''
+      linesEl.appendChild(div)
+
+      var speed = item.delay != null ? item.delay : 30
+      var text  = item.text
+      var ci    = 0
+
+      function tick() {
+        if (ci < text.length) {
+          div.textContent += text[ci++]
+          setTimeout(tick, speed)
+        } else {
+          setTimeout(function () { runSeq(idx + 1, done) }, after)
+        }
+      }
+      tick()
+    }
+
+    runSeq(0, function () {
+      cursorEl.style.display = 'none'
+      enterBtn.style.display = 'inline-block'
+    })
+
+    // ── ENTER button ────────────────────────────────────────────────────
+    enterBtn.addEventListener('click', function () {
+      root.style.pointerEvents = 'none'
+      root.style.opacity = '0'
+      setTimeout(function () { root.style.display = 'none' }, 700)
+    })
+  })()</script></body></html>
