@@ -1,6 +1,8 @@
 import cover from './cover.jpg';
 import cityMural from './targets/city-mural.jpg';
 import bushMural from './targets/bush-mural.jpg';
+import edaaLogo from './award/edaa.png';
+import edaaLogoOnDark from './award/edaa-on-dark.png';
 import mishiModel from './models/mishibizhoo.glb?url';
 import nanaModel from './models/nanabush.glb?url';
 import moozModel from './models/mooz.glb?url';
@@ -49,6 +51,15 @@ export default {
   // Framed, the AR button opens the camera in a new tab (STN_FRAMED in the build).
   launch: { type: 'build', path: '/builds/stellar-narratives/index.html', embed: true },
 
+  // Shown on the home card (top right) and in the page header. The build carries its own
+  // copy of the logo, bottom left of the 3D and AR views.
+  award: {
+    label: 'Winner, 2024 Emerging Digital Artists Award, XR',
+    short: '2024 winner, XR',
+    logo: edaaLogo,
+    logoOnDark: edaaLogoOnDark,
+  },
+
   cover,
   coverAlt:
     'A mural of a night sky over a city, with a full moon and constellation figures, mounted on a brick wall under the title Stellar Narratives.',
@@ -74,5 +85,5 @@ export default {
     { src: bibModel, recolor: '--black' },
   ],
 
-  tags: ['image target', 'public art', 'mural', 'constellations', '13 moons'],
+  tags: ['image target', 'public art', 'mural', 'constellations', '13 moons', 'award'],
 };

@@ -451,12 +451,37 @@ main {
 }
 
 .card {
+  position: relative;
   display: flex;
   flex-direction: column;
   background: var(--panel);
   color: var(--on-panel);
   text-decoration: none;
   transition: transform 0.4s var(--ease), box-shadow 0.4s var(--ease);
+}
+
+/* Award: the logo on a black tab, top right of the card, over the cover. */
+.card__award {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+  padding: 0.6rem 0.7rem 0.55rem;
+  background: var(--panel);
+  color: var(--on-panel-strong);
+  font: 400 0.68rem / 1 var(--font-display);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.card__award img {
+  display: block;
+  width: 7.5rem;
+  height: auto;
 }
 
 .card:hover {

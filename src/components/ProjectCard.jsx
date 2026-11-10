@@ -4,7 +4,7 @@ import StatusPill from './StatusPill.jsx';
 import { breakable } from '../projects/launch.js';
 
 export default function ProjectCard({ project }) {
-  const { slug, title, year, kind, summary, cover, status } = project;
+  const { slug, title, year, kind, summary, cover, status, award } = project;
   return (
     <Link to={`${site.workPath}/${slug}`} className="card">
       <div className="card__media">
@@ -16,6 +16,12 @@ export default function ProjectCard({ project }) {
           </div>
         )}
       </div>
+      {award && (
+        <div className="card__award">
+          <img src={award.logoOnDark} alt={award.label} />
+          {award.short && <span aria-hidden="true">{award.short}</span>}
+        </div>
+      )}
       <div className="card__body">
         <div className="card__meta">
           <span>{year}</span>

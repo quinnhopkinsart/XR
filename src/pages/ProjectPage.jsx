@@ -67,6 +67,12 @@ export default function ProjectPage() {
               <dd>{p.location}</dd>
             </div>
           )}
+          {p.award && (
+            <div>
+              <dt>Award</dt>
+              <dd>{p.award.label}</dd>
+            </div>
+          )}
         </dl>
         {p.status !== 'live' && <StatusPill status={p.status} />}
         {/* On phones, someone who just scanned a code gets the button first. */}
