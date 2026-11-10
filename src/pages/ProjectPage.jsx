@@ -8,7 +8,6 @@ import QRBlock from '../components/QRBlock.jsx';
 import StatusPill from '../components/StatusPill.jsx';
 import TargetGallery from '../components/TargetGallery.jsx';
 import BuildEmbed from '../components/BuildEmbed.jsx';
-import SprayTag from '../brand/SprayTag.jsx';
 import NotFound from './NotFound.jsx';
 
 const formatDate = (iso) =>
@@ -45,7 +44,6 @@ export default function ProjectPage() {
           ← Works
         </Link>
         <h1 className="work__title">{breakable(p.title)}</h1>
-        <SprayTag />
         <dl className="work__meta">
           <div>
             <dt>Year</dt>

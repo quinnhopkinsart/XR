@@ -10,5 +10,4 @@
 - The floating background (`src/field/`) collects `models` from every project.js. Add 3D pieces there, never in the field code. Keep each .glb under about 2 MB (Draco via `npx @gltf-transform/cli draco`).
 - Text on `--ground` uses `--ink` or `--heading`; text on `--purple` or `--forest` uses `--cream`. Check contrast before adding a new pairing.
 - Display type is Comfortaa, set lowercase; body is Nunito. Both are self-hosted via @fontsource, imported in src/main.jsx.
-- Surfaces are hard-edged glass: `--glass-purple`/`--glass-forest`, `--blur`, a `--hairline` border and `--shadow-hard`. No rounded corners. The only raw mark is spray paint (`url(#spray)`, SprayTag.jsx) on lines and tags, never on reading text.
-- Text that can sit over the 3D field needs a solid or glass backing (`.plate`, glass panels) so contrast holds.
+- Raw texture: panels draw their fill on a `::before` layer with `filter: url(#rough)` and `var(--grain)`. Never put the rough filters on body text.
