@@ -336,6 +336,7 @@ main {
    so a heavy stroke in the text colour makes it bold. It sits on the red without a
    plate: at this weight the floating pieces read as passing behind it. */
 .wide-title {
+  position: relative;
   /* Breaks out of the content column to span the window, inside the page gutters */
   width: calc(100vw - 2 * var(--gutter));
   margin: 0 0 0 calc((100% - 100vw) / 2 + var(--gutter));
@@ -347,6 +348,38 @@ main {
   text-transform: uppercase;
   white-space: nowrap;
   color: var(--heading);
+}
+
+.wide-title__sup {
+  /* XR as an exponent: a third of the cap height, riding the top line */
+  font-size: 0.36em;
+  vertical-align: top;
+  position: relative;
+  top: -0.06em;
+  margin-left: 0.08em;
+  letter-spacing: 0;
+  line-height: 1;
+  /* Stroke widths inherit as pixels, so XR sets its own to stay in proportion */
+  -webkit-text-stroke-width: 0.1em;
+}
+
+/* Gaussian blur in splotches over the title. backdrop-filter blurs everything
+   under the layer; the mask cuts it into soft, irregular blots. */
+.wide-title__blur {
+  position: absolute;
+  inset: -12% -1%;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  -webkit-mask: url('../brand/blur-splotch.png') center / 100% 100% no-repeat;
+  mask: url('../brand/blur-splotch.png') center / 100% 100% no-repeat;
+}
+
+@media (max-width: 560px) {
+  .wide-title__blur {
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+  }
 }
 
 .wide-title__text {

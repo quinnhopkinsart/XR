@@ -5,7 +5,7 @@ import { useLayoutEffect, useRef } from 'react';
 // STRETCH is how much wider than its natural proportions the type is drawn.
 const STRETCH = 1.85;
 
-export default function WideTitle({ children, className = '' }) {
+export default function WideTitle({ children, label, className = '' }) {
   const box = useRef(null);
   const text = useRef(null);
 
@@ -35,10 +35,12 @@ export default function WideTitle({ children, className = '' }) {
   }, []);
 
   return (
-    <h1 className={`wide-title ${className}`} ref={box}>
-      <span className="wide-title__text" ref={text}>
+    <h1 className={`wide-title ${className}`} ref={box} aria-label={label}>
+      <span className="wide-title__text" ref={text} aria-hidden={label ? true : undefined}>
         {children}
       </span>
+      {/* Splotches of gaussian blur laid over the title and whatever floats behind it */}
+      <span className="wide-title__blur" aria-hidden="true" />
     </h1>
   );
 }

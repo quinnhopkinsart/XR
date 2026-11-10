@@ -10,7 +10,9 @@ export default function Home() {
   return (
     <>
       <section className="hero">
-        <WideTitle>Noodin XR</WideTitle>
+        <WideTitle label="Noodin XR">
+          Noodin<sup className="wide-title__sup">XR</sup>
+        </WideTitle>
         <p className="hero__lede">
           <span className="plate">
             I build augmented reality works that layer Anishinaabe stories onto the places we
