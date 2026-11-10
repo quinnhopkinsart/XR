@@ -10,8 +10,8 @@ export default function Home() {
   return (
     <>
       <section className="hero">
-        <WideTitle label="Noodin XR">
-          Noodin<sup className="wide-title__sup">XR</sup>
+        <WideTitle label="Noodin XR" badge="XR">
+          Noodin
         </WideTitle>
         <p className="hero__lede">
           <span className="plate">

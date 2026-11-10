@@ -337,9 +337,10 @@ main {
    plate: at this weight the floating pieces read as passing behind it. */
 .wide-title {
   position: relative;
-  /* Breaks out of the content column to span the window, inside the page gutters */
+  /* Breaks out of the content column to span the window, inside the page gutters.
+     The bottom margin leaves room for the XR badge hanging below the baseline. */
   width: calc(100vw - 2 * var(--gutter));
-  margin: 0 0 0 calc((100% - 100vw) / 2 + var(--gutter));
+  margin: 0 0 calc(var(--title-size, 0px) * 0.15) calc((100% - 100vw) / 2 + var(--gutter));
   font-family: var(--font-wordmark);
   font-weight: 400;
   line-height: 0.95;
@@ -350,17 +351,25 @@ main {
   color: var(--heading);
 }
 
-.wide-title__sup {
-  /* XR as an exponent: a third of the cap height, riding the top line */
-  font-size: 0.36em;
-  vertical-align: top;
-  position: relative;
-  top: -0.06em;
-  margin-left: 0.08em;
-  letter-spacing: 0;
+.wide-title__badge {
+  /* XR in white, in front of NOODIN's bottom-right corner. It sits above the blur
+     layer so it stays sharp, and moves on its own depth (WideTitle.jsx sets
+     --px and --py). Nova Round at its natural weight, no stroke, for clarity.
+     White on the red ground is 3.7:1, which passes for large text, so it never
+     drops below 28px. */
+  position: absolute;
+  right: 0;
+  bottom: calc(var(--title-size, 100px) * -0.13);
+  z-index: 2;
+  font-size: max(calc(var(--title-size, 100px) * 0.5), 28px);
   line-height: 1;
-  /* Stroke widths inherit as pixels, so XR sets its own to stay in proportion */
-  -webkit-text-stroke-width: 0.1em;
+  letter-spacing: 0.04em;
+  color: var(--white);
+  -webkit-text-stroke-width: 0;
+  transform-origin: right bottom;
+  transform: translate3d(var(--px, 0px), var(--py, 0px), 0) scaleX(var(--title-sx, 1));
+  text-shadow: 0 0.06em 0.18em rgb(0 0 0 / 0.45);
+  will-change: transform;
 }
 
 /* Gaussian blur in splotches over the title. backdrop-filter blurs everything
@@ -376,6 +385,10 @@ main {
 }
 
 @media (max-width: 560px) {
+  /* XR holds a 28px floor here, so it rides higher to keep the corner overlap */
+  .wide-title__badge {
+    bottom: calc(var(--title-size, 100px) * 0.06);
+  }
   .wide-title__blur {
     -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
