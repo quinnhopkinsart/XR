@@ -5,6 +5,8 @@ import panel3 from './targets/panel-3.jpg';
 // First built as Two Eyed Seeing (8th Wall project "TwoEyedSeeing").
 // The self-hosted build in public/builds/biidaaban/ is that project rebuilt with
 // --output-public-path=./ and only the luminance images kept in image-targets/.
+// It opens in a 3D carousel of the three panels with a Play button for each story
+// (src/desktop/ in the source project). ?view=ar runs the original camera AR.
 
 export default {
   title: 'Biidaaban',
@@ -23,11 +25,14 @@ export default {
   ],
 
   howTo: [
-    'Open the work on a phone or tablet and tap Enter. Allow camera access.',
-    'Point your camera at a panel, or at one of the targets below, and keep the full panel in view.',
-    'Turn up your volume or use headphones for the narration. Tap CC for captions.',
-    'Move left to right, panel 1 to panel 3, to travel from past to present to future.',
+    'Press Enter in the frame above. The three panels open in a 3D view on any device.',
+    'Use the arrows, the dots or a swipe to move from panel 1 to panel 3, past to present to future.',
+    'Press Play the story under a panel to start its animation and narration. Turn up your volume or use headphones. CC turns captions on and off.',
+    'On desktop, move your mouse to look inside. On a phone, tilt or drag.',
+    'For AR, tap AR at the top right on a phone, then point your camera at a panel or at one of the targets below.',
   ],
+
+  embedNote: 'Enter to explore. Play each panel\'s story, or on a phone tap AR to open the camera.',
 
   credits: [
     { role: 'Artists', name: 'Will Morin and Quinn Hopkins' },
@@ -38,9 +43,9 @@ export default {
     },
   ],
 
-  // Camera-only image-target AR with no 3D fallback, so it opens full screen
-  // rather than embedding (phone browsers are unreliable with camera AR in a frame).
-  launch: { type: 'build', path: '/builds/biidaaban/index.html' },
+  // embed: the 3D carousel plays inside the work page, with a full-screen link beside it.
+  // Framed, the AR button opens the camera in a new tab (BII_FRAMED in the build).
+  launch: { type: 'build', path: '/builds/biidaaban/index.html', embed: true },
 
   cover: panel2,
   coverAlt:
