@@ -3,7 +3,7 @@ import { useLayoutEffect, useRef } from 'react';
 // A one-line title set as large as the page allows, then stretched horizontally
 // so it spans the full width of the content column exactly, at any screen size.
 // STRETCH is how much wider than its natural proportions the type is drawn.
-const STRETCH = 1.4;
+const STRETCH = 1.85;
 
 export default function WideTitle({ children, className = '' }) {
   const box = useRef(null);
@@ -36,7 +36,7 @@ export default function WideTitle({ children, className = '' }) {
 
   return (
     <h1 className={`wide-title ${className}`} ref={box}>
-      <span className="wide-title__text plate" ref={text}>
+      <span className="wide-title__text" ref={text}>
         {children}
       </span>
     </h1>

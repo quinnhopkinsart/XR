@@ -333,15 +333,17 @@ main {
 
 /* Landing title: Nova Round, one line, stretched across the full content width
    (WideTitle.jsx sets the size and the stretch). Nova Round has a single weight,
-   so a stroke in the text colour makes it bold without a faked bold. */
+   so a heavy stroke in the text colour makes it bold. It sits on the red without a
+   plate: at this weight the floating pieces read as passing behind it. */
 .wide-title {
   /* Breaks out of the content column to span the window, inside the page gutters */
   width: calc(100vw - 2 * var(--gutter));
   margin: 0 0 0 calc((100% - 100vw) / 2 + var(--gutter));
   font-family: var(--font-wordmark);
   font-weight: 400;
-  line-height: 1;
-  letter-spacing: 0;
+  line-height: 0.95;
+  letter-spacing: -0.01em;   /* tight, with a hair between letters so the O's never fuse */
+  word-spacing: -0.18em;     /* closes the gap between the words without merging them */
   text-transform: uppercase;
   white-space: nowrap;
   color: var(--heading);
@@ -349,9 +351,10 @@ main {
 
 .wide-title__text {
   display: inline-block;
-  padding: 0.04em 0;
+  /* Half the stroke sits outside the glyphs; the side padding keeps it inside the fit */
+  padding: 0.04em 0.05em;
   transform-origin: left top;
-  -webkit-text-stroke: 0.06em currentColor;
+  -webkit-text-stroke: 0.1em currentColor;
   paint-order: stroke fill;
 }
 
