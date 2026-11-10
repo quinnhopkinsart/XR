@@ -47,6 +47,12 @@ export function validateProject(p, folder) {
       errors.push(`${where}: launch.embed only works with type "build"`);
     }
   }
+  if (p.award) {
+    if (!p.award.label) errors.push(`${where}: award.label is required (it is the logo's alt text)`);
+    if (!p.award.logoOnDark) {
+      errors.push(`${where}: award.logoOnDark is required (the card badge is a black panel)`);
+    }
+  }
   if (!Array.isArray(p.models)) {
     errors.push(`${where}: models must be an array`);
   } else {
@@ -72,6 +78,7 @@ export function normalizeProject(raw, folder) {
     models: [],
     tags: [],
     order: 0,
+    award: null,
     ...raw,
   };
 }
