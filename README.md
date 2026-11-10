@@ -4,7 +4,7 @@ The home for my augmented reality and XR works. Each work is a self-contained mo
 
 Built with React 19, Vite, React Router and three.js. Deployed on AWS Amplify.
 
-The models from each work float behind every page. They lean away from the pointer, swell when hovered and spin when tapped, and they rise with the page at different speeds by depth. Builds can play inside their work page.
+The models from each work float behind every page. They lean away from the pointer, swell when hovered and spin when tapped, and they rise with the page at different speeds by depth. On phones, tilting leans the camera and slides near pieces further than far ones. A Pause control (WCAG 2.2.2) and a Tilt toggle sit in the corner; both are remembered between visits, and both disappear for visitors with reduced motion turned on, since nothing moves for them. Builds can play inside their work page.
 
 ## Run it
 
@@ -36,7 +36,9 @@ src/
     launch.js           where the Launch button goes
   field/
     FloatingField.jsx   gathers every work's models, loads three.js after first paint
-    field.js            the floating background: placement, drift, pointer, tap, scroll
+    field.js            the floating background: placement, drift, pointer, tap, scroll, tilt
+    motion.js           shared pause, tilt and embed state, gyroscope permission
+    MotionControls.jsx  the Pause and Tilt buttons
   pages/                Home, work page, full-screen launch, 404
   components/           card, QR code, launch button, targets, status, build embed
 public/

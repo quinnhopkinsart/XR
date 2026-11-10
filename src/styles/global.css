@@ -661,6 +661,76 @@ main {
   font-family: var(--font-display);
 }
 
+/* Pause and tilt controls for the floating field */
+
+.motion {
+  position: fixed;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100vw - 24px);
+}
+
+.motion__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 1rem;
+  border: 1px solid var(--cream);
+  border-radius: 999px;
+  background: var(--purple);
+  color: var(--cream);
+  font: 500 var(--step--1) var(--font-display);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  box-shadow: 0 8px 24px -10px rgb(26 6 20 / 0.6);
+}
+
+.motion__btn[aria-pressed='true'] {
+  background: var(--forest);
+}
+
+.motion__btn:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.motion__icon {
+  font-size: 0.8em;
+  line-height: 1;
+}
+
+.motion__note {
+  flex-basis: 100%;
+  padding: 0.5rem 0.75rem;
+  background: var(--purple);
+  color: var(--cream);
+  font-size: var(--step--1);
+  text-align: right;
+}
+
+/* Keeps the fixed controls from covering the footer links */
+.footer {
+  padding-bottom: calc(2rem + 56px);
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

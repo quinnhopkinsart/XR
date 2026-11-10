@@ -1,8 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { projects } from '../projects/registry.js';
+import { motion, reducedMotion } from './motion.js';
 
 // Every work can add pieces to the field through `models` in its project.js.
 const models = projects.flatMap((p) => p.models);
+export const fieldHasModels = models.length > 0;
 
 function hasWebGL() {
   try {
@@ -17,8 +19,7 @@ export default function FloatingField() {
   const ref = useRef(null);
 
   useEffect(() => {
-    if (!models.length || !hasWebGL()) return undefined;
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!fieldHasModels || !hasWebGL()) return undefined;
     let dispose;
     let cancelled = false;
 
@@ -38,5 +39,5 @@ export default function FloatingField() {
 
 /** Lets a page pause the field, for example while a build is running in view. */
 export function pauseField(paused) {
-  window.dispatchEvent(new CustomEvent('noodin:field', { detail: { paused } }));
+  motion.set({ embedPaused: paused });
 }

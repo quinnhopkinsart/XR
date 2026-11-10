@@ -7,10 +7,12 @@
 //   - pieces near the pointer drift away from it and swell a little
 //   - tapping a piece (on open page, not on text or links) sets it spinning
 //   - scrolling moves near pieces faster than far ones
+//   - on phones, tilting leans the camera and slides near pieces further than far ones
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { motion } from './motion.js';
 
 const INTERACTIVE = 'a, button, input, select, textarea, iframe, label, summary, [role="button"]';
 
@@ -127,8 +129,15 @@ export function createField(container, { models, reducedMotion }) {
   const pointerWorld = new THREE.Vector3();
   let pointerActive = false;
   let hovered = null;
-  let paused = false;
   let running = false;
+
+  // Tilt: a smoothed lean from -1 to 1 on each axis, recentred around however
+  // the phone is being held, so it answers changes in angle, not the angle itself.
+  const tilt = new THREE.Vector2();
+  const tiltTarget = new THREE.Vector2();
+  let tiltListening = false;
+  let baseline = null;
+  const isPaused = () => motion.get().userPaused || motion.get().embedPaused;
   let frame = 0;
   let last = performance.now();
   let view = { w: 10, h: 10 };
@@ -185,6 +194,8 @@ export function createField(container, { models, reducedMotion }) {
         spin: new THREE.Vector3((random() - 0.5) * 0.2, (random() - 0.5) * 0.35, (random() - 0.5) * 0.1),
         kick: new THREE.Vector3(),
         push: new THREE.Vector3(),
+        lean: new THREE.Vector2(),
+        nearness: 1 + depth / 8,                  // 1 at the focal plane, 0 at the back
         swell: 1,
         parallax: 0.35 + (1 + depth / 8) * 0.9,   // near pieces move more with scroll
       };
@@ -204,7 +215,7 @@ export function createField(container, { models, reducedMotion }) {
       const x = f.base.x * view.w * depthScale;
       const yy = (0.5 - y) * view.h * depthScale;
       const bob = reducedMotion ? 0 : Math.sin(t * f.speed + f.phase) * f.bob;
-      f.piece.position.set(x + f.push.x, yy + bob + f.push.y, f.base.z);
+      f.piece.position.set(x + f.push.x + f.lean.x, yy + bob + f.push.y + f.lean.y, f.base.z);
     }
   }
 
@@ -219,9 +230,13 @@ export function createField(container, { models, reducedMotion }) {
     last = now;
     const t = now / 1000;
 
-    // Camera leans toward the pointer.
-    camera.position.x += (pointer.x * 0.8 - camera.position.x) * 0.04;
-    camera.position.y += (pointer.y * 0.5 - camera.position.y) * 0.04;
+    tilt.lerp(tiltTarget, 0.08);
+
+    // Camera leans toward the pointer, or with the phone.
+    const leanX = (pointerActive ? pointer.x : 0) * 0.8 + tilt.x * 1.4;
+    const leanY = (pointerActive ? pointer.y : 0) * 0.5 + tilt.y * 1.0;
+    camera.position.x += (leanX - camera.position.x) * 0.04;
+    camera.position.y += (leanY - camera.position.y) * 0.04;
     camera.lookAt(0, 0, -3);
 
     // Where the pointer sits on the focal plane.
@@ -229,8 +244,8 @@ export function createField(container, { models, reducedMotion }) {
 
     for (const f of floaters) {
       const p = f.piece;
-      p.rotation.x += (f.spin.x + f.kick.x) * dt;
-      p.rotation.y += (f.spin.y + f.kick.y) * dt;
+      p.rotation.x += (f.spin.x + f.kick.x - tilt.y * 0.5) * dt;
+      p.rotation.y += (f.spin.y + f.kick.y + tilt.x * 0.7) * dt;
       p.rotation.z += (f.spin.z + f.kick.z) * dt;
       f.kick.multiplyScalar(Math.pow(0.35, dt)); // spins settle over a few seconds
 
@@ -247,6 +262,11 @@ export function createField(container, { models, reducedMotion }) {
       f.push.x += (target.x - f.push.x) * 0.06;
       f.push.y += (target.y - f.push.y) * 0.06;
 
+      // Tilt slides pieces downhill, near ones furthest, like things floating in water.
+      const slide = 0.5 + f.nearness * 1.3;
+      f.lean.x += (tilt.x * slide - f.lean.x) * 0.05;
+      f.lean.y += (tilt.y * slide - f.lean.y) * 0.05;
+
       const swellTo = f === hovered ? 1.12 : 1;
       f.swell += (swellTo - f.swell) * 0.12;
       p.scale.setScalar(f.size * p.userData.unit * f.swell);
@@ -256,7 +276,7 @@ export function createField(container, { models, reducedMotion }) {
   }
 
   function start() {
-    if (running || paused || reducedMotion || document.hidden) return;
+    if (running || isPaused() || reducedMotion || document.hidden) return;
     running = true;
     last = performance.now();
     frame = requestAnimationFrame(tick);
@@ -288,6 +308,10 @@ export function createField(container, { models, reducedMotion }) {
     hovered = overContent ? null : pick(e.clientX, e.clientY);
     document.documentElement.classList.toggle('field-hover', !!hovered);
   };
+  const onUp = (e) => {
+    // A finger lifting is not a pointer resting on the page.
+    if (e.pointerType === 'touch') onLeave();
+  };
   const onLeave = () => {
     pointerActive = false;
     hovered = null;
@@ -305,19 +329,50 @@ export function createField(container, { models, reducedMotion }) {
     if (!running) render();
   };
   const onVisibility = () => (document.hidden ? stop() : start());
-  const onPause = (e) => {
-    paused = !!e.detail?.paused;
-    if (paused) stop();
-    else start();
+  const onOrientation = (e) => {
+    if (e.beta == null || e.gamma == null) return;
+    // Map device axes to screen axes for the current orientation.
+    const angle = (screen.orientation?.angle ?? window.orientation ?? 0) % 360;
+    let x = e.gamma;
+    let y = e.beta;
+    if (angle === 90) [x, y] = [e.beta, -e.gamma];
+    else if (angle === 270 || angle === -90) [x, y] = [-e.beta, e.gamma];
+    else if (angle === 180) [x, y] = [-e.gamma, -e.beta];
+
+    if (!baseline) baseline = { x, y };
+    // Recentre slowly, so holding the phone at any angle settles back to calm.
+    baseline.x += (x - baseline.x) * 0.02;
+    baseline.y += (y - baseline.y) * 0.02;
+    const clamp = (v) => Math.max(-1, Math.min(1, v));
+    tiltTarget.set(clamp((x - baseline.x) / 20), clamp(-(y - baseline.y) / 20));
   };
+
+  function setTilt(on) {
+    if (on && !tiltListening && !reducedMotion) {
+      window.addEventListener('deviceorientation', onOrientation);
+      tiltListening = true;
+      baseline = null;
+    } else if (!on && tiltListening) {
+      window.removeEventListener('deviceorientation', onOrientation);
+      tiltListening = false;
+      tiltTarget.set(0, 0);
+    }
+  }
+
+  const unsubscribe = motion.subscribe((s) => {
+    setTilt(s.tilt);
+    if (isPaused()) stop();
+    else start();
+  });
+  setTilt(motion.get().tilt);
 
   window.addEventListener('resize', resize);
   window.addEventListener('pointermove', onMove, { passive: true });
+  window.addEventListener('pointerup', onUp, { passive: true });
   document.addEventListener('pointerleave', onLeave);
   window.addEventListener('pointerdown', onDown, { passive: true });
   window.addEventListener('scroll', onScroll, { passive: true });
   document.addEventListener('visibilitychange', onVisibility);
-  window.addEventListener('noodin:field', onPause);
 
   resize();
 
@@ -345,11 +400,13 @@ export function createField(container, { models, reducedMotion }) {
     stop();
     window.removeEventListener('resize', resize);
     window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
     document.removeEventListener('pointerleave', onLeave);
     window.removeEventListener('pointerdown', onDown);
     window.removeEventListener('scroll', onScroll);
     document.removeEventListener('visibilitychange', onVisibility);
-    window.removeEventListener('noodin:field', onPause);
+    unsubscribe();
+    setTilt(false);
     document.documentElement.classList.remove('field-hover');
     scene.traverse((o) => {
       if (o.isMesh) {

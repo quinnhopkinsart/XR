@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { site } from '../brand/site.js';
 import FloatingField from '../field/FloatingField.jsx';
+import MotionControls from '../field/MotionControls.jsx';
 
 export default function Layout() {
   const { pathname } = useLocation();
@@ -35,6 +36,8 @@ export default function Layout() {
           <a href={site.contact}>Get in touch</a>
         </span>
       </footer>
+
+      <MotionControls />
     </div>
   );
 }
