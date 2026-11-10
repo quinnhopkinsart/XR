@@ -13,22 +13,26 @@ export default {
   venue: 'Worth Gallery',
   location: 'Tkaronto',
 
-  summary: 'Two lightbox works open into augmented reality, Thunderbird and Shaman, at Worth Gallery.',
+  summary:
+    'Thunderbird vs Serpent and Shaman, two lightbox works in Hyper Woodland, open into augmented reality.',
 
-  // Description as published on noodinstudio.com/work/trading-post-humanism
+  // Statement for the two works in the XR experience. The full show statement
+  // lives on noodinstudio.com/work/trading-post-humanism.
   description: [
-    'Trading Post Humanism gathers a body of work that moves through joy, culture, pain, anxiety, and connection, and places each piece beside the question of what it costs.',
-    'Every work in the show carries a beaded price tag, hand-stitched on deer hide, hanging from the piece as part of it. The tag is not separate from the artwork. It is the artwork acknowledging the room it has entered: a market that has long set terms for Indigenous makers, sorted ceremony from craft, and assigned value through frames built elsewhere. The trading post is the historical shorthand for that arrangement. The beadwork is the older, slower economy it tried to replace.',
-    'The title also points toward posthumanism, the contemporary turn that decentres the human and recognizes agency, kinship, and personhood in animals, plants, land, technology, and spirit. Indigenous worldviews have held this understanding for far longer than the term has existed. Anishinaabe thought does not place the human at the top of a hierarchy. It situates us inside a web of relations with other beings, human and non-human, seen and unseen. The work in this show draws from that framework. The serpents, the lodges, the lightboxes, the figures studded with stone and shell are not metaphors for human experience. They are relatives, presences, and forces with their own standing.',
-    'The paintings, prints, and lightboxes range across interior and shared experience. Some sit with grief and mental health. Some hold humour, ceremony, and the steady work of relation. Read together, they refuse the split between the personal and the political, and ask the viewer to hold both at once: the figure on the wall, and the number on the tag.',
+    'Trading Post Humanism opens into augmented reality through two lightbox works, Thunderbird vs Serpent and Shaman. Both are rendered in Hyper Woodland, the style I developed and named, which carries the Woodland School into 3D modelling, augmented reality and light. The bold outlines and divided fields of the lightboxes lift into depth on your phone.',
+    'Thunderbird vs Serpent holds the dichotomy of being an urban Indigenous person. The thunderbird and the serpent are forces of the sky and the water, locked in an old struggle. Living in the city, I feel fractured. Fighting the serpent makes me complete again.',
+    'Shaman explores spirituality and authenticity in the tech era. The figure lives on the wall and on the phone screen at once, and asks what makes a spiritual practice real when it reaches us through technology.',
+    'Both works were shown in Trading Post Humanism, my 2026 solo exhibition at Worth Gallery, where every piece carried a beaded price tag hand-stitched on deer hide.',
   ],
 
   howTo: [
     'Press Enter in the frame above. It opens in a 3D view on any device.',
     'On desktop, move your mouse to look inside and scroll to the next artwork.',
-    'On a phone, tap AR at the top right. The camera opens in a new tab.',
-    'Point your phone at the Thunderbird or Shaman piece, or at one of the targets below.',
+    'On a phone, tilt or drag to look inside. Tap AR at the top right to open the camera in a new tab.',
+    'Point your phone at Thunderbird vs Serpent or Shaman, or at one of the targets below.',
   ],
+
+  embedNote: 'Enter to explore. On a phone, tilt to look around, or tap AR to open the camera.',
 
   credits: [
     { role: 'Presented at', name: 'Worth Gallery' },
@@ -49,8 +53,8 @@ export default {
   coverAlt:
     'Billboard reading Noodin Studio, Trading Post Humanism, Worth Gallery, June 9, 2026, standing on a rock outcrop under a blue sky.',
   targets: [
-    { src: thunderbird, label: 'Thunderbird', alt: 'Thunderbird lightbox artwork, image target' },
-    { src: shaman, label: 'Shaman', alt: 'Shaman collectible artwork, image target' },
+    { src: thunderbird, label: 'Thunderbird vs Serpent', alt: 'Thunderbird vs Serpent lightbox artwork, image target' },
+    { src: shaman, label: 'Shaman', alt: 'Shaman lightbox artwork, image target' },
   ],
   tags: ['image target', 'solo exhibition', 'lightbox'],
 };

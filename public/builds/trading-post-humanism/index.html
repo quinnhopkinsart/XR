@@ -237,6 +237,47 @@
       outline-offset: 2px;
     }
 
+    /* Tilt button: beside AR on phones and tablets in the 3D view (tilt.js).
+       Pressed state is red on white, the reverse of AR, so on and off read at a glance. */
+    #tilt-btn {
+      display: none;
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top));
+      right: calc(max(12px, env(safe-area-inset-right)) + 70px);
+      z-index: 1002;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0 14px;
+      border: 2px solid #ffffff;
+      border-radius: 3px;
+      background: rgba(0, 0, 0, 0.35);
+      color: #ffffff;
+      font: 700 15px/1 system-ui, -apple-system, sans-serif;
+      letter-spacing: 0.12em;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .is-3d.is-mobile.has-tilt #tilt-btn {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    #tilt-btn[aria-pressed="true"] {
+      background: #ffffff;
+      color: #CC0000;
+    }
+
+    #tilt-btn.is-denied {
+      opacity: 0.6;
+    }
+
+    #tilt-btn:focus-visible {
+      outline: 2px solid #ffffff;
+      outline-offset: 2px;
+    }
+
     /* Shown only while the browser is holding the soundtrack back (audio-unlock.ts). */
     #sound-hint {
       display: none;
@@ -342,4 +383,4 @@
       outline: 2px solid #fff;
       outline-offset: -8px;
       border-radius: 50%;
-    }</style></head><body><div id="splash-screen"><div id="loading-bar-container"><div id="loading-bar"></div></div><button id="start-btn">Start AR</button></div><a id="brand-home" href="/" target="_top" aria-label="Noodin Studio XR, back to the works"><img id="brand-logo" src="./assets/ui/noodin-logo.webp" alt=""></a><p id="brand-credit">&copy; 2026 Quinn Hopkins &middot; Noodin Studio</p><a id="ar-btn" href="?view=ar" aria-label="Open in AR">AR</a> <button id="sound-hint" type="button">Tap for sound</button><div id="desktop-hint"><span class="hint-scroll"><span class="hint-mouse">Scroll</span><span class="hint-touch">Swipe up</span> for the next artwork. </span><span class="hint-mouse">Move your mouse</span><span class="hint-touch">Drag</span> to look inside.</div><script src="bundle.js"></script></body></html>
+    }</style></head><body><div id="splash-screen"><div id="loading-bar-container"><div id="loading-bar"></div></div><button id="start-btn">Start AR</button></div><a id="brand-home" href="/" target="_top" aria-label="Noodin Studio XR, back to the works"><img id="brand-logo" src="./assets/ui/noodin-logo.webp" alt=""></a><p id="brand-credit">&copy; 2026 Quinn Hopkins &middot; Noodin Studio</p><a id="ar-btn" href="?view=ar" aria-label="Open in AR">AR</a> <button id="tilt-btn" type="button" aria-label="Look around by tilting your phone">Tilt</button> <button id="sound-hint" type="button">Tap for sound</button><div id="desktop-hint"><span class="hint-scroll"><span class="hint-mouse">Scroll</span><span class="hint-touch">Swipe up</span> for the next artwork. </span><span class="hint-mouse">Move your mouse</span><span class="hint-touch">Tilt or drag</span> to look inside.</div><script src="bundle.js"></script><script src="tilt.js"></script></body></html>
