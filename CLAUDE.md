@@ -9,3 +9,5 @@
 - 8th.io links stop working on February 28, 2027. Use `legacy` on any work still pointing at one.
 - The floating background (`src/field/`) collects `models` from every project.js. Add 3D pieces there, never in the field code. Keep each .glb under about 2 MB (Draco via `npx @gltf-transform/cli draco`).
 - Text on `--ground` uses `--ink` or `--heading`; text on `--purple` or `--forest` uses `--cream`. Check contrast before adding a new pairing.
+- Display type is Comfortaa, set lowercase; body is Nunito. Both are self-hosted via @fontsource, imported in src/main.jsx.
+- Raw texture: panels draw their fill on a `::before` layer with `filter: url(#rough)` and `var(--grain)`. Never put the rough filters on body text.

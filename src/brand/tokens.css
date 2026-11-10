@@ -1,7 +1,9 @@
 /*
   Noodin Studio XR tokens.
   Ground: the Noodin red-orange from noodinstudio.com. Accents: purple and forest green.
-  Sora set thin and uppercase for display, as on the main site.
+  Type and texture follow the Noodin Studio logo: Comfortaa, a monoline face with a
+  fully round lowercase n, set lowercase; a stipple grain over the page; panels and
+  rules with brush-pulled edges (filters in RoughFilters.jsx).
   The floating 3D field reads --ground, --purple, --purple-hi and --forest-hi too,
   so changing a colour here changes the lighting on the models.
 
@@ -21,17 +23,20 @@
   --cream: #fff1e6;           /* text on purple and forest */
   --line: rgb(26 6 20 / 0.28);
   --line-cream: rgb(255 241 230 / 0.22);
-  --veil: rgb(255 51 20 / 0.78); /* frosted panels over the field */
+  --veil: rgb(255 51 20 / 0.92); /* masthead over the field; high enough that text holds contrast */
 
   /* Type */
-  --font-display: 'Sora', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
-  --weight-display: 200;
-  --tracking-display: -0.02em;
-  --tracking-label: 0.08em;
+  --font-display: 'Comfortaa', 'Nunito', system-ui, sans-serif;
+  --font-body: 'Nunito', system-ui, sans-serif;
+  --weight-display: 500;
+  --tracking-display: -0.035em;
+  --tracking-label: 0.02em;
+
+  /* Texture */
+  --grain: url('./grain.png');
 
   /* Scale */
-  --step--1: clamp(0.78rem, 0.76rem + 0.1vw, 0.84rem);
+  --step--1: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem); /* 14px minimum for labels */
   --step-0: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
   --step-1: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
   --step-2: clamp(1.6rem, 1.3rem + 1.4vw, 2.4rem);

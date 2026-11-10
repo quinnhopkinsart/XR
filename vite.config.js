@@ -11,5 +11,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsInlineLimit: 0,
+    // three.js (~700 KB) is its own lazy chunk, loaded after first paint.
+    chunkSizeWarningLimit: 800,
   },
 });
