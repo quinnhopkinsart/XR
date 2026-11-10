@@ -1,4 +1,57 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#000000"><title>Biidaaban | Noodin Studio</title><meta itemprop="name" content="Biidaaban | Noodin Studio"><meta name="twitter:title" content="Biidaaban | Noodin Studio"><meta property="og:title" content="Biidaaban | Noodin Studio"><meta property="og:site_name" content="Noodin Studio"><meta name="description" content="An augmented reality triptych exploring the idea of two-eyed seeing. An XR experience built by Noodin Studio for the McDonald Astroparticle Physics Research Institute."><meta itemprop="description" content="An augmented reality triptych exploring the idea of two-eyed seeing. An XR experience built by Noodin Studio for the McDonald Astroparticle Physics Research Institute."><meta property="og:description" content="An augmented reality triptych exploring the idea of two-eyed seeing. An XR experience built by Noodin Studio for the McDonald Astroparticle Physics Research Institute."><meta name="twitter:description" content="An augmented reality triptych exploring the idea of two-eyed seeing. An XR experience built by Noodin Studio for the McDonald Astroparticle Physics Research Institute."><meta name="author" content="Noodin Studio"><meta property="og:type" content="website"><style>* { box-sizing: border-box; margin: 0; padding: 0; }
+<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#FF3314"><title>Biidaaban | Noodin Studio</title><meta name="description" content="Biidaaban by Will Morin and Quinn Hopkins: three panels that carry Anishinaabe knowledge and astroparticle physics from past to future. Explore them in 3D and play each story, or point your phone at the panels for AR."><meta name="author" content="Quinn Hopkins"><meta itemprop="name" content="Biidaaban | Noodin Studio"><meta itemprop="description" content="Biidaaban by Will Morin and Quinn Hopkins: three panels that carry Anishinaabe knowledge and astroparticle physics from past to future. Explore them in 3D and play each story, or point your phone at the panels for AR."><meta property="og:type" content="website"><meta property="og:site_name" content="Noodin Studio"><meta property="og:title" content="Biidaaban | Noodin Studio"><meta property="og:description" content="Biidaaban by Will Morin and Quinn Hopkins: three panels that carry Anishinaabe knowledge and astroparticle physics from past to future. Explore them in 3D and play each story, or point your phone at the panels for AR."><meta name="twitter:card" content="summary"><meta name="twitter:title" content="Biidaaban | Noodin Studio"><meta name="twitter:description" content="Biidaaban by Will Morin and Quinn Hopkins: three panels that carry Anishinaabe knowledge and astroparticle physics from past to future. Explore them in 3D and play each story, or point your phone at the panels for AR."><script>// Everyone lands in the 3D view (src/desktop/), which skips the AR engine download.
+    // Phones get an AR button top right that loads ?view=ar (src/common/ar-button.ts).
+    // ?view=ar or ?view=3d (also ?view=desktop) force a mode. Same setup as Trading Post Humanism.
+    (function () {
+      var view = new URLSearchParams(location.search).get('view')
+      var mobile = /Android|iPhone|iPad|iPod|Mobile|Silk|Kindle/i.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+      var ar = view === 'ar'
+      var framed
+      try {
+        framed = window.self !== window.top
+      } catch (e) {
+        framed = true  // cross-origin parent blocked the check, so we are framed
+      }
+      window.BII_MODE = ar ? 'ar' : '3d'
+      window.BII_MOBILE = mobile
+      window.BII_FRAMED = framed
+      var cl = document.documentElement.classList
+      cl.toggle('is-3d', !ar)
+      cl.toggle('is-ar', ar)
+      cl.toggle('is-mobile', mobile)
+      cl.toggle('is-desktop', !mobile)
+      cl.toggle('is-framed', framed)
+
+      // AR keeps its black terminal look for the browser bar.
+      if (ar) document.querySelector('meta[name="theme-color"]').setAttribute('content', '#000000')
+
+      // Record every AudioContext so the first tap can resume any the browser held back
+      // (src/common/audio-unlock.ts). Must run before runtime.js creates one.
+      var NativeAudioContext = window.AudioContext || window.webkitAudioContext
+      var contexts = window.BII_AUDIO_CONTEXTS = []
+      if (NativeAudioContext) {
+        var Tracked = class extends NativeAudioContext {
+          constructor(options) {
+            super(options)
+            contexts.push(this)
+          }
+        }
+        window.AudioContext = Tracked
+        if (window.webkitAudioContext) window.webkitAudioContext = Tracked
+      }
+
+      if (!ar) return
+      var xr = document.createElement('script')
+      xr.src = './external/xr/xr.js'
+      xr.async = true
+      xr.crossOrigin = 'anonymous'
+      xr.setAttribute('data-preload-chunks', 'face, slam')
+      document.head.appendChild(xr)
+    })()</script><script crossorigin="anonymous" src="./external/runtime/runtime.js"></script><style>*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Camera AR: terminal landing page (unchanged) ─────────────────── */
+
+    
 
     @keyframes lp-twA { 0%,100%{opacity:.9}  45%{opacity:.04} }
     @keyframes lp-twB { 0%,100%{opacity:.65} 60%{opacity:.06} }
@@ -55,7 +108,490 @@
       outline: none;
       animation: lp-glow 2.4s ease-in-out infinite;
       -webkit-tap-highlight-color: transparent;
-    }</style><script crossorigin="anonymous" src="./external/runtime/runtime.js"></script><script crossorigin="anonymous" src="./external/xr/xr.js" async="true" data-preload-chunks="face, slam"></script></head><body><div id="lp-root"><div id="lp-terminal"><div id="lp-lines"></div><div><span id="lp-cursor">_</span></div><div style="text-align:center;"><button id="lp-enter">[ &gt; ENTER ]</button></div></div></div><script src="bundle.js"></script><script>(function () {
+    }
+  
+    .is-3d #lp-root { display: none; }
+
+    /* ── 3D view: carousel. Styling follows the Trading Post Humanism 3D view. ── */
+    html.is-3d,
+    html.is-3d body {
+      background-color: #FF3314;
+      overflow: hidden;
+      height: 100%;
+    }
+
+    .is-ar #splash-screen,
+    .is-ar .ui-3d {
+      display: none !important;
+    }
+
+    .is-3d canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      /* The runtime sets touch-action: none inline. Keep it: drags turn the panel and
+         horizontal swipes move the carousel (carousel-viewer.ts). */
+    }
+
+    #splash-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background-color: #FF3314;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      padding: 96px 6% 10vh;
+      transition: opacity 0.4s ease;
+      color: #ffffff;
+      text-align: center;
+    }
+
+    #splash-panels {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(8px, 1.6vw, 18px);
+      width: min(100%, 980px);
+    }
+
+    #splash-panels img {
+      display: block;
+      width: 30%;
+      height: auto;
+      border-radius: 2px;
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);
+    }
+
+    #splash-panels img:nth-child(2) {
+      width: 36%;
+    }
+
+    #splash-title {
+      font: 700 clamp(30px, 7vw, 56px)/1 system-ui, -apple-system, sans-serif;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    }
+
+    #splash-byline {
+      margin-top: 12px;
+      padding: 6px 12px;
+      display: inline-block;
+      border-radius: 3px;
+      background: rgba(0, 0, 0, 0.55);
+      font: 500 14px/1.4 system-ui, -apple-system, sans-serif;
+      letter-spacing: 0.04em;
+    }
+
+    #loading-bar-container {
+      width: 100%;
+      max-width: 320px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.35);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    #loading-bar {
+      height: 100%;
+      width: 0%;
+      background: #ffffff;
+      border-radius: 2px;
+      transition: width 0.25s ease-out;
+    }
+
+    #start-btn,
+    #play-btn {
+      padding: 14px 44px;
+      background: #ffffff;
+      color: #CC0000;
+      border: none;
+      border-radius: 3px;
+      font: 700 16px/1 system-ui, -apple-system, sans-serif;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #start-btn {
+      display: none;
+      padding: 14px 52px;
+    }
+
+    #start-btn:active,
+    #play-btn:active {
+      opacity: 0.85;
+    }
+
+    .is-desktop #start-btn:hover,
+    .is-desktop #play-btn:hover {
+      opacity: 0.9;
+    }
+
+    #start-btn:focus-visible,
+    #play-btn:focus-visible,
+    .ui-3d button:focus-visible,
+    #brand-home:focus-visible,
+    #ar-btn:focus-visible {
+      outline: 2px solid #ffffff;
+      outline-offset: 3px;
+    }
+
+    /* Logo and credit, as in Trading Post Humanism. The logo goes back to the works
+       page on noodin.studio; target="_top" leaves the frame on the work page. */
+    #brand-home {
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10000;
+      display: block;
+      padding: 4px;
+      border-radius: 6px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .is-ar #brand-home {
+      display: none;
+    }
+
+    #brand-logo {
+      display: block;
+      width: clamp(100px, 24vw, 150px);
+      height: auto;
+      pointer-events: none;
+      user-select: none;
+      filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.45));
+      transition: transform 0.25s ease;
+    }
+
+    #brand-home:hover #brand-logo {
+      transform: scale(1.05);
+    }
+
+    #brand-credit {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: max(8px, env(safe-area-inset-bottom));
+      z-index: 1000;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.9);
+      font: 400 11px/1.3 system-ui, -apple-system, sans-serif;
+      letter-spacing: 0.04em;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+      pointer-events: none;
+    }
+
+    /* Hint under the logo. Fades after the first look or move. */
+    #desktop-hint {
+      position: fixed;
+      left: 50%;
+      top: calc(max(14px, env(safe-area-inset-top)) + 84px);
+      transform: translateX(-50%);
+      z-index: 1000;
+      padding: 8px 16px;
+      border-radius: 3px;
+      background: rgba(0, 0, 0, 0.55);
+      color: #fff;
+      font: 500 13px/1.3 system-ui, -apple-system, sans-serif;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      pointer-events: none;
+      transition: opacity 0.6s ease;
+    }
+
+    .is-mobile #desktop-hint .hint-mouse,
+    .is-desktop #desktop-hint .hint-touch {
+      display: none;
+    }
+
+    .desktop-pointer-moved #desktop-hint,
+    .carousel-moved #desktop-hint,
+    .story-playing #desktop-hint {
+      opacity: 0;
+    }
+
+    /* AR and Tilt buttons: top right of the 3D view, phones and tablets only. */
+    #ar-btn {
+      display: none;
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top));
+      right: max(12px, env(safe-area-inset-right));
+      z-index: 1002;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0 18px;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      color: #CC0000;
+      border-radius: 3px;
+      font: 700 15px/1 system-ui, -apple-system, sans-serif;
+      letter-spacing: 0.12em;
+      text-decoration: none;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .is-3d.is-mobile #ar-btn {
+      display: inline-flex;
+    }
+
+    #ar-btn:active {
+      opacity: 0.85;
+    }
+
+    #tilt-btn {
+      display: none;
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top));
+      left: max(12px, env(safe-area-inset-left));
+      z-index: 1002;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0 14px;
+      border: 2px solid #ffffff;
+      border-radius: 3px;
+      background: rgba(0, 0, 0, 0.35);
+      color: #ffffff;
+      font: 700 15px/1 system-ui, -apple-system, sans-serif;
+      letter-spacing: 0.12em;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .is-3d.is-mobile.has-tilt #tilt-btn {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    #tilt-btn[aria-pressed="true"] {
+      background: #ffffff;
+      color: #CC0000;
+    }
+
+    #tilt-btn.is-denied {
+      opacity: 0.6;
+    }
+
+    /* Shown only while the browser is holding the sound back (audio-unlock.ts). */
+    #sound-hint {
+      display: none;
+      position: fixed;
+      left: 50%;
+      top: calc(max(14px, env(safe-area-inset-top)) + 84px);
+      transform: translateX(-50%);
+      z-index: 1003;
+      min-height: 44px;
+      padding: 0 20px;
+      border: 0;
+      border-radius: 3px;
+      background: rgba(0, 0, 0, 0.6);
+      color: #ffffff;
+      font: 500 14px/1 system-ui, -apple-system, sans-serif;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+    }
+
+    .story-playing.needs-sound-tap #sound-hint {
+      display: block;
+    }
+
+    /* Carousel arrows, either side of the panel in focus. */
+    .carousel-arrow {
+      display: none;
+      position: fixed;
+      top: calc(50% - (196px - 76px) / 2);
+      transform: translateY(-50%);
+      z-index: 1001;
+      width: 48px;
+      height: 48px;
+      border: 0;
+      border-radius: 50%;
+      background: #ffffff;
+      color: #CC0000;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+      cursor: pointer;
+      place-items: center;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.2s ease;
+    }
+
+    .carousel-ready .carousel-arrow {
+      display: grid;
+    }
+
+    .carousel-arrow svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .carousel-arrow:disabled {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #carousel-prev {
+      left: max(12px, env(safe-area-inset-left));
+    }
+
+    #carousel-next {
+      right: max(12px, env(safe-area-inset-right));
+    }
+
+    .is-desktop .carousel-arrow:hover {
+      transform: translateY(-50%) scale(1.06);
+    }
+
+    /* Story controls: under the panel in focus. */
+    #story {
+      display: none;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: calc(max(8px, env(safe-area-inset-bottom)) + 24px);
+      z-index: 1001;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 0 16px;
+      pointer-events: none;
+    }
+
+    .carousel-ready #story {
+      display: flex;
+    }
+
+    #story > * {
+      pointer-events: auto;
+    }
+
+    #story-caption {
+      max-width: min(680px, 100%);
+      min-height: 0;
+      padding: 0;
+      border-radius: 3px;
+      background: rgba(0, 0, 0, 0.72);
+      color: #ffffff;
+      font: 500 clamp(14px, 2.2vw, 17px)/1.45 system-ui, -apple-system, sans-serif;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    #story-caption.is-showing {
+      padding: 10px 16px;
+      opacity: 1;
+    }
+
+    #story-label {
+      display: inline-flex;
+      gap: 10px;
+      align-items: baseline;
+      padding: 6px 12px;
+      border-radius: 3px;
+      background: rgba(0, 0, 0, 0.55);
+      color: #ffffff;
+      font: 700 13px/1.2 system-ui, -apple-system, sans-serif;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    #story-label .story-era {
+      font-weight: 500;
+      letter-spacing: 0.08em;
+    }
+
+    #story-row {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    #play-btn {
+      min-width: 220px;
+    }
+
+    #cc-btn {
+      min-width: 52px;
+      min-height: 44px;
+      padding: 0 12px;
+      border: 2px solid #ffffff;
+      border-radius: 3px;
+      background: rgba(0, 0, 0, 0.35);
+      color: #ffffff;
+      font: 700 14px/1 system-ui, -apple-system, sans-serif;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #cc-btn[aria-pressed="true"] {
+      background: #ffffff;
+      color: #CC0000;
+    }
+
+    #carousel-dots {
+      display: flex;
+      gap: 2px;
+    }
+
+    #carousel-dots button {
+      width: 36px;
+      height: 32px;
+      padding: 0;
+      border: 0;
+      background: none;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+
+    #carousel-dots button::before {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    #carousel-dots button.active::before {
+      background: #fff;
+      transform: scale(1.15);
+    }
+
+    #carousel-dots button:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: -4px;
+      border-radius: 50%;
+    }
+
+    @media (max-height: 560px) {
+      #desktop-hint { display: none; }
+      #splash-screen { gap: 18px; padding-top: 72px; }
+    }
+
+    /* Short frames (the work page on a phone): drop the panel strip so Enter stays in view. */
+    @media (max-height: 420px) {
+      #splash-panels { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #splash-screen, #story-caption, .carousel-arrow { transition: none; }
+    }</style></head><body><div id="splash-screen" class="ui-3d"><div id="splash-panels" aria-hidden="true"><img src="./assets/ui/splash-panel-1.jpg" alt=""> <img src="./assets/ui/splash-panel-2.jpg" alt=""> <img src="./assets/ui/splash-panel-3.jpg" alt=""></div><div><h1 id="splash-title">Biidaaban</h1><p id="splash-byline">Will Morin and Quinn Hopkins</p></div><div id="loading-bar-container" role="progressbar" aria-label="Loading the panels"><div id="loading-bar"></div></div><button id="start-btn" type="button">Enter</button></div><a id="brand-home" href="/" target="_top" aria-label="Noodin Studio XR, back to the works"><img id="brand-logo" src="./assets/ui/noodin-logo.webp" alt=""></a><p id="brand-credit" class="ui-3d">&copy; 2026 Will Morin and Quinn Hopkins &middot; Noodin Studio</p><a id="ar-btn" class="ui-3d" href="?view=ar" aria-label="Open in AR">AR</a> <button id="tilt-btn" class="ui-3d" type="button" aria-label="Look around by tilting your phone">Tilt</button> <button id="sound-hint" class="ui-3d" type="button">Tap for sound</button><div id="desktop-hint" class="ui-3d"><span class="hint-mouse">Move your mouse</span><span class="hint-touch">Tilt or drag</span> to look inside.</div><button id="carousel-prev" class="carousel-arrow ui-3d" type="button" aria-label="Previous panel"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5 8 12l7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button> <button id="carousel-next" class="carousel-arrow ui-3d" type="button" aria-label="Next panel"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button><section id="story" class="ui-3d" aria-label="Story"><p id="story-caption" aria-live="polite"></p><p id="story-label"></p><div id="story-row"><button id="play-btn" type="button">Play the story</button> <button id="cc-btn" type="button" aria-label="Captions" aria-pressed="true">CC</button></div><nav id="carousel-dots" aria-label="Panels"></nav></section><div id="lp-root"><div id="lp-terminal"><div id="lp-lines"></div><div><span id="lp-cursor">_</span></div><div style="text-align:center;"><button id="lp-enter">[ &gt; ENTER ]</button></div></div></div><script src="bundle.js"></script><script>(function () {
+    // Camera AR only. The 3D view has its own red splash (src/app.js).
+    if (window.BII_MODE !== 'ar') return
+
     var BRIGHT = '#00ffcc'
     var MED    = '#00c9a7'
     var DIM    = '#00a896'  // 7.05:1 on black — meets WCAG AA 4.5:1 minimum
