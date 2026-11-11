@@ -52,3 +52,13 @@ npm run build
 ```
 
 Copy `dist/` here. The 3D view hangs one print at a time on a wall with its portal open. `?view=ar` runs the camera AR on all five targets at once: `PolarBearTarget`, `eagleTarget`, `deerTarget`, `lynxTarget`, `salmonTarget`. The models are meshopt-compressed and the decoder ships in `external/vendor/meshopt_decoder.js`, so nothing loads from 8th Wall's CDN. The camera's screen shows a live view (`live-view.js`). `arctic-sea-animals.glb` is fixed by `config/fix-animals.mjs` in the source folder: re-run it if that model is ever replaced.
+
+## The Erratics
+
+Built from the `the-erratics-selfhosted` project folder (8thWall Projects). It merges two 8th Wall Studio projects, "the-erratic-at-dunlop-gallery" (the three Central Branch walls) and "the-erratics-sherwood", into one scene with four spaces, one per wall. It runs on the Studio runtime, like Biidaaban, not A-Frame. The 3D view (`src/desktop/`), the wall list (`src/common/views.ts`) and the AR wall switching (`src/app.ts`) live in that folder's `src/`. Its README lists every change from the hosted projects.
+
+```
+npm run build
+```
+
+Copy `dist/` here (the webpack config cleans `dist/` first). The 3D view shows one wall at a time and paints each hider box with the mural photo, so the doorway sits in the wall the way it does in AR. `?view=ar` tracks all four targets at once: `Dunlop-Central Branch-left-target`, `-middle-target`, `-right-target` and `Dunlop-SherwoodBranch-Erratic-print-small`. Whichever one the camera finds loads its space. `?wall=central-left|central-middle|central-right|sherwood` picks the first wall in either view. Models are Draco-compressed with WebP textures; the Studio runtime decodes Draco from its own `external/runtime/resources/draco/`, so nothing loads from 8th Wall's CDN.
