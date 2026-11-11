@@ -1,0 +1,18 @@
+{
+  "imagePath": "image-targets/eagleTarget_target.png",
+  "name": "eagleTarget",
+  "type": "PLANAR",
+  "properties": {
+    "top": 109,
+    "left": 212,
+    "width": 602,
+    "height": 803,
+    "isRotated": false,
+    "originalWidth": 1024,
+    "originalHeight": 1024
+  },
+  "userMetadataIsJson": true,
+  "loadAutomatically": true,
+  "created": 1741451287681,
+  "updated": 1741451294674
+}

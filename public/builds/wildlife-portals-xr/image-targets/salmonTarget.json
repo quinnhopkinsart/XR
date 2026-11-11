@@ -1,0 +1,18 @@
+{
+  "imagePath": "image-targets/salmonTarget_target.png",
+  "name": "salmonTarget",
+  "type": "PLANAR",
+  "properties": {
+    "top": 119,
+    "left": 217,
+    "width": 590,
+    "height": 786,
+    "isRotated": false,
+    "originalWidth": 1024,
+    "originalHeight": 1024
+  },
+  "userMetadataIsJson": true,
+  "loadAutomatically": true,
+  "created": 1741451368675,
+  "updated": 1741451375431
+}
