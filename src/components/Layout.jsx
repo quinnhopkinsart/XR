@@ -24,9 +24,6 @@ export default function Layout() {
           <img src={logo} alt="Noodin Studio XR, home" width="98" height="48" />
         </Link>
         <nav className="masthead__nav" aria-label="Main">
-          <Link to="/" className="masthead__works">
-            Works
-          </Link>
           <a href={site.mainSite}>Main site</a>
         </nav>
       </header>

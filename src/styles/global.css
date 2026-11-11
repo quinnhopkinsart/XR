@@ -199,13 +199,6 @@ main {
   }
 }
 
-/* The narrowest phones: the logo already goes to the works page */
-@media (max-width: 379px) {
-  .masthead__works {
-    display: none;
-  }
-}
-
 .masthead__xr {
   color: var(--heading);
 }
