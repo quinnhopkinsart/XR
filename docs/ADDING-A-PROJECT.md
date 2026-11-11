@@ -35,6 +35,7 @@ This copies `src/projects/_template/` into a new folder and fills in the title, 
 | `embedNote` | no | Caption under an embedded build. Default: "Enter to explore. On a phone, tap AR to open the camera." |
 | `tags` | no | Free-form, not shown yet. |
 | `order` | no | Higher numbers sit first within the same year. |
+| `hidden` | no | `true` keeps the work off the home grid, the filters and the floating background. Its page still opens at `/xr/<slug>`, so it can be tested on the live site before it is listed. Default `false`. |
 | `slug` | no | Overrides the folder name. Leave it out. |
 
 ### Images

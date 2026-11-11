@@ -18,6 +18,9 @@ export default {
   year: '2025',
   kind: 'Augmented reality',
   status: 'live',
+  // Off the home grid and the field until the models run smoothly on phones.
+  // The page still opens at /xr/the-erratics for testing.
+  hidden: true,
   venue: 'Dunlop Art Gallery, Regina Public Library',
   location: 'Central and Sherwood Village branches, Regina',
 

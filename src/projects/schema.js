@@ -56,6 +56,7 @@ export function validateProject(p, folder) {
       errors.push(`${where}: award.logoOnDark is required (the card badge is a black panel)`);
     }
   }
+  if (typeof p.hidden !== 'boolean') errors.push(`${where}: hidden must be true or false`);
   if (!Array.isArray(p.models)) {
     errors.push(`${where}: models must be an array`);
   } else {
@@ -83,6 +84,7 @@ export function normalizeProject(raw, folder) {
     order: 0,
     award: null,
     bookable: null,
+    hidden: false,
     ...raw,
   };
 }
