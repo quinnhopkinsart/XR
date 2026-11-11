@@ -5,7 +5,7 @@ export const site = {
   artist: 'Quinn Hopkins',
   title: 'Noodin Studio XR',
 
-  // Canonical address the QR codes point at. Set VITE_SITE_URL in Amplify
+  // Canonical address the QR codes and work links use. Set VITE_SITE_URL in Amplify
   // (App settings > Environment variables) to change it without touching code.
   // The site is served from xr.noodin.studio. The bare noodin.studio does not serve it.
   url: (import.meta.env.VITE_SITE_URL || 'https://xr.noodin.studio').replace(/\/$/, ''),

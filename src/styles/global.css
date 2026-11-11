@@ -821,9 +821,14 @@ main {
 }
 
 .qr__code {
-  display: inline-block;
-  background: #fff;
   line-height: 0;
+}
+
+.bead-qr {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  height: auto;
 }
 
 .qr figcaption {
@@ -834,9 +839,21 @@ main {
   margin-top: 0.75rem;
 }
 
+.qr__label {
+  font: 500 var(--step--1) var(--font-display);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
 .qr__url {
   font-size: var(--step--1);
   overflow-wrap: anywhere;
+}
+
+.qr__downloads {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 /* Full-screen stage for React experiences */

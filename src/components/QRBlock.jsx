@@ -1,44 +1,64 @@
 import { useRef } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
-import { workUrl } from '../brand/site.js';
+import BeadQR, { serializeBeadQR } from './BeadQR.jsx';
+import { arUrl } from '../projects/launch.js';
+
+const PNG_SIZE = 2400;
+
+function save(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
 
 /**
- * The code points at this site's page for the work, never at the hosting
- * provider, so moving the experience later only means editing project.js.
+ * The code opens the AR view directly. Builds read ?view=ar as "open the camera",
+ * so a phone that scans it goes straight to the camera, not the work page.
  */
-export default function QRBlock({ slug, title }) {
+export default function QRBlock({ project }) {
   const ref = useRef(null);
-  const url = workUrl(slug);
+  const url = arUrl(project);
+  const name = `${project.slug}-ar-qr`;
 
-  const download = () => {
-    const svg = ref.current?.querySelector('svg');
-    if (!svg) return;
-    const blob = new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `${slug}-qr.svg`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+  const downloadSvg = () => {
+    if (!ref.current) return;
+    save(new Blob([serializeBeadQR(ref.current)], { type: 'image/svg+xml' }), `${name}.svg`);
+  };
+
+  // PNG for print: some layout and print tools skip SVG filters and gradients.
+  const downloadPng = () => {
+    if (!ref.current) return;
+    const svgUrl = URL.createObjectURL(
+      new Blob([serializeBeadQR(ref.current, PNG_SIZE)], { type: 'image/svg+xml' }),
+    );
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = PNG_SIZE;
+      canvas.getContext('2d').drawImage(img, 0, 0, PNG_SIZE, PNG_SIZE);
+      URL.revokeObjectURL(svgUrl);
+      canvas.toBlob((blob) => blob && save(blob, `${name}.png`), 'image/png');
+    };
+    img.src = svgUrl;
   };
 
   return (
     <figure className="qr">
-      <div className="qr__code" ref={ref}>
-        <QRCodeSVG
-          value={url}
-          size={176}
-          level="M"
-          marginSize={2}
-          bgColor="#ffffff"
-          fgColor="#000000"
-          title={`QR code for ${title}`}
-        />
+      <div className="qr__code">
+        <BeadQR ref={ref} value={url} title={`QR code that opens ${project.title} in AR`} />
       </div>
       <figcaption>
+        <span className="qr__label">Scan to open in AR</span>
         <span className="qr__url">{url.replace(/^https:\/\//, '')}</span>
-        <button type="button" className="textbutton" onClick={download}>
-          Download SVG
-        </button>
+        <span className="qr__downloads">
+          <button type="button" className="textbutton" onClick={downloadPng}>
+            Download PNG
+          </button>
+          <button type="button" className="textbutton" onClick={downloadSvg}>
+            Download SVG
+          </button>
+        </span>
       </figcaption>
     </figure>
   );

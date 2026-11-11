@@ -131,4 +131,4 @@ Push to `main` and Amplify deploys. Phones need HTTPS for the camera, so test AR
 2. Copy the output to `public/builds/<slug>/`.
 3. Change `launch` from `external` to `build`, delete `legacy`, set `status: 'live'`.
 
-The QR code on the page already points at `/xr/<slug>`, so printed codes keep working through the move.
+The QR code follows `launch`: once the work is a build, the code opens `/builds/<slug>/index.html?view=ar`. Every build must open the camera AR when it sees `?view=ar`. Codes printed while the work was on 8th Wall point at the old link, so reprint them from the work page.
