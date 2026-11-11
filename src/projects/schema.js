@@ -47,6 +47,9 @@ export function validateProject(p, folder) {
       errors.push(`${where}: launch.embed only works with type "build"`);
     }
   }
+  if (p.bookable != null && typeof p.bookable !== 'string') {
+    errors.push(`${where}: bookable must be a sentence (the page adds a "Get in touch" link)`);
+  }
   if (p.award) {
     if (!p.award.label) errors.push(`${where}: award.label is required (it is the logo's alt text)`);
     if (!p.award.logoOnDark) {
@@ -79,6 +82,7 @@ export function normalizeProject(raw, folder) {
     tags: [],
     order: 0,
     award: null,
+    bookable: null,
     ...raw,
   };
 }
