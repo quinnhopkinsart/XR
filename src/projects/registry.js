@@ -17,7 +17,7 @@ const loaded = Object.entries(modules).map(([path, mod]) => {
 export const problems = loaded.flatMap((l) => l.errors);
 
 // Newest first. Within a year, higher `order` comes first, then title.
-export const projects = loaded
+const all = loaded
   .map((l) => l.project)
   .sort(
     (a, b) =>
@@ -26,6 +26,10 @@ export const projects = loaded
       a.title.localeCompare(b.title),
   );
 
-export const getProject = (slug) => projects.find((p) => p.slug === slug);
+// Listed works: the home grid, the filters and the floating background.
+// A work with `hidden: true` stays out of all three, but its page still opens at /xr/<slug>.
+export const projects = all.filter((p) => !p.hidden);
+
+export const getProject = (slug) => all.find((p) => p.slug === slug);
 
 export const allKinds = [...new Set(projects.map((p) => p.kind))].sort();
