@@ -42,3 +42,13 @@ npm run build
 ```
 
 Copy `dist/` here. The work is made for a picture on the floor: the 3D view lays the target on the ground, and `?view=ar` runs the camera AR on the one target, `Moon_target`. The moon maths (`src/components/moons.js`) is the same file Stellar Narratives uses.
+
+## Wildlife Portals XR
+
+Built from the `wildlife-ar-selfhosted` project folder (8thWall Projects). The 8th Wall export "wildlife-ar" had the engine and the targets but no scene code, so the scenes, models and images were recovered from the hosted app (`wildlife-ar-hosted-recovery.zip` beside the folder) and rebuilt as A-Frame, the same setup as Stellar Narratives. Its README lists every change from the hosted project.
+
+```
+npm run build
+```
+
+Copy `dist/` here. The 3D view hangs one print at a time on a wall with its portal open. `?view=ar` runs the camera AR on all five targets at once: `PolarBearTarget`, `eagleTarget`, `deerTarget`, `lynxTarget`, `salmonTarget`. The models are meshopt-compressed and the decoder ships in `external/vendor/meshopt_decoder.js`, so nothing loads from 8th Wall's CDN.

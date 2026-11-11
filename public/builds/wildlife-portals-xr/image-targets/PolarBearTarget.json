@@ -1,0 +1,18 @@
+{
+  "imagePath": "image-targets/PolarBearTarget_target.png",
+  "name": "PolarBearTarget",
+  "type": "PLANAR",
+  "properties": {
+    "top": 114,
+    "left": 213,
+    "width": 597,
+    "height": 796,
+    "isRotated": false,
+    "originalWidth": 1024,
+    "originalHeight": 1024
+  },
+  "userMetadataIsJson": true,
+  "loadAutomatically": true,
+  "created": 1741451338980,
+  "updated": 1741451347558
+}

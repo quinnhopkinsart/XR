@@ -1,0 +1,18 @@
+{
+  "imagePath": "image-targets/lynxTarget_target.png",
+  "name": "lynxTarget",
+  "type": "PLANAR",
+  "properties": {
+    "top": 121,
+    "left": 210,
+    "width": 600,
+    "height": 800,
+    "isRotated": false,
+    "originalWidth": 1024,
+    "originalHeight": 1024
+  },
+  "userMetadataIsJson": true,
+  "loadAutomatically": true,
+  "created": 1741451314029,
+  "updated": 1741451321410
+}
