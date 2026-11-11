@@ -1,9 +1,9 @@
 import cover from './cover.jpg';
-import polarBear from './targets/polar-bear.jpg';
-import eagle from './targets/eagle.jpg';
-import deer from './targets/deer.jpg';
-import lynx from './targets/lynx.jpg';
-import salmon from './targets/salmon.jpg';
+import polarBear from './targets/polar-bear.webp';
+import eagle from './targets/eagle.webp';
+import deer from './targets/deer.webp';
+import lynx from './targets/lynx.webp';
+import salmon from './targets/salmon.webp';
 import polarBearModel from './models/polar-bear.glb?url';
 import eagleModel from './models/eagle.glb?url';
 
