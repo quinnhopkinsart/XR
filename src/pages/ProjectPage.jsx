@@ -99,6 +99,15 @@ export default function ProjectPage() {
             <p key={i}>{para}</p>
           ))}
 
+          {p.bookable && (
+            <section className="section">
+              <h2 className="label">For events</h2>
+              <p>
+                {p.bookable} <a href={site.contact}>Get in touch</a>.
+              </p>
+            </section>
+          )}
+
           {p.howTo.length > 0 && (
             <section className="section">
               <h2 className="label">How to try it</h2>

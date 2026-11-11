@@ -33,6 +33,9 @@ export default {
   // Hosted 8th Wall link, if the work still has one. Hidden after the shutdown date.
   // legacy: { url: 'https://8th.io/xxxxx', until: '2027-02-28' },
 
+  // Available for events? One or two sentences; the page adds a "Get in touch" link.
+  // bookable: 'This work is available for events.',
+
   // cover,
   // targets: [{ src: target1, label: 'Panel 1' }],
 

@@ -29,6 +29,7 @@ This copies `src/projects/_template/` into a new folder and fills in the title, 
 | `cover` | no | Imported image. Without one, the card shows the title set in type. |
 | `coverAlt` | no | Alt text for the cover on the work page. |
 | `award` | no | `{ label, short, logo, logoOnDark }`. Puts the award's logo on a black tab at the top right of the home card and adds an Award line to the page header. `label` is the full name and the logo's alt text, for example `'Winner, 2024 Emerging Digital Artists Award, XR'`. `short` is the small line under the logo. `logoOnDark` is the logo with a clear background, drawn for a black ground. |
+| `bookable` | no | One or two sentences saying the work is available for events. Shown under the description as "For events", followed by a "Get in touch" link to the contact page in `src/brand/site.js`. |
 | `targets` | no | `[{ src: importedImage, label: 'Panel 1', alt: '...' }]`. Listed so people can try the work away from the site. |
 | `models` | no | 3D pieces this work adds to the floating background on every page. See "Floating models" below. |
 | `embedNote` | no | Caption under an embedded build. Default: "Enter to explore. On a phone, tap AR to open the camera." |

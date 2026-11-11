@@ -16,17 +16,23 @@ import eagleModel from './models/eagle.glb?url';
 
 export default {
   title: 'Wildlife Portals XR',
-  year: '2025',
+  year: '2024 to 2025',
   kind: 'Augmented reality',
   status: 'live',
+  venue: 'ROM After Dark, Royal Ontario Museum',
+  location: 'Tkaronto',
 
   summary:
     'Five round prints open into the places a polar bear, an eagle, two deer, a lynx and salmon live, and a camera floats in front of you to take their picture.',
 
   description: [
     'Wildlife Portals is five round prints. Hold a phone to one and the picture opens like a window. Through it is the place its animal lives: a polar bear on the sea ice through a ship\'s porthole, an eagle at a lake through a ring of branches, two deer in the woods and a lynx in the snow from a photographer\'s blind, and salmon over a riverbed of pale stones.',
+    'I showed it at ROM After Dark in 2024 and 2025, during the museum\'s International Wildlife Photography Awards exhibition. It ran as a scavenger hunt. Visitors went looking through the natural history galleries for the five prints.',
     'A camera floats at the bottom of the screen. Tap it and it rises to your eye, the screen flashes, and the photo is yours to keep. I built it so anyone holding a phone gets to be the wildlife photographer, with the animals close enough to frame.',
   ],
+
+  bookable:
+    'Wildlife Portals is available for events. I can set up the five prints as a scavenger hunt in your space, the way it ran at the ROM.',
 
   howTo: [
     'Press Enter in the frame above. The prints open in a 3D view on any device.',
