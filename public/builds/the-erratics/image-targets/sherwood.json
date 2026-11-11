@@ -1,0 +1,18 @@
+{
+  "imagePath": "image-targets/sherwood_target.jpeg",
+  "name": "Dunlop-SherwoodBranch-Erratic-print-small",
+  "type": "PLANAR",
+  "properties": {
+    "top": 314,
+    "left": 0,
+    "width": 643,
+    "height": 857,
+    "isRotated": true,
+    "originalWidth": 643,
+    "originalHeight": 2000
+  },
+  "userMetadataIsJson": true,
+  "loadAutomatically": true,
+  "created": 1764777373623,
+  "updated": 1764777704346
+}

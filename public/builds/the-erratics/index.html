@@ -1,0 +1,147 @@
+<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#211c19"><meta name="apple-mobile-web-app-capable" content="yes"><title>The Erratics | Noodin Studio</title><meta name="description" content="The Erratics by Quinn Hopkins: augmented reality murals at the Dunlop Art Gallery's Central and Sherwood Village branches in Regina. Coyote, Rabbit and Raven move around a glacial erratic. Look into each wall in 3D, or point your phone at a mural for AR."><meta name="author" content="Quinn Hopkins"><meta property="og:type" content="website"><meta property="og:site_name" content="Noodin Studio"><meta property="og:title" content="The Erratics | Noodin Studio"><meta property="og:description" content="Augmented reality murals at the Dunlop Art Gallery's Central and Sherwood Village branches in Regina. Look into each wall in 3D, or point your phone at a mural for AR."><meta name="twitter:card" content="summary"><script>// Everyone lands in the 3D view, which skips the AR engine download.
+    // Phones get an AR button top right that loads ?view=ar.
+    // ?view=ar or ?view=3d force a mode. Same setup as Biidaaban, also a Studio project.
+    (function () {
+      var view = new URLSearchParams(location.search).get('view')
+      var mobile = /Android|iPhone|iPad|iPod|Mobile|Silk|Kindle/i.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+      var ar = view === 'ar'
+      var framed
+      try {
+        framed = window.self !== window.top
+      } catch (e) {
+        framed = true  // cross-origin parent blocked the check, so we are framed
+      }
+      window.ERR_MODE = ar ? 'ar' : '3d'
+      window.ERR_MOBILE = mobile
+      window.ERR_FRAMED = framed
+      window.ERR_WALL_COLOR = '#211c19'
+      var cl = document.documentElement.classList
+      cl.toggle('is-3d', !ar)
+      cl.toggle('is-ar', ar)
+      cl.toggle('is-mobile', mobile)
+      cl.toggle('is-desktop', !mobile)
+      cl.toggle('is-framed', framed)
+      if (ar) document.querySelector('meta[name="theme-color"]').setAttribute('content', '#000000')
+      if (!ar) return
+      // AR only: the engine, image tracking only (no face chunk).
+      var xr = document.createElement('script')
+      xr.src = './external/xr/xr.js'
+      xr.async = true
+      xr.crossOrigin = 'anonymous'
+      xr.setAttribute('data-preload-chunks', 'slam')
+      document.head.appendChild(xr)
+    })()</script><script crossorigin="anonymous" src="./external/runtime/runtime.js"></script><style>*, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; }
+    body {
+      background: #211c19;
+      color: #fff;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+    }
+    .is-ar .only-3d, .is-3d .only-ar, .is-ar #splash { display: none !important; }
+    :focus-visible { outline: 3px solid #ffb31a; outline-offset: 3px; }
+
+    /* ── Splash (3D) ─────────────────────────────────────────────────────── */
+    #splash {
+      position: fixed; inset: 0; z-index: 50;
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+      gap: 1.1rem; padding: 0 1rem 9vh;
+      background: #211c19 url('./assets/walls/central-middle.jpg') center / cover no-repeat;
+      transition: opacity .45s ease;
+    }
+    #splash::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(33, 28, 25, 0) 30%, rgba(33, 28, 25, .92) 82%);
+    }
+    #splash > * { position: relative; }
+    #splash h1 {
+      margin: 0; font-size: clamp(2.2rem, 7vw, 4rem); line-height: 1; letter-spacing: -.01em;
+      text-align: center; text-shadow: 0 2px 18px rgba(0, 0, 0, .55);
+    }
+    #splash p { margin: 0; font-size: 1rem; text-align: center; max-width: 34rem; }
+    #splash.is-gone { opacity: 0; pointer-events: none; }
+    #start {
+      font: inherit; font-weight: 700; font-size: 1.15rem;
+      min-width: min(60vw, 14rem); min-height: 3rem; padding: .7em 1.6em;
+      color: #111; background: #ff7a1a; /* black on this orange is 8.4:1 */
+      border: 0; border-radius: 100px; cursor: pointer;
+    }
+    #start:disabled { cursor: progress; background: #c9bdb4; }
+    #start:disabled .start-ready, #start:not(:disabled) .start-wait { display: none; }
+
+    /* ── 3D view controls ────────────────────────────────────────────────── */
+    .is-3d canvas { cursor: grab; touch-action: none; }
+    .is-dragging canvas { cursor: grabbing; }
+    .is-3d:not(.is-entered) .only-3d { visibility: hidden; }
+
+    #brand-home {
+      position: fixed; top: .75rem; left: 1rem; z-index: 20;
+      width: 2.75rem; height: 2.75rem; border-radius: 50%; display: block;
+    }
+    #brand-home img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+    #top-actions { position: fixed; top: .75rem; right: 1rem; z-index: 20; display: flex; gap: .5rem; }
+    #top-actions [hidden] { display: none; }
+    .is-desktop #ar-btn { display: none; }
+
+    .chip {
+      font: inherit; font-size: 1rem; line-height: 1; white-space: nowrap;
+      color: #fff; background: rgba(20, 17, 15, .86); /* white on this is 17:1 */
+      border: 1px solid rgba(255, 255, 255, .55); border-radius: 100px;
+      min-height: 2.75rem; padding: .7em 1.05em; cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .chip[aria-pressed='true'] { color: #111; background: #ff7a1a; border-color: #ff7a1a; }
+    #ar-btn { color: #111; background: #ff7a1a; border-color: #ff7a1a; font-weight: 700; }
+
+    #wall-switch {
+      position: fixed; left: 50%; bottom: max(3vh, env(safe-area-inset-bottom)); transform: translateX(-50%);
+      z-index: 20; display: flex; gap: .75rem; align-items: flex-end; max-width: calc(100vw - 2rem);
+    }
+    #wall-switch .group { display: flex; flex-direction: column; gap: .35rem; align-items: center; }
+    #wall-switch .group-label {
+      font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      padding: .25em .7em; border-radius: 100px; background: rgba(20, 17, 15, .86);
+    }
+    #wall-switch .row { display: flex; gap: .35rem; }
+
+    #view-hint {
+      position: fixed; left: 50%; transform: translateX(-50%);
+      bottom: calc(max(3vh, env(safe-area-inset-bottom)) + 5.6rem);
+      z-index: 15; margin: 0; width: max-content; max-width: calc(100vw - 2rem);
+      text-align: center; font-size: .95rem; pointer-events: none;
+      padding: .45em .9em; border-radius: 100px; background: rgba(20, 17, 15, .72);
+    }
+    .is-entered #view-hint { animation: hint-out 1s ease 10s forwards; }
+    .is-mobile .hint-mouse, .is-desktop .hint-touch { display: none; }
+    @keyframes hint-out { to { opacity: 0; visibility: hidden; } }
+
+    #wall-status {
+      position: fixed; top: 4.2rem; left: 50%; transform: translateX(-50%); z-index: 15;
+      margin: 0; padding: .45em .9em; border-radius: 100px; font-size: .95rem;
+      background: rgba(20, 17, 15, .86); pointer-events: none;
+    }
+    #wall-status:empty { display: none; }
+
+    /* ── AR ──────────────────────────────────────────────────────────────── */
+    #ar-hint {
+      position: fixed; left: 50%; top: max(1rem, env(safe-area-inset-top)); transform: translateX(-50%);
+      z-index: 20; margin: 0; padding: .55em 1em; border-radius: 100px; font-size: 1rem;
+      width: max-content; max-width: calc(100vw - 2rem); text-align: center;
+      background: rgba(20, 17, 15, .86); pointer-events: none;
+      transition: opacity .6s ease;
+    }
+    .ar-found #ar-hint { opacity: 0; }
+
+    @media (max-width: 560px) {
+      #wall-switch { gap: .5rem; }
+      .chip { font-size: .95rem; padding: .65em .8em; }
+      #view-hint { bottom: calc(max(3vh, env(safe-area-inset-bottom)) + 6rem); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #splash { transition: none; }
+    }</style></head><body><div id="splash" class="only-3d-splash"><h1>The Erratics</h1><p>Two murals at the Dunlop Art Gallery in Regina, four doorways in the walls.</p><button id="start" type="button" disabled="disabled"><span class="start-ready">Enter</span><span class="start-wait">Loading</span></button></div><a id="brand-home" class="only-3d" href="/" target="_top" aria-label="Noodin Studio XR, back to the works"><img src="./assets/Images/NoodinStudioLogo.png" alt=""></a><div id="top-actions" class="only-3d"><button id="tilt-btn" class="chip" type="button" aria-pressed="false" hidden>Tilt</button> <a id="ar-btn" class="chip" href="?view=ar" aria-label="Open in AR with your camera">AR</a></div><nav id="wall-switch" class="only-3d" aria-label="Choose a wall"><div class="group" role="group" aria-labelledby="g-central"><span id="g-central" class="group-label">Central</span><div class="row"><button class="chip" type="button" data-wall="central-left" aria-pressed="false" aria-label="Central Branch, left wall">Left</button> <button class="chip" type="button" data-wall="central-middle" aria-pressed="false" aria-label="Central Branch, middle wall">Middle</button> <button class="chip" type="button" data-wall="central-right" aria-pressed="false" aria-label="Central Branch, right wall">Right</button></div></div><div class="group" role="group" aria-labelledby="g-sherwood"><span id="g-sherwood" class="group-label">Sherwood</span><div class="row"><button class="chip" type="button" data-wall="sherwood" aria-pressed="false" aria-label="Sherwood Village Branch">Mural</button></div></div></nav><p id="view-hint" class="only-3d"><span class="hint-mouse">Drag to look into the doorway. Scroll to move closer.</span><span class="hint-touch">Drag or tilt to look into the doorway. Pinch to move closer.</span></p><p id="wall-status" class="only-3d" aria-live="polite"></p><p id="ar-hint" class="only-ar">Point your camera at a mural.</p><script src="bundle.js"></script></body></html>
