@@ -1,0 +1,18 @@
+{
+  "imagePath": "image-targets/central-left_target.jpeg",
+  "name": "Dunlop-Central Branch-left-target",
+  "type": "PLANAR",
+  "properties": {
+    "top": 0,
+    "left": 144,
+    "width": 595,
+    "height": 793,
+    "isRotated": false,
+    "originalWidth": 1108,
+    "originalHeight": 793
+  },
+  "userMetadataIsJson": true,
+  "loadAutomatically": true,
+  "created": 1764782819439,
+  "updated": 1765475084574
+}
