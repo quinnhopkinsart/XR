@@ -42,6 +42,21 @@
   --line: rgb(0 0 0 / 0.35);
   --veil: rgb(255 51 20 / 0.78); /* masthead over the field */
 
+  /* Beadwork QR codes (BeadQR.jsx): black and white seed beads stitched onto
+     smoked deer hide. These describe materials, not page colour, so they stay
+     inside the QR. Dark beads against light beads hold about 15:1, which keeps
+     every code scannable. */
+  --bead-black: #121110;
+  --bead-black-shine: #8a8580;
+  --bead-black-gap: #36322d;
+  --bead-white: #f6f2ea;
+  --bead-white-shade: #c9c1b2;
+  --bead-thread: #b8ac94;
+  --hide: #d1a877;
+  --hide-light: #ddbb8e;
+  --hide-smoke: #7e5734;
+  --sinew: #efe3c8;
+
   /* Type */
   --font-display: 'Sora', system-ui, sans-serif;
   --font-body: 'Inter', system-ui, sans-serif;

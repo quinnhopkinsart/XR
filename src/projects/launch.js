@@ -15,6 +15,22 @@ export function launchHref(project) {
   return null;
 }
 
+/**
+ * Where a QR code sends people: straight into the AR view, never the work page.
+ *  build     -> the build with ?view=ar, which every self-hosted build reads as "open the camera"
+ *  external  -> the external experience as it is
+ *  component -> the full-screen launch route
+ * A work with nothing to open falls back to its page.
+ */
+export function arUrl(project) {
+  const href = launchHref(project);
+  if (!href) return `${site.url}${site.workPath}/${project.slug}`;
+  if (project.launch.type === 'external') return href;
+  const url = new URL(href, `${site.url}/`);
+  if (project.launch.type === 'build') url.searchParams.set('view', 'ar');
+  return url.toString();
+}
+
 /** Builds and external links leave the React app, so they need a full page load. */
 export const isFullPageLaunch = (project) =>
   project.launch?.type === 'build' || project.launch?.type === 'external';

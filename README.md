@@ -56,7 +56,7 @@ Routes:
 - `/builds/<slug>/index.html` serves a self-hosted build directly.
 - `/ar/<slug>` redirects to `/xr/<slug>`, matching the URL pattern planned in the AR catalogue.
 
-Every QR code points at `/xr/<slug>` on this site, never at the hosting provider. When a work moves from 8th.io to a self-hosted build, only `project.js` changes and printed codes keep working.
+Every QR code opens the work's AR view directly: a build at `/builds/<slug>/index.html?view=ar`, an external link as it is, a React experience at `/xr/<slug>/launch`. A work with nothing to open falls back to `/xr/<slug>`. The code is drawn as black and white beads on deer hide (`BeadQR.jsx`), and the work page offers it as a PNG for print or an SVG.
 
 ## Deploy on Amplify
 
@@ -80,7 +80,7 @@ Edit `src/brand/tokens.css`. The palette is built around the Noodin orange-red `
 - **Black** carries the text, headings and panels.
 - **Saffron** `#FFB31A` is the one bright accent, on the launch button and active states.
 - **Oxblood** `#7A1004` sits in the shadows and lights the models from below.
-- **White** appears only in tiny touches: card titles, the QR code, focus rings inside black panels, and the marks in the logo.
+- **White** appears only in tiny touches: card titles, the white beads of the QR code, focus rings inside black panels, and the marks in the logo.
 
 Sora, set thin and uppercase, is the display type, as on noodinstudio.com. Body text is Inter, standing in for Wix's Madefor, which isn't available outside Wix. The floating field reads the same tokens, so the saffron and oxblood light on the models follows any change. Contrast ratios for each text pairing are noted at the top of the file.
 

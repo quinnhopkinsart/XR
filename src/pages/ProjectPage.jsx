@@ -147,7 +147,7 @@ export default function ProjectPage() {
           {onLegacy && !expired && (
             <p className="note">Hosted on 8th Wall until {formatDate(p.legacy.until)}.</p>
           )}
-          <QRBlock slug={p.slug} title={p.title} />
+          <QRBlock project={p} />
         </aside>
       </div>
     </article>
