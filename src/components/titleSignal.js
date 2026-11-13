@@ -57,6 +57,7 @@ export function createTitleSignal({ box, text, canvas, still }) {
   let turn = 0.6; // the lights wheel around the pointer as it travels
   let noise = Array.from({ length: BANDS }, () => Math.random() * 2 - 1);
   let travelled = 0;
+  let phase = 0; // the scan line's wave runs while the line is showing
   let frame = 0;
   let last = 0;
   let dirty = true;
@@ -217,9 +218,22 @@ export function createTitleSignal({ box, text, canvas, still }) {
       g.addColorStop(0, colours.scan.clear);
       g.addColorStop(0.5, colours.scan.solid);
       g.addColorStop(1, colours.scan.clear);
-      ctx.globalAlpha = lift * 0.9;
-      ctx.fillStyle = g;
-      ctx.fillRect(light.x - span, light.y - 0.75, span * 2, 1.5);
+      // A sine wave that runs along the line, tallest at the pointer and flat at the ends
+      const amp = H * 0.07 * lift;
+      const wavelength = Math.max(48, H * 0.55);
+      ctx.beginPath();
+      for (let x = -span; x <= span; x += 3) {
+        const taper = Math.cos((x / span) * (Math.PI / 2)) ** 2;
+        const y = light.y + Math.sin((x / wavelength) * Math.PI * 2 - phase) * amp * taper;
+        if (x === -span) ctx.moveTo(light.x + x, y);
+        else ctx.lineTo(light.x + x, y);
+      }
+      ctx.globalAlpha = lift * 0.95;
+      ctx.strokeStyle = g;
+      ctx.lineWidth = Math.max(1.5, H * 0.012);
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.stroke();
       ctx.globalAlpha = 1;
     }
     const arm = Math.max(10, H * 0.14);
@@ -314,7 +328,10 @@ export function createTitleSignal({ box, text, canvas, still }) {
     const before = glitch;
     glitch *= Math.exp(-dt * 5);
     if (glitch < 0.01) glitch = 0;
-    if (!dirty && Math.abs(mx) + Math.abs(my) < 0.05 && Math.abs(me) < 0.002 && before === 0) return;
+    // The wave keeps running for as long as the scan line shows
+    const scanning = energy - REST > 0.02 || energyTarget > REST;
+    if (scanning) phase += dt * 7;
+    if (!dirty && !scanning && Math.abs(mx) + Math.abs(my) < 0.05 && Math.abs(me) < 0.002 && before === 0) return;
     light.x += mx;
     light.y += my;
     energy += me;

@@ -5,7 +5,7 @@ import { createTitleSignal } from './titleSignal.js';
 // A one-line title set as large as the page allows, then stretched horizontally
 // so it spans the full width of the content column exactly, at any screen size.
 // STRETCH is how much wider than its natural proportions the type is drawn.
-const STRETCH = 1.85;
+const STRETCH = 1.3;
 
 // The badge (XR) floats in front of the title's bottom-right corner on its own
 // depth: it drifts against the pointer, the phone's tilt and the scroll, so the
