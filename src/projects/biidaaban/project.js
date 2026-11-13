@@ -12,6 +12,7 @@ export default {
   title: 'Biidaaban',
   year: '2026',
   kind: 'Augmented reality',
+  categories: ['image-target', '3d'],
   status: 'live',
   venue: 'McDonald Institute, Queen\'s University',
 

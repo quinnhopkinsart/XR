@@ -18,6 +18,7 @@ export default {
   title: 'Wildlife Portals XR',
   year: '2024 to 2025',
   kind: 'Augmented reality',
+  categories: ['image-target', '3d'],
   status: 'live',
   venue: 'ROM After Dark, Royal Ontario Museum',
   location: 'Tkaronto',

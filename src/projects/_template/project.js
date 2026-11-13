@@ -7,6 +7,9 @@ export default {
   title: '__TITLE__',
   year: '__YEAR__',
   kind: 'Augmented reality',
+  // How it is experienced, any of: 'image-target', 'world-tracking', '3d'.
+  // Each one is a coloured tag on the card and a filter on the home page.
+  categories: ['image-target'],
   status: 'in-development', // live | migrating | in-development | archived
   venue: '',
   location: '',

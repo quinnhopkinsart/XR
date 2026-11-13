@@ -17,6 +17,7 @@ export default {
   title: 'Stellar Narratives',
   year: '2024 to present',
   kind: 'Augmented reality',
+  categories: ['image-target', '3d'],
   status: 'live',
   venue: 'Koerner Gardens, Evergreen Brick Works',
   location: 'Tkaronto',

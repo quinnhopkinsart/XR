@@ -1,11 +1,17 @@
 import { useState } from 'react';
 import ProjectCard from '../components/ProjectCard.jsx';
 import WideTitle from '../components/WideTitle.jsx';
-import { allKinds, projects } from '../projects/registry.js';
+import { allCategories, allKinds, projects } from '../projects/registry.js';
+import { CATEGORIES } from '../projects/schema.js';
 
 export default function Home() {
   const [kind, setKind] = useState('All');
-  const shown = kind === 'All' ? projects : projects.filter((p) => p.kind === kind);
+  const [category, setCategory] = useState('All');
+  const shown = projects.filter(
+    (p) =>
+      (kind === 'All' || p.kind === kind) &&
+      (category === 'All' || p.categories.includes(category)),
+  );
 
   return (
     <>
@@ -26,22 +32,45 @@ export default function Home() {
           <h2 id="works-heading" className="label plate">
             Works <span className="count">{shown.length}</span>
           </h2>
-          {allKinds.length > 1 && (
-            <div className="filters" role="group" aria-label="Filter by medium">
-              {['All', ...allKinds].map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  className="filter"
-                  aria-pressed={kind === k}
-                  onClick={() => setKind(k)}
-                >
-                  {k}
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="works__filters">
+            {allCategories.length > 0 && (
+              <div className="filters" role="group" aria-label="Filter by type">
+                {['All', ...allCategories].map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className={`filter${c === 'All' ? '' : ` filter--${CATEGORIES[c].tone}`}`}
+                    aria-pressed={category === c}
+                    onClick={() => setCategory(c)}
+                  >
+                    {c === 'All' ? 'All' : CATEGORIES[c].label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {allKinds.length > 1 && (
+              <div className="filters" role="group" aria-label="Filter by medium">
+                {['All', ...allKinds].map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    className="filter"
+                    aria-pressed={kind === k}
+                    onClick={() => setKind(k)}
+                  >
+                    {k === 'All' ? 'All media' : k}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
+
+        {shown.length === 0 && (
+          <p className="note">
+            <span className="plate">No works match these filters.</span>
+          </p>
+        )}
 
         <div className="grid">
           {shown.map((p) => (

@@ -17,6 +17,7 @@ export default {
   title: 'The Erratics',
   year: '2025',
   kind: 'Augmented reality',
+  categories: ['image-target', '3d'],
   status: 'live',
   // Off the home grid and the field until the models run smoothly on phones.
   // The page still opens at /xr/the-erratics for testing.
