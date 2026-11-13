@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>She Bends the Light to Her Will | Noodin Studio XR</title>
+<meta name="description" content="She Bends the Light to Her Will, by Feather Miigwans with Quinn Hopkins. Move the moon's light across the ground to find the words.">
+<meta name="author" content="Feather Miigwans and Quinn Hopkins">
+<meta name="theme-color" content="#15121d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Sora:wght@200;300;400;500&display=swap">
+<link rel="stylesheet" href="./style.css">
+<script>
+  (function () {
+    var framed;
+    try { framed = window.self !== window.top; } catch (e) { framed = true; }
+    window.SBL_FRAMED = framed;
+    if (framed) document.documentElement.classList.add('is-framed');
+  })();
+</script>
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three.module.js",
+  "three/addons/": "./vendor/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="stage" tabindex="0" aria-label="A moon floats over dark ground and sends a cone of light down to a star. Move the star across the ground to find seven words lying there: She bends the light to her will. Arrow keys move the star."></canvas>
+
+<a id="brand-home" href="/" target="_top" aria-label="Noodin Studio XR, back to the works"><img src="assets/logo.png" alt=""></a>
+
+<div id="top-actions" hidden>
+  <button id="sound-btn" type="button" aria-pressed="false">Sound off</button>
+  <button id="motion-btn" type="button" aria-pressed="true">Motion on</button>
+</div>
+
+<!-- The opening picture. Enter is the tap that lets the sound start. -->
+<section id="splash" aria-labelledby="splash-title">
+  <div class="splash-text">
+    <h1 id="splash-title">She Bends the Light to Her Will</h1>
+    <p>Feather Miigwans with Quinn Hopkins</p>
+    <button id="start" type="button" disabled>Loading</button>
+  </div>
+</section>
+
+<p id="hint" hidden>
+  <span class="hint-mouse">Move the light across the ground to find the words. Drag to look around.</span>
+  <span class="hint-touch">Drag the light across the ground to find the words. Two fingers look around.</span>
+</p>
+
+<!-- The words as they are found, for anyone who cannot see the ground. -->
+<p id="found" class="sr" role="status" aria-live="polite"></p>
+
+<script type="module" src="./main.js"></script>
+<noscript><p class="nojs">This work needs JavaScript and WebGL.</p></noscript>
+</body>
+</html>
