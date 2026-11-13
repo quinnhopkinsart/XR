@@ -388,6 +388,22 @@ main {
   will-change: transform;
 }
 
+/* The title drawn as a signal (titleSignal.js). The canvas overhangs the title box
+   so displaced rows and the corner marks have room; it never takes a click. */
+.wide-title__screen {
+  position: absolute;
+  pointer-events: none;
+}
+
+.wide-title.is-live .wide-title__text {
+  opacity: 0;
+}
+
+/* The title leads while it is on screen: the floating pieces sit back */
+html.title-leads .field.is-ready {
+  opacity: 0.55;
+}
+
 /* Gaussian blur in splotches over the title. backdrop-filter blurs everything
    under the layer; the mask cuts it into soft, irregular blots. */
 .wide-title__blur {
