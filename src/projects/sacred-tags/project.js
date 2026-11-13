@@ -1,4 +1,8 @@
-import cover from './cover.jpg';
+// The cover is the same photo the portfolio (noodinstudio.com) uses for this work, read
+// straight from the Wix media library, sized by Wix. If that file is ever deleted or
+// replaced there, this card loses its picture: put the new file name here.
+const cover =
+  'https://static.wixstatic.com/media/c993bc_c0b28712053149218ca0499a949a51c2~mv2.jpg/v1/fit/w_1600,h_1600,q_85,enc_auto/c993bc_c0b28712053149218ca0499a949a51c2~mv2.jpg';
 
 // The web version of the projection installation (TouchDesigner, depth sensor). It is not
 // an 8th Wall work and has no camera AR: the build in public/builds/sacred-tags/ is its own
