@@ -1,0 +1,18 @@
+{
+  "imagePath": "image-targets/Intertribal-small_target.jpeg",
+  "name": "Intertribal-small",
+  "type": "PLANAR",
+  "properties": {
+    "top": 67,
+    "left": 0,
+    "width": 800,
+    "height": 1067,
+    "isRotated": true,
+    "originalWidth": 800,
+    "originalHeight": 1200
+  },
+  "userMetadataIsJson": true,
+  "loadAutomatically": true,
+  "created": 1694116081808,
+  "updated": 1694116081808
+}

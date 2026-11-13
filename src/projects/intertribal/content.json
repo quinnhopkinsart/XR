@@ -1,0 +1,39 @@
+{
+  "title": "Intertribal",
+  "year": "2022",
+  "status": "live",
+  "hidden": true,
+  "venue": "Hart House, University of Toronto",
+  "location": "Tkaronto",
+  "summary": "Migizi, the eagle, flies through a mural of pow wow dancers and it breaks open onto the city as it could be.",
+  "description": [
+    "Intertribal is a mural I made for Hart House at the University of Toronto. It shows the Na-Me-Res Traditional Pow Wow at Fort York with the Tkaronto skyline behind it. Dancers move in regalia beneath Migizi, the eagle, who watches over the gathering.",
+    "Hold a phone to the mural and Migizi flies through it. The painting breaks into pieces, and behind them is the city as it could be, white towers planted with trees around the water. Migizi keeps circling in front of the wall while red hearts rise past.",
+    "An intertribal is the dance that welcomes everyone into the circle, whatever their nation or background. The mural extends the same invitation.",
+    "Created with representation by Highness Global."
+  ],
+  "howTo": [
+    "Press Enter in the frame above. The mural opens in a 3D view on any device.",
+    "Drag to look around the mural and into the city behind it. On a phone, drag or tap Tilt. Scroll or pinch to step closer.",
+    "Tap Replay to put the mural back together and watch it break open again.",
+    "For AR, open the target below on another screen or print it. Tap AR at the top right on a phone and point your camera at it."
+  ],
+  "embedNote": "Press Enter and drag to look around the mural. On a phone, tap AR to open the camera.",
+  "credits": [
+    {
+      "role": "Artwork and AR",
+      "name": "Quinn Hopkins"
+    },
+    {
+      "role": "Representation",
+      "name": "Highness Global"
+    }
+  ],
+  "coverAlt": "Dancers in red, black, yellow and blue regalia stand with their backs to the viewer at a pow wow. Above them a grey eagle figure with a heart at its chest spreads its wings across bands of yellow, pink and white, with a tower and city buildings behind.",
+  "tags": [
+    "image target",
+    "mural",
+    "portal"
+  ],
+  "order": 0
+}
