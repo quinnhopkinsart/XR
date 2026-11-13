@@ -102,6 +102,8 @@ Copy `dist/` here (the webpack config cleans `dist/` first). `?view=ar` tracks a
 
 Models are Quinn's unlit bake (light baked into `COLOR_0`, grass and feathers decimated), brightened x2 with `tools/brighten-unlit.mjs` to match the lit runtime. The four doorways, the left wall's rock and the spiral line stay lit PBR (`tools/keep-default-scene.mjs` on the pre-unlit models), because the bake turned them black or dark. All Draco with WebP textures; the Studio runtime decodes Draco from its own `external/runtime/resources/draco/`.
 
+Each wall's door frame stands on the bottom of its artwork, and each hider's opening matches its frame with a 3% overlap (`tools/align_doorways.py`, run once; the measurements are in the script). In 3D the painted copy of each hider follows the hider every frame, so it scales in with the card. Shadows are off (baked into the models), the 3D view caps the pixel ratio at 1.5 and drops to 1 when frames run slow, and the lit doorways are simplified to 11k to 29k triangles. The grass grounds are the heaviest thing left.
+
 ## Future Ancestors
 
 Built from the `odeyto-mural-selfhosted` project folder (8th Wall Projects), the buildable 8th Wall export "odeyto-mural" (A-Frame 1.3.0) given a 3D view. Same setup as Stellar Narratives. Its README lists every change from the hosted project.
