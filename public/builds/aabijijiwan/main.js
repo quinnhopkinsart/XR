@@ -17,7 +17,12 @@ import { buildRoom, keepOnFloor, L, P } from './room.js';
 // it on each axis, so the viewer shows the installed size even where the export differs
 // (Rev E measures 7.72 x 8.03 x 2.04, so the fit is small). Set FOOTPRINT to null to show the model as exported.
 const FOOTPRINT = { length: 8, height: 8, width: 2 };
-const CLEARANCE = 5.0;   // metres from the floor to the lowest point of the sculpture
+// PLATE_FLUSH hangs the work by its wooden suspension plate: the plate's top face sits
+// flush with the ceiling and the steel posts above it disappear into the ceiling. The
+// height of the lowest point then follows from the model. Set it to false to hang the
+// work by CLEARANCE instead, with rods drawn up to the ceiling.
+const PLATE_FLUSH = true;
+const CLEARANCE = 5.0;   // metres from the floor to the lowest point, used when PLATE_FLUSH is false
 const EYE = 1.6;         // metres, the visitor's eye height
 const FIGURE = 1.7;      // metres, the figure standing under the work
 
@@ -164,8 +169,8 @@ const views = () => ({
   lounge: { p: [2.3, EYE, 2.7], t: centre },
   under: { p: [1.5, EYE, 0.1], t: new THREE.Vector3(0.2, top, 0) },
   corridor: { p: [8.6, EYE, -3.0], t: centre },
-  level3: { p: [6.5, L.level3 + EYE, -3.3], t: centre },
-  track: { p: [7, L.level4 + EYE, -3.3], t: new THREE.Vector3(centre.x, centre.y + 0.4, 0) },
+  level3: { p: [3.4, L.level3 + EYE, -2.95], t: centre },
+  track: { p: [3.6, L.level4 + EYE, -2.95], t: new THREE.Vector3(centre.x, centre.y + 2.0, 0) },
   long: { p: [14, L.level3 + 1.9, 0.9], t: new THREE.Vector3(-1, centre.y + 0.4, 0.3) },
 });
 
@@ -210,20 +215,42 @@ loader.load(MODEL, (gltf) => {
     root.scale.set(FOOTPRINT.length / exported.x, FOOTPRINT.height / exported.y, FOOTPRINT.width / exported.z);
     root.updateMatrixWorld(true);
   }
-  // Hang it: the lowest point sits CLEARANCE above the floor, the cables end at the ceiling.
+  // Hang it. Flush: the top of the suspension plate, the highest wood in the model, meets
+  // the ceiling. Otherwise the lowest point sits CLEARANCE above the floor.
   const box = new THREE.Box3().setFromObject(root);
-  root.position.y = CLEARANCE - box.min.y;
+  let plateTop = -Infinity;
+  if (PLATE_FLUSH) {
+    const p = new THREE.Vector3();
+    root.traverse((o) => {
+      if (!o.isMesh) return;
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      const pos = o.geometry.attributes.position;
+      const index = o.geometry.index;
+      const groups = o.geometry.groups.length
+        ? o.geometry.groups
+        : [{ start: 0, count: index ? index.count : pos.count, materialIndex: 0 }];
+      for (const g of groups) {
+        if (!/wood/i.test(mats[g.materialIndex]?.name || '')) continue;
+        for (let i = g.start; i < g.start + g.count; i += 1) {
+          p.fromBufferAttribute(pos, index ? index.getX(i) : i).applyMatrix4(o.matrixWorld);
+          if (p.y > plateTop) plateTop = p.y;
+        }
+      }
+    });
+  }
+  const flush = PLATE_FLUSH && Number.isFinite(plateTop);
+  root.position.y = flush ? L.ceiling - plateTop : CLEARANCE - box.min.y;
   scene.add(root);
   box.translate(new THREE.Vector3(0, root.position.y, 0));
   const size = box.getSize(new THREE.Vector3());
-  window.__model = { exported: exported.toArray(), shown: size.toArray(), lowest: box.min.y, ceiling: box.max.y };
+  window.__model = { exported: exported.toArray(), shown: size.toArray(), lowest: box.min.y, top: box.max.y, plateTop: flush ? L.ceiling : null };
   top = box.max.y;
-  centre = new THREE.Vector3((box.min.x + box.max.x) / 2, CLEARANCE + size.y * 0.36, (box.min.z + box.max.z) / 2);
+  centre = new THREE.Vector3((box.min.x + box.max.x) / 2, box.min.y + size.y * 0.36, (box.min.z + box.max.z) / 2);
 
   // Hangers: steel rods carry on from the highest points of the model up to the ceiling,
   // where the beams above take the load.
   const rise = L.ceiling - top;
-  if (rise > 0.02) {
+  if (!flush && rise > 0.02) {
     const steel = new THREE.MeshStandardMaterial({ color: 0x9a9da0, roughness: 0.35, metalness: 1 });
     const tops = new Map();
     const p = new THREE.Vector3();
