@@ -1,4 +1,3 @@
-import cover from './cover.jpg';
 import centralLeft from './targets/central-left.jpg';
 import centralMiddle from './targets/central-middle.jpg';
 import centralRight from './targets/central-right.jpg';
@@ -21,7 +20,8 @@ export default {
   // Framed, the AR button opens the camera in a new tab (ERR_FRAMED in the build).
   launch: { type: 'build', path: '/builds/the-erratics/index.html', embed: true },
 
-  cover,
+  // The cover is the middle wall's image target, the same photo as its entry in targets.
+  cover: centralMiddle,
   targets: [
     {
       src: centralLeft,
