@@ -11,6 +11,9 @@ const STROKE = 0.1; // of the font size, the same weight as the DOM title
 const CORE = 0.035; // how far the lit core spreads into that stroke
 const REST = 0.5; // light level when nobody is near
 const BANDS = 56; // rows the scan can displace
+// The glitch, kept light: how far a row can jump (of the title's width), how fast
+// pointer travel builds it, how fast it settles, and how strong the colour fringes are.
+const GLITCH = { shift: 0.016, gain: 2, decay: 8, fringe: 0.5 };
 const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 
 function tokenColours(el) {
@@ -187,7 +190,7 @@ export function createTitleSignal({ box, text, canvas, still }) {
     const bandH = Math.ceil(ch / BANDS);
     const scanY = (light.y + padY) * dpr;
     const sigma = H * 0.3 * dpr;
-    const maxShift = W * 0.045 * dpr;
+    const maxShift = W * GLITCH.shift * dpr;
     let runStart = 0; // undisplaced rows are drawn in one piece
     const flush = (end) => {
       if (end > runStart) ctx.drawImage(lit, 0, runStart, cw, end - runStart, 0, runStart, cw, end - runStart);
@@ -201,9 +204,9 @@ export function createTitleSignal({ box, text, canvas, still }) {
       flush(y0);
       runStart = y0 + bandH;
       const hgt = Math.min(bandH, ch - y0);
-      ctx.globalAlpha = 0.9;
-      ctx.drawImage(fringeA, 0, y0, cw, hgt, dx * 2.1, y0, cw, hgt);
-      ctx.drawImage(fringeB, 0, y0, cw, hgt, -dx * 1.3, y0, cw, hgt);
+      ctx.globalAlpha = GLITCH.fringe;
+      ctx.drawImage(fringeA, 0, y0, cw, hgt, dx * 1.8, y0, cw, hgt);
+      ctx.drawImage(fringeB, 0, y0, cw, hgt, -dx * 1.1, y0, cw, hgt);
       ctx.globalAlpha = 1;
       ctx.drawImage(lit, 0, y0, cw, hgt, dx, y0, cw, hgt);
     }
@@ -265,7 +268,7 @@ export function createTitleSignal({ box, text, canvas, still }) {
     light.ty = clamp(y, -H * 0.1, H * 1.1);
     energyTarget = REST + (1 - REST) * near;
     if (near > 0) {
-      glitch = clamp(glitch + (moved / W) * 5 * near);
+      glitch = clamp(glitch + (moved / W) * GLITCH.gain * near);
       turn += (dx / W) * 2.4;
       travelled += moved;
       if (travelled > H * 0.12) {
@@ -326,7 +329,7 @@ export function createTitleSignal({ box, text, canvas, still }) {
     const my = (light.ty - light.y) * follow;
     const me = (energyTarget - energy) * (1 - Math.exp(-dt * 4));
     const before = glitch;
-    glitch *= Math.exp(-dt * 5);
+    glitch *= Math.exp(-dt * GLITCH.decay);
     if (glitch < 0.01) glitch = 0;
     // The wave keeps running for as long as the scan line shows
     const scanning = energy - REST > 0.02 || energyTarget > REST;

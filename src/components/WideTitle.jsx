@@ -2,10 +2,8 @@ import { useEffect, useLayoutEffect, useRef } from 'react';
 import { motion, reducedMotion } from '../field/motion.js';
 import { createTitleSignal } from './titleSignal.js';
 
-// A one-line title set as large as the page allows, then stretched horizontally
-// so it spans the full width of the content column exactly, at any screen size.
-// STRETCH is how much wider than its natural proportions the type is drawn.
-const STRETCH = 1.3;
+// A one-line title sized like the portfolio's wordmark (fitTitle in its js/ui.js):
+// Nova Round at its natural proportions, as large as the content column allows.
 
 // The badge (XR) floats in front of the title's bottom-right corner on its own
 // depth: it drifts against the pointer, the phone's tilt and the scroll, so the
@@ -60,8 +58,9 @@ export default function WideTitle({ children, badge, label, className = '' }) {
       // Width per pixel of font size, measured at a reference size.
       span.style.fontSize = '100px';
       const perPx = span.offsetWidth / 100;
-      const size = width / (perPx * STRETCH);
+      const size = Math.floor(width / perPx) - 1;
       span.style.fontSize = `${size}px`;
+      // A hair of horizontal scale closes the last pixel, so the title meets both edges.
       const sx = width / span.offsetWidth;
       span.style.transform = `scaleX(${sx})`;
       // The badge sizes and stretches from the same numbers.
@@ -162,8 +161,6 @@ export default function WideTitle({ children, badge, label, className = '' }) {
         {children}
       </span>
       <canvas className="wide-title__screen" ref={screen} aria-hidden="true" />
-      {/* Splotches of gaussian blur laid over the title and whatever floats behind it */}
-      <span className="wide-title__blur" aria-hidden="true" />
       {badge && (
         <span className="wide-title__badge" ref={tag} aria-hidden={label ? true : undefined}>
           {badge}
