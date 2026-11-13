@@ -19,9 +19,13 @@ export default {
   // Pieces this work adds to the floating background on every page.
   models: [
     { src: thunderbirdModel, hero: true, recolor: '--black' },
-    { src: hyperWoodlandModel, split: true, exclude: ['backdrop'] },
+    // foreground: the barbed wire and the spirit lines leave their sculpture and hang close
+    // to the camera, very large, running off the screen. The spirit lines are the Shaman's
+    // blue loops (SP_RingA, B and C). The red branching line (AR_GlowPaper) is a thunderbird
+    // and stays in its sculpture.
+    { src: hyperWoodlandModel, split: true, exclude: ['backdrop'], foreground: ['barbedwire'] },
     // The sculpture faces +x in its file, so it turns to face the page. The basin is its ground.
-    { src: shamanPortalModel, split: true, exclude: ['disc', 'basin'], turn: -90 },
+    { src: shamanPortalModel, split: true, exclude: ['disc', 'basin'], turn: -90, foreground: ['barbedwire', 'ring'] },
   ],
 
   cover,

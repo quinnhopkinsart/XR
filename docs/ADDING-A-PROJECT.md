@@ -114,7 +114,8 @@ models: [
 | Option | What it does |
 |---|---|
 | `src` | The imported `.glb` URL. Draco-compressed files work. |
-| `split` | Breaks a scene into its separate meshes. The parts stay roughly where the sculpture has them, each pushed a little out of place and turned, so the whole reads as a ruin of the original. Good for AR scenes built from many objects. Without `split` the model floats as one piece and tumbles slowly. |
+| `split` | Breaks a scene into its separate meshes. The sculpture is shown almost put together, just a little exploded: each part eased slightly out from the centre. Good for AR scenes built from many objects. Without `split` the model floats as one piece and tumbles slowly. |
+| `foreground` | Mesh names (case-insensitive, partial match) to lift out of a split sculpture and hang close to the camera, far larger than the screen and running off its edges. For lines and wire only, for example `foreground: ['barbedwire', 'ring']`. A flat drawing on a plane comes in smaller than modelled wire. |
 | `turn` | Degrees to turn a split sculpture about its upright axis so its front faces the page. Use it when the model faces sideways in its file, for example `turn: -90` for one that faces +x. |
 | `exclude` | Mesh names to leave out when splitting (case-insensitive, partial match). Use it for backdrops, occluders, portal masks and ground planes much larger than the sculpture. |
 | `hero` | Always shown, larger, on the first screen beside the title. |
@@ -127,7 +128,7 @@ Keep each file under about 2 MB. Compress a heavy model before adding it:
 npx @gltf-transform/cli draco in.glb out.glb
 ```
 
-Every model listed in `models` is shown, so the field is curated by what each work lists. A work can keep its `.glb` files in its folder and leave `models` empty. Sculptures sit at different depths: some in front of the focal plane, some far behind. On desktop a lens blurs whatever is off the focal plane; phones skip the lens, keep a light haze, and show only the 14 largest parts of each split sculpture. The field stays still for anyone with reduced motion turned on, and pauses when the tab is hidden.
+Every model listed in `models` is shown, so the field is curated by what each work lists. A work can keep its `.glb` files in its folder and leave `models` empty. Each sculpture is sized to fill the screen while its body stays in view, and sits near the focal plane so it is sharp. About one sculpture shows per screen as the page scrolls. On desktop a lens softens the foreground wire; phones skip the lens and show only the 22 largest parts of each split sculpture. The field stays still for anyone with reduced motion turned on, and pauses when the tab is hidden.
 
 ## 4. Check and ship
 
