@@ -13,6 +13,8 @@ import salmon from './targets/salmon.webp';
 // The build opens in a 3D view of the five prints. ?view=ar runs the original camera AR,
 // with all five targets live at once.
 // The old link, 8th.io/997et, stops on February 28, 2027.
+// One project, two iterations: Wildlife XR (2024) and these portals (2025). The portfolio
+// lists both under this work, so keep the two descriptions in step.
 
 export default {
   title: 'Wildlife Portals XR',
@@ -28,7 +30,7 @@ export default {
 
   description: [
     'Wildlife Portals is five round prints. Hold a phone to one and the picture opens like a window. Through it is the place its animal lives: a polar bear on the sea ice through a ship\'s porthole, an eagle at a lake through a ring of branches, two deer in the woods and a lynx in the snow from a photographer\'s blind, and salmon over a riverbed of pale stones.',
-    'I showed it at ROM After Dark in 2024 and 2025, during the museum\'s International Wildlife Photography Awards exhibition. It ran as a scavenger hunt. Visitors went looking through the natural history galleries for the five prints.',
+    'I made it for ROM After Dark in two iterations, a year apart, both during the museum\'s International Wildlife Photography Awards exhibition. The first, Wildlife XR in 2024, brought five animals to life in the galleries: a polar bear on an ice floe, deer, eagles, fish and a T-rex among the dinosaur skeletons. In 2025 I rebuilt it as these five portals. Both ran as a scavenger hunt, with visitors searching the museum for each animal.',
     'A camera floats at the bottom of the screen. Tap it and it rises to your eye, the screen flashes, and the photo is yours to keep. I built it so anyone holding a phone gets to be the wildlife photographer, with the animals close enough to frame.',
   ],
 
