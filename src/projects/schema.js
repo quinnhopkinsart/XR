@@ -1,5 +1,26 @@
-// The shape every project.js default export follows.
+// The shape every work follows: project.js (images, launch, targets, models) merged
+// with content.json (text, status, the hidden flag) from the same folder.
 // Full field guide: docs/ADDING-A-PROJECT.md
+
+// The fields that live in content.json, in the order the dashboard (/admin) writes them.
+// Anything listed here is edited there and must not be set in project.js.
+export const CONTENT_FIELDS = [
+  'title',
+  'year',
+  'status',
+  'hidden',
+  'venue',
+  'location',
+  'summary',
+  'description',
+  'howTo',
+  'embedNote',
+  'bookable',
+  'credits',
+  'coverAlt',
+  'tags',
+  'order',
+];
 
 export const STATUSES = {
   live: 'Live',
@@ -20,6 +41,43 @@ export const LAUNCH_TYPES = ['build', 'external', 'component'];
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
+const isText = (v) => typeof v === 'string';
+const isTextList = (v) => Array.isArray(v) && v.every((x) => isText(x) && x.trim());
+
+/**
+ * Problems with the content.json fields of one work, as short messages. Empty list
+ * means valid. The dashboard runs this before it publishes, and `npm run check` runs
+ * it again before every build, so a bad edit never reaches the live site.
+ */
+export function contentProblems(c) {
+  const errors = [];
+  if (!isText(c.title) || !c.title.trim()) errors.push('missing title');
+  if (!isText(c.year) || !/^\d{4}/.test(c.year)) errors.push('year must start with four digits, like "2026" or "2024 to 2025"');
+  if (!isText(c.summary) || !c.summary.trim()) errors.push('missing summary (one sentence for the card)');
+  if (!isTextList(c.description) || c.description.length === 0) {
+    errors.push('description must be an array of paragraphs');
+  }
+  if (c.status != null && !STATUSES[c.status]) {
+    errors.push(`status "${c.status}" must be one of ${Object.keys(STATUSES).join(', ')}`);
+  }
+  if (c.hidden != null && typeof c.hidden !== 'boolean') errors.push('hidden must be true or false');
+  if (c.howTo != null && !isTextList(c.howTo)) errors.push('howTo must be an array of steps');
+  if (c.tags != null && !isTextList(c.tags)) errors.push('tags must be an array of words');
+  ['venue', 'location', 'embedNote', 'coverAlt'].forEach((k) => {
+    if (c[k] != null && !isText(c[k])) errors.push(`${k} must be text`);
+  });
+  if (c.bookable != null && !isText(c.bookable)) {
+    errors.push('bookable must be a sentence (the page adds a "Get in touch" link)');
+  }
+  if (c.credits != null) {
+    if (!Array.isArray(c.credits) || !c.credits.every((x) => isText(x?.role) && x.role.trim() && isText(x?.name) && x.name.trim())) {
+      errors.push('each credit needs a role and a name');
+    }
+  }
+  if (c.order != null && typeof c.order !== 'number') errors.push('order must be a number');
+  return errors;
+}
+
 /**
  * Returns a list of problems with one project. Empty list means valid.
  * Used at runtime (dev warnings) and by `npm run check` before every build.
@@ -30,15 +88,7 @@ export function validateProject(p, folder) {
 
   if (!p || typeof p !== 'object') return [`${where}: no default export`];
   if (!SLUG.test(p.slug)) errors.push(`${where}: slug "${p.slug}" must be lowercase-with-dashes`);
-  if (!p.title) errors.push(`${where}: missing title`);
-  if (!p.year) errors.push(`${where}: missing year`);
-  if (!p.summary) errors.push(`${where}: missing summary (one sentence for the card)`);
-  if (!Array.isArray(p.description) || p.description.length === 0) {
-    errors.push(`${where}: description must be an array of paragraphs`);
-  }
-  if (p.status && !STATUSES[p.status]) {
-    errors.push(`${where}: status "${p.status}" must be one of ${Object.keys(STATUSES).join(', ')}`);
-  }
+  contentProblems(p).forEach((m) => errors.push(`src/projects/${folder}/content.json: ${m}`));
   if (p.launch) {
     const { type } = p.launch;
     if (!LAUNCH_TYPES.includes(type)) {
@@ -55,9 +105,6 @@ export function validateProject(p, folder) {
       errors.push(`${where}: launch.embed only works with type "build"`);
     }
   }
-  if (p.bookable != null && typeof p.bookable !== 'string') {
-    errors.push(`${where}: bookable must be a sentence (the page adds a "Get in touch" link)`);
-  }
   if (p.award) {
     if (!p.award.label) errors.push(`${where}: award.label is required (it is the logo's alt text)`);
     if (!p.award.logoOnDark) {
@@ -73,7 +120,6 @@ export function validateProject(p, folder) {
       }
     });
   }
-  if (typeof p.hidden !== 'boolean') errors.push(`${where}: hidden must be true or false`);
   if (!Array.isArray(p.models)) {
     errors.push(`${where}: models must be an array`);
   } else {

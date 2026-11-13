@@ -1,0 +1,17 @@
+{
+  "title": "__TITLE__",
+  "year": "__YEAR__",
+  "status": "in-development",
+  "hidden": false,
+  "venue": "",
+  "location": "",
+  "summary": "One sentence for the card on the home page.",
+  "description": [
+    "First paragraph: what the work is, where it lives, who commissioned it.",
+    "Second paragraph: the concept."
+  ],
+  "howTo": [],
+  "credits": [],
+  "tags": [],
+  "order": 0
+}

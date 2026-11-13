@@ -36,10 +36,7 @@ if (existsSync(dir)) {
 cpSync(join('src', 'projects', '_template'), dir, { recursive: true });
 
 const file = join(dir, 'project.js');
-let src = readFileSync(file, 'utf8')
-  .replaceAll('__TITLE__', title.replace(/'/g, "\\'"))
-  .replaceAll('__YEAR__', year)
-  .replaceAll('__SLUG__', slug);
+let src = readFileSync(file, 'utf8').replaceAll('__SLUG__', slug);
 
 if (flag('build')) {
   rmSync(join(dir, 'Experience.jsx'));
@@ -54,6 +51,13 @@ if (flag('build')) {
 
 writeFileSync(file, src);
 
+// Text lives in content.json, which the dashboard at /admin edits.
+const contentFile = join(dir, 'content.json');
+const content = JSON.parse(readFileSync(contentFile, 'utf8'));
+content.title = title;
+content.year = year;
+writeFileSync(contentFile, `${JSON.stringify(content, null, 2)}\n`);
+
 console.log(`Created ${dir}/`);
 if (flag('build')) console.log(`Copy the 8th Wall build output into public/builds/${slug}/`);
-console.log(`Edit ${file}, then run npm run dev and open /xr/${slug}`);
+console.log(`Edit ${file} and ${contentFile}, then run npm run dev and open /xr/${slug}`);
