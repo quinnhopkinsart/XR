@@ -65,7 +65,7 @@ $('controls').querySelectorAll('button').forEach((btn) => {
   btn.addEventListener('click', () => { if (!held) act(); held = false; view?.touched?.(); });
 });
 
-// Motion: the floating parts, and the slow turn in the 3D view. Off for reduced motion.
+// Motion: the breathing. Off for reduced motion.
 const motionBtn = $('motion-btn');
 function setMotion(on) {
   state.motion = on;

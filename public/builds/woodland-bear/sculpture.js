@@ -3,30 +3,23 @@ import { GLTFLoader } from 'three/addons/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/DRACOLoader.js';
 
 // Woodland Be[AR]: a black body with colour parts standing off both of its sides in layers.
-// models/woodland-bear.glb keeps every colour part as its own node, so each one floats here.
+// models/woodland-bear.glb keeps every colour part as its own node, so each layer can breathe out from the body here.
 // The file is metres-agnostic: the sculpture is fitted to HEIGHT and stood on y = 0.
 //
 // Nesting, outside in:
 //   anchor  where it stands, which way it faces, how big the visitor has made it
-//   sway    the whole body leaning a little from its feet, and a slow rise and fall
+//   sway    kept as a spare level; nothing moves it now
 //   fitted  the model scaled to HEIGHT, centred, feet on the ground, face turned to +z
 export const HEIGHT = 1.5;          // metres, at 100%
 export const SIZE = { min: 0.2, max: 3 };
 
 const MODEL = './models/woodland-bear.glb';
-// How far things move. All of it stops when motion is off.
-const FLOAT = {
-  spread: 0.09,   // layers breathe out and in along the axis they stand off the body on
-  bob: 0.012,     // each part's own drift, as a share of the sculpture's height
-  tilt: 0.07,     // radians, each part's own rocking
-  sway: 0.012,    // radians, the whole sculpture from its feet
-  lift: 0.012,    // metres at 100%, the whole sculpture rising and falling
-};
-
-// A steady pseudo-random number per part, so the motion is the same on every visit.
-const hash = (i, salt) => {
-  const x = Math.sin(i * 127.1 + salt * 311.7) * 43758.5453;
-  return x - Math.floor(x);
+// The motion is a breath on one axis: the colour layers move out from the body and back in,
+// along the line they already stand off it on. Nothing bobs, rocks or sways.
+const BREATH = {
+  depth: 0.05,   // how far the layers travel, as a share of their distance from the body
+  seconds: 5.5,  // one breath, out and in
+  lag: 0.35,     // radians the outermost layer trails the innermost, so the breath rolls outward
 };
 
 export async function loadSculpture(onProgress) {
@@ -75,12 +68,7 @@ export async function loadSculpture(onProgress) {
     return {
       mesh,
       home: mesh.position.clone(),
-      turn: mesh.quaternion.clone(),
       off: local.x - midLocal.x,
-      unit: size.y / mesh.parent.getWorldScale(tmp).y, // the sculpture's height in the parent's units
-      speed: 0.5 + hash(i, 1) * 0.5,
-      phase: hash(i, 2) * Math.PI * 2,
-      phase2: hash(i, 3) * Math.PI * 2,
     };
   });
   const reach = Math.max(...parts.map((p) => Math.abs(p.off)), 1e-6);
@@ -91,34 +79,18 @@ export async function loadSculpture(onProgress) {
     m.frustumCulled = false; // parts move off their bounds while floating
   });
 
-  const q = new THREE.Quaternion();
-  const e = new THREE.Euler();
   let level = 1;   // 1 moving, 0 still: eased, so turning motion off settles instead of snapping
   let target = 1;
 
   function update(t, dt) {
     level += (target - level) * Math.min(1, dt * 3);
-    const a = level;
+    const w = (Math.PI * 2) / BREATH.seconds;
     for (const p of parts) {
       const depth = Math.abs(p.off) / reach;
-      // A wave that leaves the body and runs outward through the layers.
-      const breath = Math.sin(t * 0.7 - depth * 2.2);
-      const s = t * p.speed;
-      p.mesh.position.set(
-        p.home.x + a * (p.off * FLOAT.spread * breath + p.unit * FLOAT.bob * 0.6 * Math.sin(s * 0.8 + p.phase2)),
-        p.home.y + a * p.unit * FLOAT.bob * Math.sin(s + p.phase),
-        p.home.z + a * p.unit * FLOAT.bob * Math.cos(s * 0.9 + p.phase),
-      );
-      e.set(
-        a * FLOAT.tilt * Math.sin(s * 0.7 + p.phase),
-        a * FLOAT.tilt * 0.6 * Math.sin(s * 0.5 + p.phase2),
-        a * FLOAT.tilt * Math.cos(s * 0.6 + p.phase2),
-      );
-      p.mesh.quaternion.copy(p.turn).multiply(q.setFromEuler(e));
+      // In the model's own space the layers stand off the body along x, so only x moves.
+      const breath = Math.sin(t * w - depth * BREATH.lag);
+      p.mesh.position.x = p.home.x + level * p.off * BREATH.depth * breath;
     }
-    sway.rotation.z = a * FLOAT.sway * Math.sin(t * 0.45);
-    sway.rotation.x = a * FLOAT.sway * 0.6 * Math.sin(t * 0.33 + 1.3);
-    sway.position.y = a * FLOAT.lift * (1 + Math.sin(t * 0.6));
   }
 
   return {
