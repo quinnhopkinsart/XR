@@ -101,3 +101,19 @@ npm run build
 Copy `dist/` here (the webpack config cleans `dist/` first). `?view=ar` tracks all four targets at once and loads whichever wall the camera finds. `?wall=central-left|central-middle|central-right|sherwood` picks the first wall in either view.
 
 Models are Quinn's unlit bake (light baked into `COLOR_0`, grass and feathers decimated), brightened x2 with `tools/brighten-unlit.mjs` to match the lit runtime. The four doorways, the left wall's rock and the spiral line stay lit PBR (`tools/keep-default-scene.mjs` on the pre-unlit models), because the bake turned them black or dark. All Draco with WebP textures; the Studio runtime decodes Draco from its own `external/runtime/resources/draco/`.
+
+## Future Ancestors
+
+Built from the `odeyto-mural-selfhosted` project folder (8th Wall Projects), the buildable 8th Wall export "odeyto-mural" (A-Frame 1.3.0) given a 3D view. Same setup as Stellar Narratives. Its README lists every change from the hosted project.
+
+```
+npm run build
+```
+
+Copy `dist/` here. `image-targets/` holds only `mural-target.json` and `mural-target_luminance.jpeg`.
+
+- The 3D view hangs a photo of the mural on a night-blue wall, then opens the portal in it. The Mural button puts the painting back. `?view=ar` runs the camera AR on the one target, `mural-target`, with world tracking off, as the hosted scene ran.
+- `assets/scene-1.glb` is the export's scene optimized in Blender: the two water meshes decimated (131,640 to 25,019 triangles), unused UV maps removed, textures as WebP. 6.8 MB to 1.1 MB. Not Draco-compressed, since the engine's Draco worker points at 8th Wall's CDN. The source `.blend` and a version without the water's transmission are in the source folder's `blender/`.
+- `reflections` and `xr-light` came from 8th Wall's Reflections module, which the hosted app loaded at runtime. They are rebuilt in the source's `src/components/reflections.js`. The cube map is `assets/cube_up.png` on all six faces, as the project's module config had it.
+- The export's `target` image target is 8th Wall's jellyfish sample and is not here. `sound2.mp3` and five of the six cube map pictures were unused and are not here.
+- Tested in headless Chromium: 3D on desktop and phone sizes, AR with a fake camera showing the mural (found as `mural-target`, 1 by 0.75). Sound, video capture and tracking on the real wall need a phone.

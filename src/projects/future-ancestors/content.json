@@ -1,0 +1,38 @@
+{
+  "title": "Future Ancestors",
+  "year": "2023",
+  "status": "live",
+  "hidden": true,
+  "venue": "Odeyto, Seneca Polytechnic",
+  "location": "Tkaronto",
+  "summary": "A mural at Odeyto opens into the city at night, with Star Woman in her canoe on moving water.",
+  "description": [
+    "Future Ancestors is a mural at Odeyto, the Indigenous centre at Seneca Polytechnic. It shows Tkaronto as I dream it. Towers stand lit under a full moon, a thunderbird sits on the skyline, and Star Woman crosses the water in a canoe that carries medicines. The side of the canoe reads Water is Life.",
+    "Hold a phone to the mural and the wall opens. The water starts to move and runs out past the frame toward your feet. The canoe rocks on it, and behind the trees on the far shore the towers stand in a ring around you.",
+    "Created with representation by Highness Global."
+  ],
+  "howTo": [
+    "Press Enter in the frame above. The mural opens in a 3D view on any device.",
+    "Drag to look into the portal from the side. On a phone, drag or tap Tilt. Scroll or pinch to step closer.",
+    "Tap Mural to put the painted mural back over the portal, and again to open it.",
+    "For AR, stand in front of the mural at Odeyto, or open the target below on another screen. Tap AR at the top right on a phone and point your camera at it."
+  ],
+  "embedNote": "Press Enter and drag to look into the mural. On a phone, tap AR to open the camera.",
+  "credits": [
+    {
+      "role": "Artwork and AR",
+      "name": "Quinn Hopkins"
+    },
+    {
+      "role": "Representation",
+      "name": "Highness Global"
+    }
+  ],
+  "coverAlt": "A canoe painted with the words Water is Life crosses blue and black water at night. A white figure sits in it among plants and a crate of berries. Behind it are lit towers, a thunderbird in lights and a full yellow moon.",
+  "tags": [
+    "image target",
+    "mural",
+    "portal"
+  ],
+  "order": 0
+}
