@@ -47,7 +47,8 @@ export default {
   models: [
     { src: thunderbirdModel, hero: true, recolor: '--black' },
     { src: hyperWoodlandModel, split: true, exclude: ['backdrop'] },
-    { src: shamanPortalModel, split: true, exclude: ['disc'] },
+    // The sculpture faces +x in its file, so it turns to face the page. The basin is its ground.
+    { src: shamanPortalModel, split: true, exclude: ['disc', 'basin'], turn: -90 },
   ],
 
   cover,
