@@ -115,7 +115,7 @@ models: [
 |---|---|
 | `src` | The imported `.glb` URL. Draco-compressed files work. |
 | `split` | Breaks a scene into its separate meshes. The sculpture is shown almost put together, just a little exploded: each part eased slightly out from the centre. Good for AR scenes built from many objects. Without `split` the model floats as one piece and tumbles slowly. |
-| `foreground` | Mesh names (case-insensitive, partial match) to lift out of a split sculpture and hang close to the camera, far larger than the screen and running off its edges. For lines and wire only, for example `foreground: ['barbedwire', 'glowpaper']`. A flat drawing on a plane comes in smaller than modelled wire. |
+| `foreground` | Mesh names (case-insensitive, partial match) to lift out of a split sculpture and hang close to the camera, far larger than the screen and running off its edges. For lines and wire only, for example `foreground: ['barbedwire', 'ring']`. A flat drawing on a plane comes in smaller than modelled wire. |
 | `turn` | Degrees to turn a split sculpture about its upright axis so its front faces the page. Use it when the model faces sideways in its file, for example `turn: -90` for one that faces +x. |
 | `exclude` | Mesh names to leave out when splitting (case-insensitive, partial match). Use it for backdrops, occluders, portal masks and ground planes much larger than the sculpture. |
 | `hero` | Always shown, larger, on the first screen beside the title. |

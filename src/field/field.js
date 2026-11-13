@@ -96,8 +96,12 @@ function sculptureFrom(gltf, spec, maxParts) {
     });
     for (const mesh of meshes) {
       const copy = mesh.clone();
-      // Bake the world transform so each part keeps its authored shape and place.
-      copy.applyMatrix4(mesh.matrixWorld);
+      // Give the copy the mesh's world transform, so each part keeps its authored shape,
+      // size and place. Set, not applied on top: the clone already carries the mesh's own
+      // position and scale, and applying the world matrix again would count them twice
+      // (that squashed the scaled orbs on Woodland Be[AR]).
+      copy.matrix.copy(mesh.matrixWorld);
+      copy.matrix.decompose(copy.position, copy.quaternion, copy.scale);
       copy.matrixAutoUpdate = true;
       const part = toPart(copy);
       if (isFront(mesh.name) || isFront(mesh.parent?.name)) {
@@ -106,7 +110,11 @@ function sculptureFrom(gltf, spec, maxParts) {
         // A drawing on a plane (a cut-out texture), as against modelled wire or tube.
         mesh.geometry.computeBoundingBox();
         const thin = mesh.geometry.boundingBox.getSize(new THREE.Vector3());
-        part.flat = Math.min(thin.x, thin.y, thin.z) < Math.max(thin.x, thin.y, thin.z) * 0.02;
+        const material = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+        // Broad: a drawing on a plane, or a thick see-through loop. These come in smaller
+        // than thin wire, or their bands would cover the sculptures behind them.
+        part.flat =
+          Math.min(thin.x, thin.y, thin.z) < Math.max(thin.x, thin.y, thin.z) * 0.02 || !!material?.transparent;
         foreground.push({
           parts: [part],
           unit: 1 / part.longest,
@@ -293,9 +301,9 @@ export function createField(container, { models, reducedMotion }) {
         const n = Math.max(1, fronts.length);
         const z = 7.2 + (frontIndex % 3) * 0.9;
         const across = ((camera.position.z - z) / camera.position.z) * 14; // rough view width at that depth
-        // Wire is thin, so it comes in far larger than a flat drawing of lines does.
+        // Wire is thin, so it comes in far larger than a broad loop or a flat drawing does.
         const flat = s.parts[0].flat;
-        size = across * (flat ? 1.25 : mobile ? 2.2 : 2.7 + random() * 0.4);
+        size = across * (flat ? (mobile ? 1.5 : 1.2) : mobile ? 2.2 : 2.7 + random() * 0.4);
         base = new THREE.Vector3(
           (frontIndex % 2 ? -1 : 1) * (0.1 + random() * 0.16),
           0.35 + ((frontIndex + random() * 0.3) / n) * BAND,
