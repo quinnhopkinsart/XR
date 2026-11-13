@@ -2,9 +2,9 @@ import { OrbitControls } from 'three/addons/OrbitControls.js';
 import { HEIGHT } from './sculpture.js';
 
 // The 3D view: the sculpture on a saffron stage. Drag to look around it, pinch or scroll
-// to zoom. Left alone, it turns slowly, unless motion is off.
+// to zoom. The sculpture stays put and breathes; it does not turn on its own.
 export function startViewer(ctx, ready) {
-  const { THREE, scene, controls, state, $, reduced } = ctx;
+  const { THREE, scene, state, $ } = ctx;
   const canvas = $('stage');
   const framed = window.WB_FRAMED;
 
@@ -61,9 +61,7 @@ export function startViewer(ctx, ready) {
   resize();
   home();
 
-  // A slow turn while nobody is touching it.
-  let idleAt = performance.now();
-  const touched = () => { idleAt = performance.now(); $('hint').classList.add('gone'); };
+  const touched = () => $('hint').classList.add('gone');
   orbit.addEventListener('start', touched);
 
   ready.then(() => {
@@ -75,11 +73,7 @@ export function startViewer(ctx, ready) {
   });
 
   renderer.setAnimationLoop(() => {
-    const dt = ctx.tick();
-    if (state.motion && !reduced && performance.now() - idleAt > 4000) {
-      state.turn += dt * 0.12;
-      controls.apply();
-    }
+    ctx.tick();
     orbit.update();
     renderer.render(scene, camera);
   });
