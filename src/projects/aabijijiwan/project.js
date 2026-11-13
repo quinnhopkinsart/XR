@@ -1,4 +1,8 @@
-import cover from './cover.jpg';
+// The cover is the same render the portfolio (noodinstudio.com) uses for this work, read
+// straight from the Wix media library, sized by Wix. If that file is ever deleted or
+// replaced there, this card loses its picture: put the new file name here.
+const cover =
+  'https://static.wixstatic.com/media/c993bc_f8e12a449c024ec3bfb66b3075fd60f2~mv2.jpg/v1/fit/w_1600,h_1600,q_85,enc_auto/c993bc_f8e12a449c024ec3bfb66b3075fd60f2~mv2.jpg';
 
 // A design model of a suspended sculpture, not an AR work: there is no camera view.
 // The build in public/builds/aabijijiwan/ is a three.js viewer with the sculpture hung in
@@ -44,7 +48,7 @@ export default {
 
   cover,
   coverAlt:
-    'Five wavy wooden channels inlaid with clear and purple mirror tiles, hanging on thin cables from a ceiling panel, seen from below.',
+    'Render looking up an atrium of wood slats and windows at a suspended sculpture of five layered, meandering wooden channels with purple and clear mirror inlays.',
 
   models: [],
   tags: ['public art', 'sculpture', 'design model'],
