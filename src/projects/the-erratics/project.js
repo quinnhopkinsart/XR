@@ -2,7 +2,7 @@ import centralLeft from './targets/central-left.jpg';
 import centralMiddle from './targets/central-middle.jpg';
 import centralRight from './targets/central-right.jpg';
 import sherwood from './targets/sherwood.jpg';
-import erraticModel from './models/erratic.glb?url';
+// import erraticModel from './models/erratic.glb?url';
 
 // Two 8th Wall Studio projects merged into one self-hosted build: "the-erratic-at-dunlop-gallery"
 // (the three Central Branch walls, 8th.io/uh73x) and "the-erratics-sherwood" (8th.io/n2ree).
@@ -49,5 +49,8 @@ export default {
   ],
 
   // The erratic itself joins the floating background.
-  models: [{ src: erraticModel, recolor: '--black' }],
+  // The floating background is curated: this work's piece is held back for now.
+  // To bring it back, restore the model import at the top and this line.
+  // models: [{ src: erraticModel, recolor: '--black' }],
+  models: [],
 };

@@ -2,10 +2,13 @@
 // Plain three.js, loaded on demand by <FloatingField />, so the first paint
 // never waits on WebGL.
 //
-// Each model is one sculpture. A split model keeps its parts roughly where the
-// sculpture has them, each a little out of place, like a ruin: the whole still
-// hints at what it was. Sculptures sit at different depths, some in front of the
-// focal plane and some far behind, and the lens blurs whatever is off that plane.
+// Each model is one sculpture. A split model is almost put together, just a little
+// exploded: each part eased slightly out from the centre, so the whole is recognised at
+// a glance. Sculptures are large and sit near the focal plane, where the lens is sharp.
+//
+// A model can also name `foreground` parts (spirit lines, barbed wire). Those leave
+// their sculpture and hang close to the camera, far larger than the screen and running
+// off its edges, soft in the lens, so the page sits inside the work.
 //
 // Interaction, kept slight on purpose:
 //   - the camera leans toward the pointer
@@ -79,7 +82,10 @@ function recolor(root, colour) {
 function sculptureFrom(gltf, spec, maxParts) {
   const exclude = (spec.exclude || []).map((s) => s.toLowerCase());
   const skip = (name = '') => exclude.some((s) => name.toLowerCase().includes(s));
+  const front = (spec.foreground || []).map((s) => s.toLowerCase());
+  const isFront = (name = '') => front.some((s) => name.toLowerCase().includes(s));
   let parts = [];
+  const foreground = [];
 
   gltf.scene.updateMatrixWorld(true);
 
@@ -93,20 +99,41 @@ function sculptureFrom(gltf, spec, maxParts) {
       // Bake the world transform so each part keeps its authored shape and place.
       copy.applyMatrix4(mesh.matrixWorld);
       copy.matrixAutoUpdate = true;
-      parts.push(toPart(copy));
+      const part = toPart(copy);
+      if (isFront(mesh.name) || isFront(mesh.parent?.name)) {
+        if (spec.recolor) recolor(part.pivot, token(spec.recolor, '#000000'));
+        part.home = new THREE.Vector3();
+        // A drawing on a plane (a cut-out texture), as against modelled wire or tube.
+        mesh.geometry.computeBoundingBox();
+        const thin = mesh.geometry.boundingBox.getSize(new THREE.Vector3());
+        part.flat = Math.min(thin.x, thin.y, thin.z) < Math.max(thin.x, thin.y, thin.z) * 0.02;
+        foreground.push({
+          parts: [part],
+          unit: 1 / part.longest,
+          front: true,
+          hero: false,
+          scale: 1,
+          turn: THREE.MathUtils.degToRad(spec.turn || 0),
+        });
+      } else {
+        parts.push(part);
+      }
     }
     // On small screens only the largest parts are kept; they carry the shape.
     parts = parts.sort((a, b) => b.longest - a.longest).slice(0, maxParts);
   } else {
     parts.push(toPart(gltf.scene));
   }
-  if (!parts.length) return null;
+  if (!parts.length) return foreground;
 
   // The sculpture's extent: where its parts sit, padded by a typical part. Measured
   // from centres so one oversized part cannot shrink everything else.
   const bounds = new THREE.Box3();
   parts.forEach((p) => bounds.expandByPoint(p.centre));
-  const centre = bounds.getCenter(new THREE.Vector3());
+  // Centred on the middle part on each axis, so one part set far off does not pull
+  // the sculpture's centre away from its body.
+  const mid = (axis) => parts.map((p) => p.centre[axis]).sort((a, b) => a - b)[Math.floor(parts.length / 2)];
+  const centre = new THREE.Vector3(mid('x'), mid('y'), mid('z'));
   const spread = bounds.getSize(new THREE.Vector3());
   const typical = parts.map((p) => p.longest).sort((a, b) => a - b)[Math.floor(parts.length / 2)];
   const longest =
@@ -116,18 +143,21 @@ function sculptureFrom(gltf, spec, maxParts) {
     if (spec.recolor) recolor(part.pivot, token(spec.recolor, '#000000'));
     part.home = part.centre.clone().sub(centre);
   }
-  return {
-    parts,
-    unit: 1 / longest,
-    hero: !!spec.hero,
-    scale: spec.scale || 1,
-    turn: THREE.MathUtils.degToRad(spec.turn || 0),
-  };
+  return [
+    {
+      parts,
+      unit: 1 / longest,
+      hero: !!spec.hero,
+      scale: spec.scale || 1,
+      turn: THREE.MathUtils.degToRad(spec.turn || 0),
+    },
+    ...foreground,
+  ];
 }
 
 export function createField(container, { models, reducedMotion }) {
   const mobile = window.matchMedia('(max-width: 760px), (pointer: coarse)').matches;
-  const maxParts = mobile ? 14 : 60; // per split sculpture
+  const maxParts = mobile ? 22 : 60; // per split sculpture
   const lens = !mobile; // depth of field; phones get the haze only
   const random = rng(11);
   const ground = new THREE.Color(token('--ground', '#ff3314'));
@@ -161,7 +191,11 @@ export function createField(container, { models, reducedMotion }) {
     const renderBokeh = bokeh.render.bind(bokeh);
     bokeh.render = (...args) => {
       scene.background = null;
+      // The depth pass ignores cut-outs, so a foreground plane would blur everything
+      // behind its whole rectangle. Those parts sit the pass out.
+      flatFront.forEach((o) => (o.visible = false));
       renderBokeh(...args);
+      flatFront.forEach((o) => (o.visible = true));
       scene.background = ground;
     };
     composer.addPass(bokeh);
@@ -179,6 +213,7 @@ export function createField(container, { models, reducedMotion }) {
   const loader = new GLTFLoader().setDRACOLoader(draco);
 
   const floaters = []; // every part
+  const flatFront = []; // foreground parts drawn with a cut-out or see-through material
   const clusters = []; // every sculpture
   const tmp = new THREE.Vector3();
   const tmpQ = new THREE.Quaternion();
@@ -215,16 +250,23 @@ export function createField(container, { models, reducedMotion }) {
     if (!running) render();
   }
 
-  const BAND = 2.5; // screen heights the sculptures are spread over; scrolling wraps inside it
-  const BAND_TOP = -0.6;
+  // Screen heights the sculptures are spread over; scrolling wraps inside it. Roughly a
+  // screen each, so one sculpture reads at a time. The wrap happens well off screen.
+  const BAND = 3.2;
+  const BAND_TOP = -1.0;
+  // How far a split sculpture's parts sit from their true place: almost put together, just
+  // a little exploded. `spread` eases every part straight out from the centre (1 = assembled),
+  // `nudge` and `turn` add a trace of disorder. Quinn wants these small.
+  const LOOSE = { spread: 1.08, nudge: 0.008, turn: 0.04 };
 
   function place(sculptures) {
     const k = mobile ? 0.62 : 1; // sizes on a narrow screen
     // Heroes open the composition on the right of the first screen, beside the title.
     // Then the split sculptures, largest first, then the single pieces.
     const heroes = sculptures.filter((s) => s.hero);
+    const fronts = sculptures.filter((s) => s.front);
     // The split sculptures are spaced evenly down the page, with single pieces between.
-    const others = sculptures.filter((s) => !s.hero);
+    const others = sculptures.filter((s) => !s.hero && !s.front);
     const wholes = others.filter((s) => s.parts.length > 1).sort((a, b) => b.parts.length - a.parts.length);
     const singles = others.filter((s) => s.parts.length === 1).sort(() => random() - 0.5);
     const rest = [];
@@ -234,18 +276,34 @@ export function createField(container, { models, reducedMotion }) {
       else rest.push(singles.shift());
     }
 
-    // Depths for the rest, in turn: near the focal plane, in front of it, far behind.
-    const depths = [-0.5, -2.5, 3.6, -6, 1.2, -8.5, 4.6, -4, -7, 2.4];
+    // Depths for the rest, in turn: all close to the focal plane, so they stay sharp and large.
+    const depths = [-0.4, -1.6, 0.8, -2.6, 0.2, -1.2, 1.2, -2.2];
+    let frontIndex = 0;
     let heroIndex = 0;
     let wholeSide = 1; // sculptures alternate sides; single pieces keep to the other side
 
-    [...heroes, ...rest].forEach((s) => {
+    [...heroes, ...rest, ...fronts].forEach((s) => {
       const group = new THREE.Group();
       const whole = s.parts.length > 1;
       let base;
       let size;
-      if (s.hero) {
-        size = (mobile ? 3.8 : 6.6) * s.scale;
+      if (s.front) {
+        // Close to the camera and far larger than the screen there, so the lines cross
+        // the whole view and leave by its edges. Each takes a side, spaced down the page.
+        const n = Math.max(1, fronts.length);
+        const z = 7.2 + (frontIndex % 3) * 0.9;
+        const across = ((camera.position.z - z) / camera.position.z) * 14; // rough view width at that depth
+        // Wire is thin, so it comes in far larger than a flat drawing of lines does.
+        const flat = s.parts[0].flat;
+        size = across * (flat ? 1.25 : mobile ? 2.2 : 2.7 + random() * 0.4);
+        base = new THREE.Vector3(
+          (frontIndex % 2 ? -1 : 1) * (0.1 + random() * 0.16),
+          0.35 + ((frontIndex + random() * 0.3) / n) * BAND,
+          z,
+        );
+        frontIndex += 1;
+      } else if (s.hero) {
+        size = (mobile ? 4.6 : 8.2) * s.scale; // refitted to the screen below
         base = new THREE.Vector3(
           mobile ? 0.18 : 0.26 - heroIndex * 0.5,
           mobile ? 0.62 : 0.4 + heroIndex * 0.6,
@@ -257,50 +315,103 @@ export function createField(container, { models, reducedMotion }) {
         const n = Math.max(1, rest.length);
         if (whole) wholeSide = -wholeSide;
         const side = whole ? wholeSide : -wholeSide;
-        size = (whole ? 8.5 + random() * 2 : 3.8 + random() * 2) * k * s.scale;
+        size = (whole ? 11 + random() * 1.5 : 6 + random() * 1) * k * s.scale; // refitted to the screen below
         base = new THREE.Vector3(
-          side * (mobile ? 0.08 + random() * 0.18 : whole ? 0.16 + random() * 0.08 : 0.14 + random() * 0.28), // fraction of view width
-          BAND_TOP + 0.75 + ((i + random() * 0.6) / n) * BAND,              // fraction of view height, wraps
+          side * (mobile ? 0.04 + random() * 0.1 : whole ? 0.14 + random() * 0.08 : 0.16 + random() * 0.16), // fraction of view width
+          0.7 + ((i + random() * 0.2) / n) * BAND,                          // fraction of view height, wraps
           depths[i % depths.length],
         );
       }
-      const nearness = THREE.MathUtils.clamp(1 + base.z / 8, 0, 1.6); // 1 at the focal plane
+      const nearness = THREE.MathUtils.clamp(1 + base.z / 8, 0, 1.9); // 1 at the focal plane
+      const steady = whole || s.front || s.hero; // these keep facing the page and only rock
       const cluster = {
         group,
         base,
         size,
         whole,
+        front: !!s.front,
         turn: s.turn,
         // Single pieces tumble slowly, so every side comes round. Sculptures only rock.
-        spin: whole
+        spin: steady
           ? new THREE.Vector3()
           : new THREE.Vector3((random() - 0.5) * 0.14, (random() - 0.5) * 0.26, (random() - 0.5) * 0.08),
-        sway: whole ? 0.2 : 0,
+        sway: s.front ? 0.12 : steady ? 0.16 : 0,
         phase: random() * Math.PI * 2,
         nearness,
         parallax: 0.35 + nearness * 0.9, // near sculptures move more with scroll
         lean: new THREE.Vector2(),
       };
-      group.scale.setScalar(size * s.unit);
-      cluster.rot = whole
-        ? new THREE.Vector3((random() - 0.5) * 0.25, cluster.turn, (random() - 0.5) * 0.2)
+      cluster.rot = s.front
+        ? new THREE.Vector3((random() - 0.5) * 0.3, cluster.turn + (random() - 0.5) * 0.5, (random() - 0.5) * 0.9)
+        : steady
+        ? new THREE.Vector3((random() - 0.5) * 0.12, cluster.turn, (random() - 0.5) * 0.1)
         : new THREE.Vector3(random() * Math.PI, random() * Math.PI * 2, (random() - 0.5) * 0.6);
 
       const extent = 1 / s.unit; // the sculpture's size in its own units
+      const placed = [];
       for (const part of s.parts) {
-        // Out of place: pushed outward from the centre, nudged and turned a little.
+        // A little exploded: eased straight outward, with barely any nudge or turn.
         const home = whole
           ? part.home
               .clone()
-              .multiplyScalar(1.22)
-              .add(new THREE.Vector3(random() - 0.5, random() - 0.5, random() - 0.5).multiplyScalar(extent * 0.09))
+              .multiplyScalar(LOOSE.spread)
+              .add(new THREE.Vector3(random() - 0.5, random() - 0.5, random() - 0.5).multiplyScalar(extent * LOOSE.nudge))
           : new THREE.Vector3();
         const rest = whole
-          ? new THREE.Euler((random() - 0.5) * 0.5, (random() - 0.5) * 0.6, (random() - 0.5) * 0.5)
+          ? new THREE.Euler((random() - 0.5) * LOOSE.turn, (random() - 0.5) * LOOSE.turn, (random() - 0.5) * LOOSE.turn)
           : new THREE.Euler();
         part.pivot.position.copy(home);
         part.pivot.rotation.copy(rest);
         group.add(part.pivot);
+        placed.push({ part, home, rest });
+      }
+
+      if (s.front) {
+        group.traverse((o) => {
+          const m = o.isMesh && (Array.isArray(o.material) ? o.material[0] : o.material);
+          if (m && (m.transparent || m.alphaTest > 0)) flatFront.push(o);
+        });
+      } else {
+        // As large as the screen allows with the whole sculpture still in view, so it is
+        // recognised: measured as it faces the page, then fitted to the view's height and width.
+        group.rotation.set(cluster.rot.x, cluster.rot.y, cluster.rot.z);
+        group.scale.setScalar(s.unit);
+        group.updateMatrixWorld(true);
+        // The extent is the body: where most parts sit (the spread of their centres with the
+        // outermost few left out, padded by a typical part) or the largest single part,
+        // whichever is greater. A stray orb or a statue set far off may leave the screen;
+        // it must not shrink the figure at the centre.
+        const biggest = new THREE.Vector3();
+        const partBox = new THREE.Box3();
+        const partSize = new THREE.Vector3();
+        const sizes = [];
+        const at = [];
+        for (const { part } of placed) {
+          partBox.setFromObject(part.pivot);
+          at.push(partBox.getCenter(new THREE.Vector3()));
+          partBox.getSize(partSize);
+          biggest.max(partSize);
+          sizes.push(Math.max(partSize.x, partSize.y, partSize.z));
+        }
+        const typical = sizes.sort((a, b) => a - b)[Math.floor(sizes.length / 2)];
+        const body = (axis) => {
+          const v = at.map((p) => p[axis]).sort((a, b) => a - b);
+          const middle = v[Math.floor(v.length / 2)];
+          const off = v.map((x) => Math.abs(x - middle)).sort((a, b) => a - b);
+          return 2 * off[Math.floor((off.length - 1) * 0.85)] + (v.length > 1 ? typical : 0);
+        };
+        // Never less than 60% of the full bounds, so a loose scene is not blown up past the screen.
+        const full = new THREE.Box3().setFromObject(group).getSize(new THREE.Vector3()).multiplyScalar(0.6);
+        const dims = new THREE.Vector3(body('x'), body('y'), body('z')).max(biggest).max(full);
+        const fill = whole || s.hero ? 1 : 0.6; // single pieces tumble, so they stay smaller
+        const maxH = view.h * 0.9 * fill;
+        const maxW = view.w * (mobile ? 0.92 : 0.64) * fill;
+        size = Math.min(maxH / (dims.y || 1), maxW / (dims.x || 1)) * (0.94 + random() * 0.06) * s.scale;
+        cluster.size = size;
+      }
+      group.scale.setScalar(size * s.unit);
+
+      for (const { part, home, rest } of placed) {
         floaters.push({
           piece: part.pivot,
           cluster,
@@ -516,16 +627,16 @@ export function createField(container, { models, reducedMotion }) {
   Promise.all(
     models.map((spec) =>
       loader.loadAsync(spec.src).then(
-        (gltf) => sculptureFrom(gltf, spec, maxParts),
+        (gltf) => sculptureFrom(gltf, spec, maxParts) || [],
         (err) => {
           console.warn(`Floating field: could not load ${spec.src}`, err);
-          return null;
+          return [];
         },
       ),
     ),
   ).then((sculptures) => {
     if (disposed) return;
-    place(sculptures.filter(Boolean));
+    place(sculptures.flat().filter(Boolean));
     render();
     container.classList.add('is-ready');
     start();

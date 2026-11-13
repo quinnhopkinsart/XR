@@ -133,6 +133,9 @@ export function validateProject(p, folder) {
       }
       if (m?.recolor && !String(m.recolor).startsWith('--')) {
         errors.push(`${where}: models[${i}].recolor must name a token like '--black'`);
+      if (m?.foreground != null && (!Array.isArray(m.foreground) || !m.foreground.every((n) => typeof n === 'string' && n.trim()) || !m.split)) {
+        errors.push(`${where}: models[${i}].foreground must be a list of mesh names, on a split model`);
+      }
       }
     });
   }
