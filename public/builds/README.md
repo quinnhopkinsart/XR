@@ -122,6 +122,25 @@ Copy `dist/` here. `image-targets/` holds only `mural-target.json` and `mural-ta
 - The export's `target` image target is 8th Wall's jellyfish sample and is not here. `sound2.mp3` and five of the six cube map pictures were unused and are not here.
 - Tested in headless Chromium: 3D on desktop and phone sizes, AR with a fake camera showing the mural (found as `mural-target`, 1 by 0.75). Sound, video capture and tracking on the real wall need a phone.
 
+## Intertribal
+
+Built from the `intertribal-selfhosted` project folder (8th Wall Projects\Archives), the buildable 8th Wall export "intertribal" (A-Frame 1.3.0) given a 3D view. Same setup as Stellar Narratives. Its README lists every change from the hosted project.
+
+```
+npm run build
+```
+
+Copy `dist/` here. `image-targets/` holds only `Intertribal-small.json` and `Intertribal-small_target.jpeg`.
+
+- One scene, as hosted: the hider model (a wall with a mural-shaped opening), the sky behind it, the mural model in 193 pieces and the eagle with its hearts. Both models share a 4.3 second clip named `Animation`: the eagle flies through the mural and it breaks apart. The mural plays it once and holds, the eagle loops.
+- The models' rest pose is the broken mural, so the 3D view holds both clips on their first frame until Enter. Replay starts both from the top.
+- In the 3D view the hider is painted as a dark wall with a pink wash above and below the mural, after the pink lights that sat above and below the print at Hart House. In AR it is drawn to depth only, as `xrextras-hider-material` did.
+- `clip-player` in the source's `src/components/portal.js` plays the clips with three.js directly. The hosted app used aframe-extras' `animation-mixer` from 8th Wall's CDN; it is not in the build.
+- The splash button reads Loading with a spinner until the scene is ready. The audio is not preloaded. `?view=ar` runs the camera AR on the one target, `Intertribal-small` (the mural, stored rotated), with world tracking off, as the hosted scene ran.
+- The export's `wall` image target is 8th Wall's sample brick wall and is not here. The Reflections module and Howler were loaded by the hosted app and never used, so neither is here. `skybox.jpg` is 4096 px wide (hosted: 6144).
+- The red hearts render dark, as they did on the hosted app: their material is metallic and the scene has no environment map.
+- Tested in headless Chromium: 3D on desktop and phone sizes, AR with a fake camera showing the mural (found as `Intertribal-small`, 1 by 0.75). Sound, video capture and tracking on a real print need a phone.
+
 ## Sacred Tags
 
 Not an 8th Wall build and not AR: the web version of the projection installation, written new. Plain WebGL, no libraries and no build step, so the files here are the source. The installation's TouchDesigner files are in `Documents\Art\2026\Sacred Tags`.
