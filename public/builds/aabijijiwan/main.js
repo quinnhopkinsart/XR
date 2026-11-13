@@ -7,11 +7,17 @@ import { RoomEnvironment } from 'three/addons/RoomEnvironment.js';
 // in the atrium. The camera stays at eye height. Drag to look, tap the floor to walk.
 //
 // The model is in metres, Y up, with its lowest point at y = 0 and its cables ending
-// at its highest point. Three numbers set the room:
-const CLEARANCE = 3.0;   // metres from the floor to the lowest point of the sculpture
+// at its highest point. These numbers set the work and the room:
+//
+// FOOTPRINT is the size the installed work takes up, in metres: length along the river,
+// height from its lowest point to the ceiling fixing, and width. The model is fitted to
+// it on each axis, so the viewer shows the installed size even where the export differs
+// (Rev E measures 7.72 x 8.03 x 2.04, so the fit is small). Set FOOTPRINT to null to show the model as exported.
+const FOOTPRINT = { length: 8, height: 8, width: 2 };
+const CLEARANCE = 5.0;   // metres from the floor to the lowest point of the sculpture
 const EYE = 1.6;         // metres, the visitor's eye height
 const FIGURE = 1.7;      // metres, the figure standing under the work
-const ROOM = 13;         // metres, how far from the centre you can walk
+const ROOM = 16;         // metres, how far from the centre you can walk
 
 const MODEL = './models/aabijijiwan.glb';
 const canvas = document.getElementById('stage');
@@ -109,20 +115,20 @@ buildFigure();
 // Camera: a visitor on the floor.
 const camera = new THREE.PerspectiveCamera(58, 1, 0.05, 200);
 camera.rotation.order = 'YXZ';
-const me = { x: 0, y: EYE, z: 11, yaw: 0, pitch: 0.42 };
+const me = { x: 0, y: EYE, z: 15, yaw: 0, pitch: 0.45 };
 let centre = new THREE.Vector3(0, CLEARANCE + 2.6, 0); // refined once the model loads
-let top = CLEARANCE + 7.2;
+let top = CLEARANCE + (FOOTPRINT ? FOOTPRINT.height : 7.2);
 
 function lookFrom(p, t) {
   const dx = t.x - p.x, dy = t.y - p.y, dz = t.z - p.z;
   return { yaw: Math.atan2(-dx, -dz), pitch: Math.atan2(dy, Math.hypot(dx, dz)) };
 }
 const views = () => ({
-  approach: { p: [0, EYE, 11], t: centre },
+  approach: { p: [0, EYE, 15], t: centre },
   under: { p: [0.5, EYE, 0.7], t: new THREE.Vector3(0.2, top, 0.1) },
-  along: { p: [-6.5, EYE, 4.2], t: centre },
-  end: { p: [9.5, EYE, 0.4], t: centre },
-  balcony: { p: [7.5, CLEARANCE + 4.2, 10.5], t: centre },
+  along: { p: [-7, EYE, 5], t: centre },
+  end: { p: [11, EYE, 0.4], t: centre },
+  balcony: { p: [8.5, CLEARANCE + 4.2, 12], t: centre },
 });
 
 let tween = null;
@@ -160,12 +166,19 @@ loader.load(MODEL, (gltf) => {
       if (/Mirror/i.test(m.name)) { m.metalness = 1; m.roughness = Math.max(m.roughness, 0.04); }
     }
   });
+  // Fit it to the installed footprint, measured from the model as exported.
+  const exported = new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3());
+  if (FOOTPRINT) {
+    root.scale.set(FOOTPRINT.length / exported.x, FOOTPRINT.height / exported.y, FOOTPRINT.width / exported.z);
+    root.updateMatrixWorld(true);
+  }
   // Hang it: the lowest point sits CLEARANCE above the floor, the cables end at the ceiling.
   const box = new THREE.Box3().setFromObject(root);
   root.position.y = CLEARANCE - box.min.y;
   scene.add(root);
   box.translate(new THREE.Vector3(0, root.position.y, 0));
   const size = box.getSize(new THREE.Vector3());
+  window.__model = { exported: exported.toArray(), shown: size.toArray(), lowest: box.min.y, ceiling: box.max.y };
   top = box.max.y;
   centre = new THREE.Vector3((box.min.x + box.max.x) / 2, CLEARANCE + size.y * 0.36, (box.min.z + box.max.z) / 2);
 
