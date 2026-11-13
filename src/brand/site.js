@@ -23,4 +23,8 @@ export const site = {
   contact: 'https://www.noodinstudio.com/contact',
 };
 
+// A work's page on the portfolio (the Wix headless site). `slug` is the Work item's slug in
+// the portfolio's CMS, which is not always the slug used here.
+export const portfolioUrl = (slug) => `${site.mainSite}/project.html?slug=${encodeURIComponent(slug)}`;
+
 export const workUrl = (slug) => `${site.url}${site.workPath}/${slug}`;

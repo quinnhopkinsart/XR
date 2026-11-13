@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getProject } from '../projects/registry.js';
 import { breakable, legacyExpired } from '../projects/launch.js';
-import { site } from '../brand/site.js';
+import { portfolioUrl, site } from '../brand/site.js';
 import LaunchButton from '../components/LaunchButton.jsx';
 import QRBlock from '../components/QRBlock.jsx';
 import StatusPill from '../components/StatusPill.jsx';
@@ -157,6 +157,13 @@ export default function ProjectPage() {
             <p className="note">Hosted on 8th Wall until {formatDate(p.legacy.until)}.</p>
           )}
           <QRBlock project={p} />
+          {p.portfolio && (
+            <p className="work__portfolio">
+              <a className="textbutton" href={portfolioUrl(p.portfolio)}>
+                View in the portfolio
+              </a>
+            </p>
+          )}
         </aside>
       </div>
     </article>

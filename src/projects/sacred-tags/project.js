@@ -14,6 +14,9 @@ import cover from './cover.jpg';
 
 // Text, status and the hidden flag live in content.json beside this file.
 export default {
+  // This work's page on the portfolio: noodinstudio.com/project.html?slug=<this>.
+  portfolio: 'nuit-blanche-2025',
+
   kind: 'Interactive projection',
   categories: ['3d'],
 

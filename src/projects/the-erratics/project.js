@@ -14,6 +14,9 @@ import erraticModel from './models/erratic.glb?url';
 
 // Text, status and the hidden flag live in content.json beside this file.
 export default {
+  // This work's page on the portfolio: noodinstudio.com/project.html?slug=<this>.
+  portfolio: 'the-erratics',
+
   kind: 'Augmented reality',
   categories: ['image-target', '3d'],
   // embed: the 3D view plays inside the work page, with a full-screen link beside it.

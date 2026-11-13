@@ -21,6 +21,10 @@ export default {
   // Hosted 8th Wall link, if the work still has one. Hidden after the shutdown date.
   // legacy: { url: 'https://8th.io/xxxxx', until: '2027-02-28' },
 
+  // The slug of this work's page on the portfolio (noodinstudio.com/project.html?slug=...).
+  // Adds a "View in the portfolio" link to the work page.
+  // portfolio: '__SLUG__',
+
   // cover,
   // targets: [{ src: target1, label: 'Panel 1' }],
 

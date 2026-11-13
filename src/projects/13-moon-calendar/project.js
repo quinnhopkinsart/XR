@@ -10,6 +10,9 @@ import moonModel from './models/moon.glb?url';
 
 // Text, status and the hidden flag live in content.json beside this file.
 export default {
+  // This work's page on the portfolio: noodinstudio.com/project.html?slug=<this>.
+  portfolio: '13-moon-calendar',
+
   kind: 'Augmented reality',
   categories: ['image-target', '3d'],
 

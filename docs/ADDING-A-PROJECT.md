@@ -34,6 +34,7 @@ The File column says where each field lives. The list of `content.json` fields i
 | `credits` | content.json | no | `[{ "role": "Commissioned by", "name": "City of Toronto" }]` |
 | `launch` | project.js | no | Where the Launch button goes. See below. `null` hides the button. |
 | `legacy` | project.js | no | `{ url: 'https://8th.io/xxxxx', until: '2027-02-28' }`. When `launch.url` matches, the page shows the shutdown date and hides the button after it. |
+| `portfolio` | project.js | no | The slug of this work's page on the portfolio, for example `'seneca-mural'` for Future Ancestors. Adds a "View in the portfolio" link under the QR code, to `noodinstudio.com/project.html?slug=<slug>`. Use the Work item's slug from the portfolio's CMS; it is not always the slug used here. |
 | `cover` | project.js | no | Imported image. Without one, the card shows the title set in type. |
 | `coverAlt` | content.json | no | Alt text for the cover on the work page. |
 | `award` | project.js | no | `{ label, short, logo, logoOnDark }`. Puts the award's logo on a black tab at the top right of the home card and adds an Award line to the page header. `label` is the full name and the logo's alt text, for example `'Winner, 2024 Emerging Digital Artists Award, XR'`. `short` is the small line under the logo. `logoOnDark` is the logo with a clear background, drawn for a black ground. |
