@@ -1,6 +1,7 @@
 # Notes for Claude
 
-- Each XR work is one folder in `src/projects/<slug>/` with a `project.js` default export. The registry auto-discovers it. Do not add works to a central list.
+- Each XR work is one folder in `src/projects/<slug>/` with a `project.js` default export and a `content.json` beside it. The registry auto-discovers and merges them. Do not add works to a central list.
+- `content.json` holds the text, `status` and `hidden` (`CONTENT_FIELDS` in schema.js); `project.js` holds images, launch, targets, categories, award and models. Never set a `CONTENT_FIELDS` field in project.js: `npm run check` fails on it. Quinn edits content.json through the dashboard at `/admin` (`src/admin/`, guide in `docs/THE-DASHBOARD.md`), which commits straight to `main` through the GitHub API with his token. So `main` can move between your pull and your push: fetch before editing any content.json, and keep the dashboard's form (`toForm` and `fromForm` in Admin.jsx) in step when a content field is added. The home intro is `src/brand/copy.json`. Where these notes say "in project.js" for `hidden`, text or status, read content.json.
 - Field rules live in `src/projects/schema.js`; the human guide is `docs/ADDING-A-PROJECT.md`. Keep the two in sync when a field changes.
 - Scaffold new works with `npm run new -- "Title"` (add `--build` for a self-hosted 8th Wall build).
 - Colours and type come only from `src/brand/tokens.css`. Components never hard-code colours.

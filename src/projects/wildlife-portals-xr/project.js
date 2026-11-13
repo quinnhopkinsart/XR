@@ -16,47 +16,16 @@ import salmon from './targets/salmon.webp';
 // One project, two iterations: Wildlife XR (2024) and these portals (2025). The portfolio
 // lists both under this work, so keep the two descriptions in step.
 
+// Text, status and the hidden flag live in content.json beside this file.
 export default {
-  title: 'Wildlife Portals XR',
-  year: '2024 to 2025',
   kind: 'Augmented reality',
   categories: ['image-target', '3d'],
-  status: 'live',
-  venue: 'ROM After Dark, Royal Ontario Museum',
-  location: 'Tkaronto',
-
-  summary:
-    'Five round prints open into the places a polar bear, an eagle, two deer, a lynx and salmon live, and a camera floats in front of you to take their picture.',
-
-  description: [
-    'Wildlife Portals is five round prints. Hold a phone to one and the picture opens like a window. Through it is the place its animal lives: a polar bear on the sea ice through a ship\'s porthole, an eagle at a lake through a ring of branches, two deer in the woods and a lynx in the snow from a photographer\'s blind, and salmon over a riverbed of pale stones.',
-    'I made it for ROM After Dark in two iterations, a year apart, both during the museum\'s International Wildlife Photography Awards exhibition. The first, Wildlife XR in 2024, brought five animals to life in the galleries: a polar bear on an ice floe, deer, eagles, fish and a T-rex among the dinosaur skeletons. In 2025 I rebuilt it as these five portals. Both ran as a scavenger hunt, with visitors searching the museum for each animal.',
-    'A camera floats at the bottom of the screen. Tap it and it rises to your eye, the screen flashes, and the photo is yours to keep. I built it so anyone holding a phone gets to be the wildlife photographer, with the animals close enough to frame.',
-  ],
-
-  bookable:
-    'Wildlife Portals is available for events. I can set up the five prints as a scavenger hunt in your space, the way it ran at the ROM.',
-
-  howTo: [
-    'Press Enter in the frame above. The prints open in a 3D view on any device.',
-    'Choose an animal with the buttons along the bottom. Drag to look into the portal from the side. On a phone, drag or tap Tilt.',
-    'Tap the camera, or Take photo, to take a picture. Download it from the preview.',
-    'For AR, print one of the targets below or open it on another screen. Tap AR at the top right on a phone and point your camera at the print.',
-  ],
-
-  embedNote: 'Press Enter, choose an animal and tap the camera to take a photo. On a phone, tap AR to open the camera.',
-
-  credits: [
-    { role: 'Artwork and AR', name: 'Quinn Hopkins' },
-  ],
 
   // embed: the 3D view plays inside the work page, with a full-screen link beside it.
   // Framed, the AR button opens the camera in a new tab (WPX_FRAMED in the build).
   launch: { type: 'build', path: '/builds/wildlife-portals-xr/index.html', embed: true },
 
   cover,
-  coverAlt:
-    'A polar bear stands on an ice floe in open water while a gull flies past, seen through a brass ship\'s porthole on a dark green wall.',
   targets: [
     {
       src: polarBear,
@@ -91,6 +60,4 @@ export default {
   // { src: polarBearModel, recolor: '--black' },
   // { src: eagleModel, recolor: '--black' },
   models: [],
-
-  tags: ['image target', 'five targets', 'photo capture'],
 };

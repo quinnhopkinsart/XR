@@ -10,42 +10,15 @@ import cover from './cover.jpg';
 // Listed on the home grid since November 13, 2026, on Quinn's call. The description names
 // Kaswentha, the Two Row Wampum belt, at his request.
 
+// Text, status and the hidden flag live in content.json beside this file.
 export default {
-  title: 'Aabijijiwan',
-  year: '2026',
   kind: 'Suspended sculpture',
   categories: ['3d'],
-  status: 'in-development',
-  venue: 'John Innes Community Recreation Centre',
-  location: 'Moss Park, Tkaronto',
-
-  summary:
-    'One river at five moments in its life, hung as five layers of wood and mirror that run side by side like the rows of Kaswentha, the Two Row Wampum belt. Walk underneath it.',
-
-  description: [
-    'Aabijijiwan is Anishinaabemowin for "it flows continuously." The sculpture is one river shown at five moments in its life, hung as five layers of CNC-cut wood. The youngest moment hangs highest, its channel almost straight. By the lowest layer the bends have grown until the river is two-thirds longer than where it began.',
-    'The five channels run parallel through a shared space and never touch, the way the two rows do on Kaswentha, the Two Row Wampum belt. Set into each one is a line of mirror tiles, like the beads of the belt, clear on one layer and purple on the next.',
-    'CNC-cut plywood, acrylic mirror, steel and steel cable, suspended in the atrium. This is the design model, Rev E.',
-  ],
-
-  howTo: [
-    'Drag to look around. You start in the Level 2 lounge with the sculpture overhead, so look up.',
-    'Tap or click the floor to walk there, or use the arrow keys or WASD.',
-    'Use the buttons to stand in the lounge, underneath, in the corridor, at the Level 3 glazing, on the Level 4 track, or far down the atrium.',
-    'The figure under the work is 1.7 m tall.',
-  ],
-
-  embedNote: 'Drag to look. Tap the floor to walk under the sculpture.',
-
-  credits: [{ role: 'Commissioned by', name: 'City of Toronto' }],
 
   // embed: the viewer plays inside the work page, with a full-screen link beside it.
   launch: { type: 'build', path: '/builds/aabijijiwan/index.html', embed: true },
 
   cover,
-  coverAlt:
-    'Five wavy wooden channels inlaid with clear and purple mirror tiles, hanging on thin cables from a ceiling panel, seen from below.',
 
   models: [],
-  tags: ['public art', 'sculpture', 'design model'],
 };
