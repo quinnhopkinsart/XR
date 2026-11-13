@@ -9,6 +9,7 @@ export default {
   title: 'Trading Post Humanism',
   year: '2026',
   kind: 'Augmented reality',
+  categories: ['image-target', '3d'],
   status: 'live',
   venue: 'Worth Gallery',
   location: 'Tkaronto',

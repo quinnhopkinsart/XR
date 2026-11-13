@@ -20,6 +20,7 @@ This copies `src/projects/_template/` into a new folder and fills in the title, 
 | `summary` | yes | One sentence for the card. |
 | `description` | yes | Array of paragraphs. Follow the voice guide in the Noodin Studio Website project. |
 | `kind` | no | Medium. Drives the filter buttons on the home page. Default `'Augmented reality'`. Use the same wording across works, for example `'Interactive projection'`, `'Virtual reality'`. |
+| `categories` | no | How the work is experienced: any of `'image-target'`, `'world-tracking'`, `'3d'`. A work can hold more than one, for example `['image-target', '3d']` for an AR work with a 3D view. Each is a coloured tag on the card and a filter button on the home page. A filter button only appears once a listed work uses its category. The list, labels and colours live in `CATEGORIES` in `src/projects/schema.js`. |
 | `status` | no | `live`, `migrating`, `in-development` or `archived`. Default `live`. Anything but `live` shows a pill. |
 | `venue`, `location` | no | Shown in the page header. |
 | `howTo` | no | Array of steps for the "How to try it" list. |

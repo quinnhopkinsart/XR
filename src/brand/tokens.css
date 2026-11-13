@@ -57,6 +57,15 @@
   --hide-smoke: #7e5734;
   --sinew: #efe3c8;
 
+  /* Category tags on the cards (CATEGORIES in src/projects/schema.js). They sit on
+     the black card panel, in the portfolio's tag colours. White text on each:
+     purple 8.2:1, green 4.8:1, teal 5.0:1. The portfolio's green (#008a3a) is
+     4.47:1 with white, so it is a shade deeper here. */
+  --tag-purple: #5a1ad8;
+  --tag-green: #00843a;
+  --tag-teal: #007c85;
+  --on-tag: var(--white);
+
   /* Type */
   --font-display: 'Sora', system-ui, sans-serif;
   --font-body: 'Inter', system-ui, sans-serif;

@@ -464,6 +464,61 @@ main {
   color: var(--white);
 }
 
+.works__filters {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+/* A pressed category filter takes its tag colour */
+.filter--purple[aria-pressed='true'] {
+  background: var(--tag-purple);
+  border-color: var(--black);
+  color: var(--on-tag);
+}
+.filter--green[aria-pressed='true'] {
+  background: var(--tag-green);
+  border-color: var(--black);
+  color: var(--on-tag);
+}
+.filter--teal[aria-pressed='true'] {
+  background: var(--tag-teal);
+  border-color: var(--black);
+  color: var(--on-tag);
+}
+
+/* Category tags on the cards, as on the portfolio */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.6rem 0 0.7rem;
+  padding: 0;
+  list-style: none;
+}
+
+.tag {
+  display: inline-block;
+  padding: 0.4em 0.72em 0.36em;
+  border-radius: 999px;
+  color: var(--on-tag);
+  font: 500 0.68rem / 1 var(--font-display);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tag--purple {
+  background: var(--tag-purple);
+}
+.tag--green {
+  background: var(--tag-green);
+}
+.tag--teal {
+  background: var(--tag-teal);
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));

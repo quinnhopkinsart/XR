@@ -12,6 +12,7 @@ export default {
   title: '13 Moon Calendar',
   year: '2024',
   kind: 'Augmented reality',
+  categories: ['image-target', '3d'],
   status: 'live',
   venue: 'La Leun Waashisho, MuseumsQuartier',
   location: 'Vienna',

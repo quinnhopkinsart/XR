@@ -2,7 +2,7 @@
 // Folders starting with "_" (like _template) are ignored.
 // Nothing else needs editing to add a work.
 
-import { normalizeProject, validateProject } from './schema.js';
+import { CATEGORIES, normalizeProject, validateProject } from './schema.js';
 
 const modules = import.meta.glob(['./*/project.js', '!./_*/project.js'], { eager: true });
 
@@ -33,3 +33,8 @@ export const projects = all.filter((p) => !p.hidden);
 export const getProject = (slug) => all.find((p) => p.slug === slug);
 
 export const allKinds = [...new Set(projects.map((p) => p.kind))].sort();
+
+// Categories in use by listed works, in the order schema.js sets.
+export const allCategories = Object.keys(CATEGORIES).filter((c) =>
+  projects.some((p) => p.categories.includes(c)),
+);

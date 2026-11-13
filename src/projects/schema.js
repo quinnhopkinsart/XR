@@ -8,6 +8,14 @@ export const STATUSES = {
   archived: 'Archived',
 };
 
+// How a work is experienced. A work can hold more than one. The order here is the
+// order of the filter buttons and of the tags on a card. `tone` names a --tag-* token.
+export const CATEGORIES = {
+  'image-target': { label: 'Image target', tone: 'purple' },
+  'world-tracking': { label: 'World tracking', tone: 'green' },
+  '3d': { label: '3D', tone: 'teal' },
+};
+
 export const LAUNCH_TYPES = ['build', 'external', 'component'];
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -56,6 +64,15 @@ export function validateProject(p, folder) {
       errors.push(`${where}: award.logoOnDark is required (the card badge is a black panel)`);
     }
   }
+  if (!Array.isArray(p.categories)) {
+    errors.push(`${where}: categories must be an array`);
+  } else {
+    p.categories.forEach((c) => {
+      if (!CATEGORIES[c]) {
+        errors.push(`${where}: category "${c}" must be one of ${Object.keys(CATEGORIES).join(', ')}`);
+      }
+    });
+  }
   if (typeof p.hidden !== 'boolean') errors.push(`${where}: hidden must be true or false`);
   if (!Array.isArray(p.models)) {
     errors.push(`${where}: models must be an array`);
@@ -80,6 +97,7 @@ export function normalizeProject(raw, folder) {
     howTo: [],
     targets: [],
     models: [],
+    categories: [],
     tags: [],
     order: 0,
     award: null,
