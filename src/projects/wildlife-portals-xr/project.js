@@ -4,8 +4,8 @@ import eagle from './targets/eagle.webp';
 import deer from './targets/deer.webp';
 import lynx from './targets/lynx.webp';
 import salmon from './targets/salmon.webp';
-import polarBearModel from './models/polar-bear.glb?url';
-import eagleModel from './models/eagle.glb?url';
+// import polarBearModel from './models/polar-bear.glb?url';
+// import eagleModel from './models/eagle.glb?url';
 
 // Rebuilt from the 8th Wall project "wildlife-ar" for the self-hosted engine. Its export held
 // no scene code, so the scenes, models and images were recovered from the hosted app.
@@ -84,10 +84,11 @@ export default {
   ],
 
   // The polar bear and the eagle join the floating background.
-  models: [
-    { src: polarBearModel, recolor: '--black' },
-    { src: eagleModel, recolor: '--black' },
-  ],
+  // The floating background is curated: this work's pieces are held back for now.
+  // To bring them back, restore the two model imports at the top and these lines.
+  // { src: polarBearModel, recolor: '--black' },
+  // { src: eagleModel, recolor: '--black' },
+  models: [],
 
   tags: ['image target', 'five targets', 'photo capture'],
 };
