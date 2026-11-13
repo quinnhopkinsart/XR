@@ -1,8 +1,9 @@
 import cover from './cover.jpg';
 
 // A design model of a suspended sculpture, not an AR work: there is no camera view.
-// The build in public/builds/aabijijiwan/ is a three.js viewer with the sculpture hung
-// from a ceiling, a 1.7 m figure for scale, and the visitor walking the floor under it.
+// The build in public/builds/aabijijiwan/ is a three.js viewer with the sculpture hung in
+// a rebuilt atrium of the recreation centre, a 1.7 m figure for scale, and the visitor
+// walking the Level 2 lounge under it.
 // The installed size and the clearance above the floor are FOOTPRINT and CLEARANCE in the
 // build's main.js: 8 m long, 8 m tall, 2 m wide, lowest point 5 m up.
 //
@@ -28,9 +29,9 @@ export default {
   ],
 
   howTo: [
-    'Drag to look around. The sculpture hangs from the ceiling, so look up.',
+    'Drag to look around. You start in the Level 2 lounge with the sculpture overhead, so look up.',
     'Tap or click the floor to walk there, or use the arrow keys or WASD.',
-    'Use the buttons to stand at the approach, underneath, alongside, end on, or above.',
+    'Use the buttons to stand in the lounge, underneath, in the corridor, at the Level 3 glazing, on the Level 4 track, or far down the atrium.',
     'The figure under the work is 1.7 m tall.',
   ],
 
