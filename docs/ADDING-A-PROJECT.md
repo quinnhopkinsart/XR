@@ -119,7 +119,7 @@ Keep each file under about 2 MB. Compress a heavy model before adding it:
 npx @gltf-transform/cli draco in.glb out.glb
 ```
 
-Every model in every listed work is shown. Sculptures sit at different depths: some in front of the focal plane, some far behind. On desktop a lens blurs whatever is off the focal plane; phones skip the lens, keep a light haze, and show only the 14 largest parts of each split sculpture. The field stays still for anyone with reduced motion turned on, and pauses when the tab is hidden.
+Every model listed in `models` is shown, so the field is curated by what each work lists. A work can keep its `.glb` files in its folder and leave `models` empty. Sculptures sit at different depths: some in front of the focal plane, some far behind. On desktop a lens blurs whatever is off the focal plane; phones skip the lens, keep a light haze, and show only the 14 largest parts of each split sculpture. The field stays still for anyone with reduced motion turned on, and pauses when the tab is hidden.
 
 ## 4. Check and ship
 

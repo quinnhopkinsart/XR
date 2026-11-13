@@ -3,10 +3,10 @@ import cityMural from './targets/city-mural.jpg';
 import bushMural from './targets/bush-mural.jpg';
 import edaaLogo from './award/edaa.png';
 import edaaLogoOnDark from './award/edaa-on-dark.png';
-import mishiModel from './models/mishibizhoo.glb?url';
-import nanaModel from './models/nanabush.glb?url';
-import moozModel from './models/mooz.glb?url';
-import bibModel from './models/biboonkeonini.glb?url';
+// import mishiModel from './models/mishibizhoo.glb?url';
+// import nanaModel from './models/nanabush.glb?url';
+// import moozModel from './models/mooz.glb?url';
+// import bibModel from './models/biboonkeonini.glb?url';
 
 // Rebuilt from the 8th Wall project "stellar-narratives" (code-only export) for the
 // self-hosted engine. Source and notes: the stellar-narratives project folder, README.md.
@@ -79,12 +79,13 @@ export default {
 
   // The four seasonal figures join the floating background. Their own material is the
   // scanning-line shader from the build, so they take a token colour here.
-  models: [
-    { src: mishiModel, recolor: '--black' },
-    { src: nanaModel, recolor: '--black' },
-    { src: moozModel, recolor: '--black' },
-    { src: bibModel, recolor: '--black' },
-  ],
+  // The floating background is curated: this work's pieces are held back for now.
+  // To bring them back, restore the four model imports at the top and these lines.
+  // { src: mishiModel, recolor: '--black' },
+  // { src: nanaModel, recolor: '--black' },
+  // { src: moozModel, recolor: '--black' },
+  // { src: bibModel, recolor: '--black' },
+  models: [],
 
   tags: ['image target', 'public art', 'mural', 'constellations', '13 moons', 'award'],
 };
