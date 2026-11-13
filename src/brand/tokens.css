@@ -66,6 +66,16 @@
   --tag-teal: #007c85;
   --on-tag: var(--white);
 
+  /* Landing title signal (titleSignal.js): the light that moves through the letters,
+     the scan line, and the ink of the letters and corner marks. The lights only
+     colour the core of each letter; a black rim always stays against the ground. */
+  --title-ink: var(--black);
+  --title-scan: var(--white);
+  --title-light-1: var(--tag-purple);
+  --title-light-2: var(--tag-teal);
+  --title-light-3: var(--saffron);
+  --title-light-4: var(--tag-green);
+
   /* Type */
   --font-display: 'Sora', system-ui, sans-serif;
   --font-body: 'Inter', system-ui, sans-serif;

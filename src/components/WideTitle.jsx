@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { motion, reducedMotion } from '../field/motion.js';
+import { createTitleSignal } from './titleSignal.js';
 
 // A one-line title set as large as the page allows, then stretched horizontally
 // so it spans the full width of the content column exactly, at any screen size.
@@ -15,6 +16,37 @@ export default function WideTitle({ children, badge, label, className = '' }) {
   const box = useRef(null);
   const text = useRef(null);
   const tag = useRef(null);
+  const screen = useRef(null);
+
+  // The signal: the letters redrawn on a canvas that answers the pointer and tilt
+  // (titleSignal.js). The DOM text stays underneath for layout and as the fallback.
+  useEffect(() => {
+    const h1 = box.current;
+    if (!h1 || !text.current || !screen.current) return undefined;
+    const signal = createTitleSignal({
+      box: h1,
+      text: text.current,
+      canvas: screen.current,
+      still: reducedMotion,
+    });
+    if (!signal) return undefined;
+    h1.classList.add('is-live');
+
+    // While the title is on screen it leads, and the floating pieces sit back.
+    const root = document.documentElement;
+    const io = new IntersectionObserver(
+      ([entry]) => root.classList.toggle('title-leads', entry.isIntersecting),
+      { threshold: 0.35 },
+    );
+    io.observe(h1);
+
+    return () => {
+      io.disconnect();
+      root.classList.remove('title-leads');
+      h1.classList.remove('is-live');
+      signal.destroy();
+    };
+  }, []);
 
   useLayoutEffect(() => {
     const h1 = box.current;
@@ -129,6 +161,7 @@ export default function WideTitle({ children, badge, label, className = '' }) {
       <span className="wide-title__text" ref={text} aria-hidden={label ? true : undefined}>
         {children}
       </span>
+      <canvas className="wide-title__screen" ref={screen} aria-hidden="true" />
       {/* Splotches of gaussian blur laid over the title and whatever floats behind it */}
       <span className="wide-title__blur" aria-hidden="true" />
       {badge && (
