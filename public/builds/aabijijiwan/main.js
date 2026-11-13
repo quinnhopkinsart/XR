@@ -2,9 +2,12 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/DRACOLoader.js';
 import { RoomEnvironment } from 'three/addons/RoomEnvironment.js';
+import { RGBELoader } from 'three/addons/RGBELoader.js';
+import { buildRoom, keepOnFloor, L, P } from './room.js';
 
-// Aabijijiwan hangs from a ceiling and you walk the floor under it, the way you would
-// in the atrium. The camera stays at eye height. Drag to look, tap the floor to walk.
+// Aabijijiwan hangs in the atrium of the John Innes Community Recreation Centre and you
+// walk the Level 2 lounge under it, the way you will in the building. The camera stays at
+// eye height. Drag to look, tap the floor to walk. The room is built in room.js.
 //
 // The model is in metres, Y up, with its lowest point at y = 0 and its cables ending
 // at its highest point. These numbers set the work and the room:
@@ -17,9 +20,13 @@ const FOOTPRINT = { length: 8, height: 8, width: 2 };
 const CLEARANCE = 5.0;   // metres from the floor to the lowest point of the sculpture
 const EYE = 1.6;         // metres, the visitor's eye height
 const FIGURE = 1.7;      // metres, the figure standing under the work
-const ROOM = 16;         // metres, how far from the centre you can walk
 
 const MODEL = './models/aabijijiwan.glb';
+// What is outside the windows, and what the mirror tiles reflect: a 360 degree photo of
+// a park. An .hdr or a plain equirectangular .jpg both work, so a panorama shot in Moss
+// Park can replace this one. ENV_TURN spins it, in degrees, to put the open park to the south.
+const ENV = './env/rooitou_park_1k.hdr';
+const ENV_TURN = 0;
 const canvas = document.getElementById('stage');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const framed = window.top !== window.self;
@@ -27,8 +34,6 @@ const framed = window.top !== window.self;
 const css = getComputedStyle(document.documentElement);
 const token = (name) => new THREE.Color(css.getPropertyValue(name).trim());
 const GROUND = token('--ground');
-const GROUND_DEEP = token('--ground-deep');
-const OXBLOOD = token('--oxblood');
 const BLACK = token('--black');
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
@@ -39,31 +44,61 @@ renderer.toneMappingExposure = 1.0;
 renderer.setClearColor(GROUND, 1);
 
 const scene = new THREE.Scene();
-// The room is the site's red ground: the floor fades into it at the edges.
-scene.fog = new THREE.Fog(GROUND, 14, 52);
+// Until the park photo loads, and if it fails, the windows look onto the site's red ground.
 
 // Reflections matter here: the mirror tiles need something to mirror.
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 scene.environmentIntensity = 0.9;
 
-const key = new THREE.DirectionalLight(0xfff2e0, 2.0);
-key.position.set(5, 12, 7);
-scene.add(key);
-// Light bounced up off the red floor reaches the undersides, which is the side you see.
-scene.add(new THREE.HemisphereLight(0xfff2e0, GROUND_DEEP, 0.9));
+// The work reflects the room it hangs in, not the open park: once the room and the park
+// are both there, one look around from the centre of the work becomes its reflections.
+let work = null;
+function reflectRoom() {
+  if (!work) return;
+  const target = new THREE.WebGLCubeRenderTarget(256, { type: THREE.HalfFloatType });
+  const probe = new THREE.CubeCamera(0.1, 120, target);
+  probe.position.copy(centre);
+  work.visible = false;
+  probe.update(renderer, scene);
+  work.visible = true;
+  const env = pmrem.fromCubemap(target.texture).texture;
+  target.dispose();
+  work.traverse((o) => {
+    if (!o.isMesh) return;
+    for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+      m.envMap = env;
+      m.envMapIntensity = 1.25;
+      m.needsUpdate = true;
+    }
+  });
+}
 
-// Floor: flat colour with a one-metre grid, so distance and size read at a glance.
+function usePark(tex) {
+  tex.mapping = THREE.EquirectangularReflectionMapping;
+  const turn = THREE.MathUtils.degToRad(ENV_TURN);
+  scene.background = tex;
+  scene.backgroundRotation.y = turn;
+  scene.environment = tex;
+  scene.environmentRotation.y = turn;
+  scene.environmentIntensity = 1.0;
+  reflectRoom();
+}
+if (/\.hdr$/i.test(ENV)) {
+  new RGBELoader().load(ENV, usePark, undefined, (e) => console.warn('Park photo did not load', e));
+} else {
+  new THREE.TextureLoader().load(ENV, (tex) => { tex.colorSpace = THREE.SRGBColorSpace; usePark(tex); },
+    undefined, (e) => console.warn('Park photo did not load', e));
+}
+
+// Daylight comes through the south facade; the wood throws a warm bounce back up.
+const key = new THREE.DirectionalLight(0xfff2e0, 2.2);
+key.position.set(-6, 16, 12);
+scene.add(key);
+scene.add(new THREE.HemisphereLight(0xfff6ea, 0xc9a577, 1.5));
+
 const flat = (color, extra = {}) => new THREE.MeshBasicMaterial({ color, toneMapped: false, ...extra });
-const floor = new THREE.Mesh(new THREE.CircleGeometry(70, 64), flat(GROUND_DEEP));
-floor.rotation.x = -Math.PI / 2;
-scene.add(floor);
-const grid = new THREE.GridHelper(120, 120, BLACK, BLACK);
-grid.material.transparent = true;
-grid.material.opacity = 0.22;
-grid.material.toneMapped = false;
-grid.position.y = 0.003;
-scene.add(grid);
+buildRoom(scene, renderer);
 
 function shadow(w, d, x, z, strength) {
   const c = document.createElement('canvas');
@@ -76,15 +111,15 @@ function shadow(w, d, x, z, strength) {
   g.fillRect(0, 0, 128, 128);
   const m = new THREE.Mesh(
     new THREE.PlaneGeometry(w, d),
-    flat(OXBLOOD, { map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }),
+    flat(BLACK, { map: new THREE.CanvasTexture(c), transparent: true, opacity: 0.55, depthWrite: false }),
   );
   m.rotation.x = -Math.PI / 2;
   m.position.set(x, 0.006, z);
   scene.add(m);
 }
 
-// A person for scale, standing just off the centre line and looking up.
-const FIGURE_AT = new THREE.Vector3(1.7, 0, 1.9);
+// A person for scale, standing in the lounge beside the wood block and looking up.
+const FIGURE_AT = new THREE.Vector3(1.5, 0, 1.6);
 function buildFigure() {
   const mat = new THREE.MeshStandardMaterial({ color: BLACK, roughness: 0.85, metalness: 0 });
   const g = new THREE.Group();
@@ -115,7 +150,7 @@ buildFigure();
 // Camera: a visitor on the floor.
 const camera = new THREE.PerspectiveCamera(58, 1, 0.05, 200);
 camera.rotation.order = 'YXZ';
-const me = { x: 0, y: EYE, z: 15, yaw: 0, pitch: 0.45 };
+const me = { x: 2.3, y: EYE, z: 2.7, yaw: 0, pitch: 0.45 };
 let centre = new THREE.Vector3(0, CLEARANCE + 2.6, 0); // refined once the model loads
 let top = CLEARANCE + (FOOTPRINT ? FOOTPRINT.height : 7.2);
 
@@ -123,12 +158,15 @@ function lookFrom(p, t) {
   const dx = t.x - p.x, dy = t.y - p.y, dz = t.z - p.z;
   return { yaw: Math.atan2(-dx, -dz), pitch: Math.atan2(dy, Math.hypot(dx, dz)) };
 }
+// Places to stand: the lounge under the work, the Level 2 corridor, the glazing of the
+// Level 3 corridor and the Level 4 track, and the long view from the east in MJMA's render.
 const views = () => ({
-  approach: { p: [0, EYE, 15], t: centre },
-  under: { p: [0.5, EYE, 0.7], t: new THREE.Vector3(0.2, top, 0.1) },
-  along: { p: [-7, EYE, 5], t: centre },
-  end: { p: [11, EYE, 0.4], t: centre },
-  balcony: { p: [8.5, CLEARANCE + 4.2, 12], t: centre },
+  lounge: { p: [2.3, EYE, 2.7], t: centre },
+  under: { p: [1.5, EYE, 0.1], t: new THREE.Vector3(0.2, top, 0) },
+  corridor: { p: [8.6, EYE, -3.0], t: centre },
+  level3: { p: [6.5, L.level3 + EYE, -3.3], t: centre },
+  track: { p: [7, L.level4 + EYE, -3.3], t: new THREE.Vector3(centre.x, centre.y + 0.4, 0) },
+  long: { p: [14, L.level3 + 1.9, 0.9], t: new THREE.Vector3(-1, centre.y + 0.4, 0.3) },
 });
 
 let tween = null;
@@ -182,14 +220,35 @@ loader.load(MODEL, (gltf) => {
   top = box.max.y;
   centre = new THREE.Vector3((box.min.x + box.max.x) / 2, CLEARANCE + size.y * 0.36, (box.min.z + box.max.z) / 2);
 
-  // The ceiling it hangs from: a black slab a little larger than the work.
-  const slab = new THREE.Mesh(
-    new THREE.BoxGeometry(size.x + 3.2, 0.16, size.z + 3.2),
-    new THREE.MeshStandardMaterial({ color: BLACK, roughness: 0.7, metalness: 0, fog: false }),
-  );
-  slab.position.set(centre.x, top + 0.08, centre.z);
-  scene.add(slab);
-  shadow(size.x * 1.25, size.z * 2.6, centre.x, centre.z, 0.7);
+  // Hangers: steel rods carry on from the highest points of the model up to the ceiling,
+  // where the beams above take the load.
+  const rise = L.ceiling - top;
+  if (rise > 0.02) {
+    const steel = new THREE.MeshStandardMaterial({ color: 0x9a9da0, roughness: 0.35, metalness: 1 });
+    const tops = new Map();
+    const p = new THREE.Vector3();
+    root.updateMatrixWorld(true);
+    root.traverse((o) => {
+      if (!o.isMesh) return;
+      const pos = o.geometry.attributes.position;
+      for (let i = 0; i < pos.count; i += 1) {
+        p.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+        if (p.y < top - 0.02) continue;
+        const k = `${Math.round(p.x / 0.5)}|${Math.round(p.z / 0.5)}`;
+        const t = tops.get(k) || { x: 0, z: 0, n: 0 };
+        t.x += p.x; t.z += p.z; t.n += 1;
+        tops.set(k, t);
+      }
+    });
+    for (const t of [...tops.values()].slice(0, 12)) {
+      const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, rise, 10), steel);
+      rod.position.set(t.x / t.n, top + rise / 2, t.z / t.n);
+      scene.add(rod);
+    }
+  }
+
+  work = root;
+  reflectRoom();
 
   Object.assign(me, lookFrom(new THREE.Vector3(me.x, me.y, me.z), centre));
   document.getElementById('loader').classList.add('done');
@@ -214,10 +273,7 @@ let pinch = 0;
 const ray = new THREE.Raycaster();
 const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 
-function clampToRoom(x, z) {
-  const d = Math.hypot(x, z);
-  return d > ROOM ? { x: (x / d) * ROOM, z: (z / d) * ROOM } : { x, z };
-}
+const clampToRoom = keepOnFloor;
 function walkTo(clientX, clientY) {
   const r = canvas.getBoundingClientRect();
   ray.setFromCamera(new THREE.Vector2(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1), camera);
@@ -225,7 +281,7 @@ function walkTo(clientX, clientY) {
   if (!hit) return; // tapped above the horizon
   const to = clampToRoom(hit.x, hit.z);
   const dist = Math.hypot(to.x - me.x, to.z - me.z);
-  travel({ x: to.x, z: to.z, y: EYE }, Math.min(2600, 500 + dist * 260));
+  travel({ x: to.x, z: to.z, y: EYE }, Math.min(2600, 500 + dist * 260 + Math.abs(me.y - EYE) * 150));
   clearActive();
 }
 function step(forward, sideways) {
