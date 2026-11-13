@@ -26,7 +26,7 @@ The File column says where each field lives. The list of `content.json` fields i
 | `year` | content.json | yes | String. Sorts the grid, newest first. `'2024'` or `'2024 to 2025'` both work; sorting reads the first four digits. |
 | `summary` | content.json | yes | One sentence for the card. |
 | `description` | content.json | yes | Array of paragraphs. Follow the voice guide in the Noodin Studio Website project. |
-| `kind` | project.js | no | Medium. Drives the filter buttons on the home page. Default `'Augmented reality'`. Use the same wording across works, for example `'Interactive projection'`, `'Virtual reality'`. |
+| `kind` | project.js | no | Medium. Shown on the card and in the page header; the home page no longer filters by it. Default `'Augmented reality'`. Use the same wording across works, for example `'Interactive projection'`, `'Virtual reality'`. |
 | `categories` | project.js | no | How the work is experienced: any of `'image-target'`, `'world-tracking'`, `'3d'`. A work can hold more than one, for example `['image-target', '3d']` for an AR work with a 3D view. Each is a coloured tag on the card and a filter button on the home page. A filter button only appears once a listed work uses its category. The list, labels and colours live in `CATEGORIES` in `src/projects/schema.js`. |
 | `status` | content.json | no | `live`, `migrating`, `in-development` or `archived`. Default `live`. Anything but `live` shows a pill. |
 | `venue`, `location` | content.json | no | Shown in the page header. |
