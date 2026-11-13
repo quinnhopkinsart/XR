@@ -1,0 +1,103 @@
+/* Woodland Be[AR], styled to match xr.noodin.studio.
+   The colours and type below mirror src/brand/tokens.css in the XR repo.
+   A build is served on its own, so it cannot read those tokens: change them in both places.
+   The 3D stage is saffron, not the site's red ground, because the sculpture's red parts
+   disappear on red. Text on saffron is black. */
+:root{
+  --ground:#ff3314; --ground-deep:#d92408; --black:#000; --white:#fff;
+  --saffron:#ffb31a; --saffron-deep:#e89a00; --oxblood:#7a1004;
+  --stage:var(--saffron);
+  --font-display:'Sora',system-ui,sans-serif;
+  --font-body:'Inter',system-ui,sans-serif;
+  --tracking-label:.08em;
+  --step--1:clamp(.78rem,.76rem + .1vw,.84rem);
+  --step-0:clamp(1rem,.96rem + .2vw,1.125rem);
+  --pad:max(16px,env(safe-area-inset-left));
+  --top:max(16px,env(safe-area-inset-top));
+  --bottom:max(16px,env(safe-area-inset-bottom));
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--stage);color:var(--black);overflow:hidden}
+.is-ar,.is-ar body{background:var(--black)}
+body{height:100dvh;font:400 var(--step-0)/1.6 var(--font-body);-webkit-font-smoothing:antialiased;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+[hidden]{display:none!important}
+.is-3d .only-ar,.is-ar .only-3d{display:none!important}
+:focus-visible{outline:2px solid var(--black);outline-offset:3px}
+.is-ar :focus-visible{outline-color:var(--white)}
+
+#stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#stage:focus-visible{outline-offset:-4px}
+
+button,.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;padding:.4rem .9rem;
+  border:1px solid var(--black);border-radius:0;background:var(--stage);color:var(--black);text-decoration:none;cursor:pointer;
+  font:500 var(--step--1) var(--font-display);letter-spacing:var(--tracking-label);text-transform:uppercase;touch-action:manipulation}
+button:hover,.btn:hover{background:var(--saffron-deep)}
+button[disabled]{opacity:.6;cursor:default}
+/* In AR the controls sit on the camera picture, so they are black panels with white text. */
+.is-ar button,.is-ar .btn{background:var(--black);color:var(--white);border-color:var(--white)}
+.is-ar button:hover,.is-ar .btn:hover{background:var(--oxblood)}
+button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+#brand-home{position:fixed;top:var(--top);left:var(--pad);display:block;width:72px;padding:6px;background:var(--black);line-height:0}
+#brand-home img{width:100%;height:auto}
+.is-framed #brand-home{width:56px}
+
+#top-actions{position:fixed;top:var(--top);right:var(--pad);display:flex;gap:8px}
+.is-desktop #ar-btn{display:none}
+#ar-btn{background:var(--black);color:var(--white)}
+#ar-btn:hover{background:var(--oxblood)}
+
+#controls{position:fixed;left:50%;transform:translateX(-50%);bottom:var(--bottom);display:flex;gap:6px;align-items:stretch;
+  max-width:calc(100vw - 2*var(--pad))}
+#controls button{padding:.4rem .6rem}
+#size{display:inline-flex;align-items:center;justify-content:center;min-width:4.2em;padding:0 .4em;background:var(--black);color:var(--white);
+  font:500 var(--step--1) var(--font-display);letter-spacing:var(--tracking-label);font-variant-numeric:tabular-nums}
+.is-ar #size{border:1px solid var(--white)}
+
+#hint,#status{position:fixed;left:50%;transform:translateX(-50%);margin:0;padding:.35em .7em;max-width:calc(100vw - 2*var(--pad));width:max-content;
+  text-align:center;font:400 var(--step--1)/1.4 var(--font-display);pointer-events:none}
+#hint{bottom:calc(var(--bottom) + 58px);background:var(--stage);transition:opacity .8s}
+#hint.gone{opacity:0}
+.is-ar #hint{bottom:calc(var(--bottom) + 150px);background:var(--black);color:var(--white)}
+#status{top:calc(var(--top) + 60px);background:var(--black);color:var(--white)}
+.hint-touch{display:none}
+@media (hover:none){.hint-mouse{display:none}.hint-touch{display:inline}}
+
+/* The shutter: a white ring with a white disc, on a black plate so it reads on any room. */
+#shutter{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--bottom) + 62px);width:76px;height:76px;padding:0;
+  border:4px solid var(--white);border-radius:50%;background:var(--black)}
+#shutter span{display:block;width:54px;height:54px;border-radius:50%;background:var(--white);transition:transform .12s var(--ease)}
+#shutter:active span{transform:scale(.86)}
+#shutter:hover{background:var(--black)}
+#flash{position:fixed;inset:0;background:var(--white);pointer-events:none;animation:flash .35s var(--ease) forwards}
+@keyframes flash{from{opacity:.85}to{opacity:0}}
+
+#ar-start{position:fixed;inset:0;z-index:5;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1rem;
+  padding:var(--pad);padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right));
+  background:var(--black);color:var(--ground)}
+#ar-start h1{margin:0;color:var(--white);font:200 clamp(2rem,9vw,3.4rem)/1.05 var(--font-display);letter-spacing:-.02em;text-transform:uppercase}
+#ar-start p{margin:0;max-width:34em}
+#ar-go{background:var(--saffron);color:var(--black);border-color:var(--saffron);padding:.7rem 1.4rem}
+#ar-go:hover{background:var(--saffron-deep)}
+
+#photo{position:fixed;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  padding:var(--top) var(--pad) var(--bottom);background:var(--black)}
+#photo img{max-width:100%;max-height:calc(100dvh - 140px);object-fit:contain;border:1px solid var(--white);-webkit-touch-callout:default}
+.photo-actions{display:flex;gap:8px}
+
+#loader{position:fixed;inset:0;display:grid;place-content:center;gap:12px;justify-items:center;background:var(--stage);transition:opacity .6s}
+#loader.done{opacity:0;pointer-events:none}
+.is-ar #loader{display:none}
+#loader .bar{width:min(260px,60vw);height:3px;background:rgb(0 0 0 / .3)}
+#loader .bar span{display:block;height:100%;width:0;background:var(--black);transition:width .15s}
+#loader p{margin:0;font:400 var(--step--1) var(--font-display);letter-spacing:var(--tracking-label);text-transform:uppercase}
+.nojs{position:fixed;inset:0;display:grid;place-items:center;margin:0}
+
+@media (max-width:420px){
+  #controls{gap:4px}
+  #controls button{padding:.4rem .45rem}
+  #size{min-width:3.6em}
+}
+@media (prefers-reduced-motion:reduce){#loader,#hint,#shutter span{transition:none}#flash{animation:none;opacity:0}}

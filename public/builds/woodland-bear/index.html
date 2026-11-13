@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Woodland Be[AR] | Noodin Studio XR</title>
+<meta name="description" content="Woodland Be[AR], a digital sculpture by Quinn Hopkins. Turn it and resize it in 3D, or stand it in your own space with your phone's camera.">
+<meta name="author" content="Quinn Hopkins">
+<meta name="theme-color" content="#ffb31a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Sora:wght@200;300;400;500&display=swap">
+<link rel="stylesheet" href="./style.css">
+<script>
+  // ?view=ar opens the camera. Anything else is the 3D view.
+  (function () {
+    var ar = new URLSearchParams(location.search).get('view') === 'ar';
+    var mobile = /Android|iPhone|iPad|iPod|Mobile|Silk|Kindle/i.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var framed;
+    try { framed = window.self !== window.top; } catch (e) { framed = true; }
+    window.WB_MODE = ar ? 'ar' : '3d';
+    window.WB_MOBILE = mobile;
+    window.WB_FRAMED = framed;
+    var c = document.documentElement.classList;
+    c.add(ar ? 'is-ar' : 'is-3d', mobile ? 'is-mobile' : 'is-desktop');
+    if (framed) c.add('is-framed');
+    if (ar) document.querySelector('meta[name="theme-color"]').setAttribute('content', '#000000');
+  })();
+</script>
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three.module.js",
+  "three/addons/": "./vendor/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="stage" tabindex="0" aria-label="Woodland Be[AR], a bear sculpture in black with red, blue, magenta, green and yellow parts floating out from both sides. Drag to look around it. Arrow keys turn it, plus and minus resize it."></canvas>
+
+<!-- 3D view -->
+<a id="brand-home" class="only-3d" href="/" target="_top" aria-label="Noodin Studio XR, back to the works"><img src="assets/logo.png" alt=""></a>
+
+<div id="top-actions">
+  <button id="motion-btn" type="button" aria-pressed="true">Motion on</button>
+  <a id="ar-btn" class="btn only-3d" href="?view=ar" aria-label="Open in AR with your camera">AR</a>
+  <a id="exit-btn" class="btn only-ar" href="./" aria-label="Leave AR and open the 3D view">3D view</a>
+</div>
+
+<div id="loader" role="status" aria-live="polite">
+  <div class="bar"><span id="bar-fill"></span></div>
+  <p id="loader-text">Loading 0%</p>
+</div>
+
+<!-- AR: the start panel. The tap is what lets a phone ask for the camera and motion sensors. -->
+<section id="ar-start" class="only-ar" aria-labelledby="ar-title">
+  <h1 id="ar-title">Woodland Be[AR]</h1>
+  <p id="ar-text">Stand the sculpture in your own space. This uses your camera and motion sensors. Nothing is recorded or sent anywhere.</p>
+  <button id="ar-go" type="button" disabled>Loading</button>
+  <a class="btn" href="./">Open the 3D view</a>
+</section>
+
+<p id="status" class="only-ar" role="status" aria-live="polite" hidden></p>
+
+<button id="shutter" class="only-ar" type="button" aria-label="Take a photo" hidden><span></span></button>
+
+<div id="controls" role="group" aria-label="Turn and resize the sculpture" hidden>
+  <button type="button" data-act="left" aria-label="Turn left"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a7 7 0 1 1-6.3 4"/><path d="M5 4v5.2h5.2"/></svg></button>
+  <button type="button" data-act="right" aria-label="Turn right"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a7 7 0 1 0 6.3 4"/><path d="M19 4v5.2h-5.2"/></svg></button>
+  <button type="button" data-act="smaller" aria-label="Smaller"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+  <output id="size" aria-label="Size">100%</output>
+  <button type="button" data-act="bigger" aria-label="Bigger"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></button>
+  <button type="button" data-act="reset">Reset</button>
+</div>
+
+<p id="hint" hidden>
+  <span class="only-3d hint-mouse">Drag to look around. Scroll to zoom.</span>
+  <span class="only-3d hint-touch">Drag to look around. Pinch to zoom.</span>
+  <span class="only-ar">Tap the ground to move the sculpture. Drag to turn it. Pinch to resize.</span>
+</p>
+
+<!-- AR: the photo just taken -->
+<div id="photo" role="dialog" aria-modal="true" aria-label="Your photo" hidden>
+  <img id="photo-img" alt="Photo of Woodland Be[AR] in your space">
+  <div class="photo-actions">
+    <button id="photo-share" type="button" hidden>Share</button>
+    <a id="photo-save" class="btn" download="woodland-bear.jpg">Save</a>
+    <button id="photo-close" type="button">Close</button>
+  </div>
+</div>
+
+<script type="module" src="./main.js"></script>
+<noscript><p class="nojs">This work needs JavaScript and WebGL.</p></noscript>
+</body>
+</html>

@@ -61,3 +61,15 @@ Not an 8th Wall build: a plain three.js viewer (three 0.170 vendored in `vendor/
 - To update the model, re-export from `Baketigweyaa_AR.blend` with Draco on and replace `models/aabijijiwan.glb`. Metres, Y up. The viewer measures the model, fits it to `FOOTPRINT` and hangs it, so nothing else needs changing.
 - There is no camera AR. `?view=ar` is ignored, and the work's QR code opens the viewer without it (`hasAR` in `src/projects/launch.js`).
 - The statement text is from `AJW_statements.md` v3, with Kaswentha, the Two Row Wampum belt, named in the second paragraph at Quinn's request (November 13, 2026). The work was hidden at first and has been listed on the home grid since that day.
+
+## Woodland Be[AR]
+
+Not an 8th Wall export: the work was a Spark AR effect, so this build is new and the files here are its source. Plain three.js (0.170, vendored in `vendor/`), no build step.
+
+- `main.js`: the scene, the lights, and the controls both views share: turn left and right, smaller and bigger, reset, and Motion on or off. Arrow keys turn, plus and minus resize, 0 resets.
+- `sculpture.js`: loads `models/woodland-bear.glb`, fits it to `HEIGHT` (1.5 m at 100%) and floats its parts. The `FLOAT` values set how far the layers breathe out from the body, how much each part drifts and rocks, and how much the whole sculpture sways. Motion is off for visitors with reduced motion turned on.
+- `viewer.js`: the 3D view. Drag orbits, pinch or scroll zooms (inside the work page the wheel zooms only with ctrl, so the page still scrolls). Left alone, the sculpture turns slowly.
+- `ar.js`: `?view=ar`. World tracking on the self-hosted engine (`external/xr/xr.js` and `xr-slam.js`, nothing else from 8th Wall). Start AR asks for the camera and, on iOS, the motion sensors. Tap the ground to move the sculpture, drag to turn it, pinch to resize or twist. The round button takes a photo of the camera picture with the sculpture on it, then offers Share and Save. The floor is y = 0 and the phone starts `EYE` (1.4) units up, so a unit is about a metre.
+- The model is made from `WoodlandBear_mural.glb` in `Documents\Art\2022\Medicine Bear\Project Files` with `optimize.mjs` (in that folder's `Web` subfolder): 633,000 triangles and 17 MB down to about 75,000 and 300 KB, Draco-compressed, with the 52 colour parts kept as separate nodes and the black body as `Body` and `Outline`. Re-run it and replace the .glb here and in `src/projects/woodland-bear/models/` if the sculpture changes.
+- `style.css` copies the site's tokens. The stage is saffron because the red parts disappear on the red ground.
+- Tested in headless Chromium only. World tracking, the motion prompt on iOS and the photo share sheet need a real phone.
