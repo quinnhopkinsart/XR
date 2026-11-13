@@ -105,6 +105,9 @@ export function validateProject(p, folder) {
       errors.push(`${where}: launch.embed only works with type "build"`);
     }
   }
+  if (p.portfolio != null && !SLUG.test(p.portfolio)) {
+    errors.push(`${where}: portfolio "${p.portfolio}" must be the work's slug on the portfolio, lowercase-with-dashes`);
+  }
   if (p.award) {
     if (!p.award.label) errors.push(`${where}: award.label is required (it is the logo's alt text)`);
     if (!p.award.logoOnDark) {
@@ -150,6 +153,7 @@ export function normalizeProject(raw, folder) {
     tags: [],
     order: 0,
     award: null,
+    portfolio: null,
     bookable: null,
     hidden: false,
     ...raw,

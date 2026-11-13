@@ -16,6 +16,9 @@ const cover =
 
 // Text, status and the hidden flag live in content.json beside this file.
 export default {
+  // This work's page on the portfolio: noodinstudio.com/project.html?slug=<this>.
+  portfolio: 'aabijijiwan',
+
   kind: 'Suspended sculpture',
   categories: ['3d'],
 

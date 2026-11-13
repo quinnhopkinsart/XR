@@ -7,6 +7,9 @@ import shamanPortalModel from './models/shaman-portal.glb?url';
 
 // Text, status and the hidden flag live in content.json beside this file.
 export default {
+  // This work's page on the portfolio: noodinstudio.com/project.html?slug=<this>.
+  portfolio: 'trading-post-humanism',
+
   kind: 'Augmented reality',
   categories: ['image-target', '3d'],
 

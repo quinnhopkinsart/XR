@@ -10,6 +10,9 @@ import panel3 from './targets/panel-3.jpg';
 
 // Text, status and the hidden flag live in content.json beside this file.
 export default {
+  // This work's page on the portfolio: noodinstudio.com/project.html?slug=<this>.
+  portfolio: 'biidaaban',
+
   kind: 'Augmented reality',
   categories: ['image-target', '3d'],
 

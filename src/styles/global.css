@@ -824,6 +824,11 @@ html.title-leads .field.is-ready {
   color: var(--on-panel);
 }
 
+/* Link to the work's page on the portfolio, under the QR code */
+.work__portfolio {
+  margin: 1.5rem 0 0;
+}
+
 /* Embedded build */
 
 .embed {

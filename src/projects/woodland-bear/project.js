@@ -19,6 +19,9 @@ import bearModel from './models/woodland-bear.glb?url';
 
 // Text, status and the hidden flag live in content.json beside this file.
 export default {
+  // This work's page on the portfolio: noodinstudio.com/project.html?slug=<this>.
+  portfolio: 'baca',
+
   kind: 'Digital sculpture',
   categories: ['world-tracking', '3d'],
 
