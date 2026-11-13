@@ -3,6 +3,7 @@ import ProjectCard from '../components/ProjectCard.jsx';
 import WideTitle from '../components/WideTitle.jsx';
 import { allCategories, allKinds, projects } from '../projects/registry.js';
 import { CATEGORIES } from '../projects/schema.js';
+import copy from '../brand/copy.json';
 
 export default function Home() {
   const [kind, setKind] = useState('All');
@@ -20,10 +21,7 @@ export default function Home() {
           Noodin
         </WideTitle>
         <p className="hero__lede">
-          <span className="plate">
-            I build augmented reality works that layer Anishinaabe stories onto the places we
-            live. Scan a code at an installation, or open a work here.
-          </span>
+          <span className="plate">{copy.homeIntro}</span>
         </p>
       </section>
 

@@ -14,6 +14,10 @@ export const site = {
   // printed with the catalogue's noodin.studio/ar/<slug> pattern keep working.
   workPath: '/xr',
 
+  // The GitHub repository and branch Amplify deploys from. The dashboard at /admin
+  // reads and commits content.json files here.
+  repo: { owner: 'quinnhopkinsart', name: 'XR', branch: 'main' },
+
   mainSite: 'https://www.noodinstudio.com',
   instagram: 'https://www.instagram.com/noodinstudio',
   contact: 'https://www.noodinstudio.com/contact',

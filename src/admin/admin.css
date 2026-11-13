@@ -1,0 +1,401 @@
+/* The dashboard at /admin. Colours come from src/brand/tokens.css, like the rest of the
+   site: the red ground, black panels, red text on the panels (5.7:1), white for titles
+   and for the text typed into fields (21:1), saffron for the one primary action and
+   for focus rings on black. No floating field here, so text on the ground needs no plate. */
+
+.admin {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--gutter) var(--gutter) 9rem;
+}
+
+.admin__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin__title {
+  margin: 0;
+  font: 400 var(--step-2) / 1.1 var(--font-wordmark);
+}
+
+.admin__title span {
+  font: 400 var(--step--1) / 1 var(--font-display);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.admin__nav {
+  display: flex;
+  gap: 1.25rem;
+  font: 500 var(--step--1) var(--font-display);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.admin__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+.admin__status p {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--black);
+}
+
+.admin__status .admin__alert {
+  border-width: 3px;
+  font-weight: 500;
+}
+
+.admin__section {
+  margin: 2rem 0 0.75rem;
+  font: 400 var(--step--1) / 1.2 var(--font-display);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.admin__section span {
+  margin-left: 0.4em;
+}
+
+.admin__list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Panels */
+
+.admin__panel {
+  padding: 1.1rem 1.25rem;
+  background: var(--panel);
+  color: var(--on-panel);
+}
+
+.admin__panel h2,
+.admin__panel h3 {
+  margin: 0;
+  color: var(--on-panel-strong);
+  font: 300 var(--step-1) / 1.2 var(--font-display);
+  letter-spacing: var(--tracking-display);
+}
+
+.admin__panel a:hover {
+  color: var(--on-panel-strong);
+}
+
+.admin__panel :focus-visible,
+.admin__bar :focus-visible {
+  outline-color: var(--saffron);
+}
+
+section.admin__panel {
+  margin-top: 2rem;
+}
+
+section.admin__panel h2 {
+  margin-bottom: 1rem;
+}
+
+.admin__work.is-hidden {
+  /* A hidden work reads as set back: a ground-coloured edge instead of a full panel. */
+  box-shadow: inset 6px 0 0 var(--ground-deep);
+}
+
+.admin__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+}
+
+.admin__row-main {
+  min-width: 12rem;
+  flex: 1;
+}
+
+.admin__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0.3rem 0 0;
+  font: 400 var(--step--1) var(--font-display);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.admin__edited {
+  padding: 0 0.45em;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.admin__row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Buttons */
+
+.admin__btn {
+  display: inline-block;
+  min-height: 2.75rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--on-panel);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--on-panel);
+  font: 500 var(--step--1) / 1.4 var(--font-display);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.admin__btn:hover {
+  border-color: var(--on-panel-strong);
+  color: var(--on-panel-strong);
+}
+
+.admin__btn--primary,
+.admin__btn--primary:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.admin__btn:disabled {
+  border-style: dashed;
+  background: var(--panel);
+  color: var(--on-panel);
+  cursor: var(--cursor);
+}
+
+/* Shown / Hidden switch */
+
+.admin__switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 8.2rem;
+  min-height: 2.75rem;
+  padding: 0.4rem 0.6rem;
+  border: 0;
+  background: none;
+  color: var(--on-panel);
+  font: 500 var(--step--1) var(--font-display);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.admin__switch-track {
+  display: block;
+  width: 2.8rem;
+  height: 1.5rem;
+  padding: 2px;
+  border: 1px solid var(--on-panel);
+  border-radius: 1rem;
+}
+
+.admin__switch-knob {
+  display: block;
+  height: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--on-panel);
+  transition: transform 0.15s var(--ease);
+}
+
+.admin__switch[aria-checked='true'] {
+  color: var(--on-panel-strong);
+}
+
+.admin__switch[aria-checked='true'] .admin__switch-track {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.admin__switch[aria-checked='true'] .admin__switch-knob {
+  background: var(--on-accent);
+  transform: translateX(1.3rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin__switch-knob {
+    transition: none;
+  }
+}
+
+/* Forms */
+
+.admin__form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.25rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--on-panel);
+}
+
+.admin__field {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.admin__field--wide {
+  grid-column: 1 / -1;
+}
+
+.admin label,
+.admin legend {
+  display: block;
+  margin-bottom: 0.35rem;
+  padding: 0;
+  font: 500 var(--step--1) var(--font-display);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.admin input,
+.admin textarea,
+.admin select {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--on-panel);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--on-panel-strong);
+  font: 400 var(--step-0) / 1.5 var(--font-body);
+  cursor: text;
+}
+
+.admin select {
+  cursor: var(--cursor-link);
+}
+
+.admin textarea {
+  resize: vertical;
+}
+
+.admin input::placeholder {
+  color: var(--on-panel);
+  opacity: 1;
+}
+
+.admin__hint {
+  margin: 0.35rem 0 0;
+  font-size: var(--step--1);
+}
+
+.admin__credits {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+}
+
+.admin__credit {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr auto;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.admin__problems {
+  margin: 0.9rem 0 0;
+  padding: 0.6rem 0.9rem;
+  border-left: 4px solid var(--accent);
+  color: var(--on-panel-strong);
+  list-style: none;
+}
+
+.admin__signin {
+  display: grid;
+  gap: 0.9rem;
+  justify-items: start;
+  max-width: 640px;
+}
+
+.admin__signin p,
+.admin__signin ol {
+  margin: 0;
+}
+
+.admin__signin ol {
+  padding-left: 1.2rem;
+}
+
+.admin__signin label {
+  margin-bottom: -0.5rem;
+}
+
+.admin__foot {
+  margin: 1.5rem 0 0;
+  font-size: var(--step--1);
+}
+
+/* Pending edits: stays in reach at the bottom of the window */
+
+.admin__bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  padding: 0.9rem var(--gutter);
+  padding-bottom: max(0.9rem, env(safe-area-inset-bottom));
+  border-top: 3px solid var(--accent);
+  background: var(--panel);
+  color: var(--on-panel);
+}
+
+.admin__bar p {
+  flex: 1;
+  min-width: 14rem;
+  margin: 0;
+  font-size: var(--step--1);
+}
+
+.admin__bar strong {
+  color: var(--on-panel-strong);
+  font-weight: 500;
+}
+
+.admin__bar-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .admin__form {
+    grid-template-columns: 1fr;
+  }
+
+  .admin__credit {
+    grid-template-columns: 1fr;
+  }
+}

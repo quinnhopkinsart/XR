@@ -19,7 +19,11 @@ npm run dev
 npm run new -- "Work Title" --year 2027
 ```
 
-Then edit `src/projects/work-title/project.js`. Full guide: [docs/ADDING-A-PROJECT.md](docs/ADDING-A-PROJECT.md).
+Then edit `src/projects/work-title/project.js` and the `content.json` beside it. Full guide: [docs/ADDING-A-PROJECT.md](docs/ADDING-A-PROJECT.md).
+
+## Edit text, show or hide a work
+
+Use the dashboard at `/admin`. It commits to `main` and Amplify rebuilds. Guide: [docs/THE-DASHBOARD.md](docs/THE-DASHBOARD.md).
 
 ## How it fits together
 
@@ -31,6 +35,7 @@ src/
   projects/
     _template/          copied by `npm run new`
     <slug>/project.js   one folder per work, auto-discovered
+    <slug>/content.json the work's text, status and hidden flag, edited at /admin
     registry.js         finds every project.js, sorts, validates
     schema.js           field rules and defaults
     launch.js           where the Launch button goes

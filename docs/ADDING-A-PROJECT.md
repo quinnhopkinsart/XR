@@ -1,6 +1,11 @@
 # Adding a project
 
-Every work is one folder in `src/projects/`. The folder name is the URL: `src/projects/biidaaban/` becomes `/xr/biidaaban`. The home grid, the work page, the QR code and the filters all build themselves from `project.js`. Nothing else needs editing.
+Every work is one folder in `src/projects/`. The folder name is the URL: `src/projects/biidaaban/` becomes `/xr/biidaaban`. The home grid, the work page, the QR code and the filters all build themselves from two files in that folder. Nothing else needs editing.
+
+- `content.json`: the text, the status and the hidden flag. Edit it in the dashboard at `/admin` (see [THE-DASHBOARD.md](THE-DASHBOARD.md)) or by hand.
+- `project.js`: what needs code. Images, the launch, targets, categories and models.
+
+The registry merges the two. A field belongs in one file only: `npm run check` fails if a `content.json` field is also set in `project.js`.
 
 ## 1. Scaffold
 
@@ -9,35 +14,37 @@ npm run new -- "Biidaaban" --year 2026            # React experience in the repo
 npm run new -- "Wildlife Portals XR" --build       # self-hosted 8th Wall build
 ```
 
-This copies `src/projects/_template/` into a new folder and fills in the title, year and slug.
+This copies `src/projects/_template/` into a new folder and fills in the title, year and slug. The new work then shows up in the dashboard.
 
-## 2. Fill in project.js
+## 2. Fill in content.json and project.js
 
-| Field | Required | What it does |
-|---|---|---|
-| `title` | yes | Shown on the card and as the page heading. |
-| `year` | yes | String. Sorts the grid, newest first. `'2024'` or `'2024 to 2025'` both work; sorting reads the first four digits. |
-| `summary` | yes | One sentence for the card. |
-| `description` | yes | Array of paragraphs. Follow the voice guide in the Noodin Studio Website project. |
-| `kind` | no | Medium. Drives the filter buttons on the home page. Default `'Augmented reality'`. Use the same wording across works, for example `'Interactive projection'`, `'Virtual reality'`. |
-| `categories` | no | How the work is experienced: any of `'image-target'`, `'world-tracking'`, `'3d'`. A work can hold more than one, for example `['image-target', '3d']` for an AR work with a 3D view. Each is a coloured tag on the card and a filter button on the home page. A filter button only appears once a listed work uses its category. The list, labels and colours live in `CATEGORIES` in `src/projects/schema.js`. |
-| `status` | no | `live`, `migrating`, `in-development` or `archived`. Default `live`. Anything but `live` shows a pill. |
-| `venue`, `location` | no | Shown in the page header. |
-| `howTo` | no | Array of steps for the "How to try it" list. |
-| `credits` | no | `[{ role: 'Commissioned by', name: 'City of Toronto' }]` |
-| `launch` | no | Where the Launch button goes. See below. `null` hides the button. |
-| `legacy` | no | `{ url: 'https://8th.io/xxxxx', until: '2027-02-28' }`. When `launch.url` matches, the page shows the shutdown date and hides the button after it. |
-| `cover` | no | Imported image. Without one, the card shows the title set in type. |
-| `coverAlt` | no | Alt text for the cover on the work page. |
-| `award` | no | `{ label, short, logo, logoOnDark }`. Puts the award's logo on a black tab at the top right of the home card and adds an Award line to the page header. `label` is the full name and the logo's alt text, for example `'Winner, 2024 Emerging Digital Artists Award, XR'`. `short` is the small line under the logo. `logoOnDark` is the logo with a clear background, drawn for a black ground. |
-| `bookable` | no | One or two sentences saying the work is available for events. Shown under the description as "For events", followed by a "Get in touch" link to the contact page in `src/brand/site.js`. |
-| `targets` | no | `[{ src: importedImage, label: 'Panel 1', alt: '...' }]`. Listed so people can try the work away from the site. |
-| `models` | no | 3D pieces this work adds to the floating background on every page. See "Floating models" below. |
-| `embedNote` | no | Caption under an embedded build. Default: "Enter to explore. On a phone, tap AR to open the camera." |
-| `tags` | no | Free-form, not shown yet. |
-| `order` | no | Higher numbers sit first within the same year. |
-| `hidden` | no | `true` keeps the work off the home grid, the filters and the floating background. Its page still opens at `/xr/<slug>`, so it can be tested on the live site before it is listed. Default `false`. |
-| `slug` | no | Overrides the folder name. Leave it out. |
+The File column says where each field lives. The list of `content.json` fields is `CONTENT_FIELDS` in `src/projects/schema.js`.
+
+| Field | File | Required | What it does |
+|---|---|---|---|
+| `title` | content.json | yes | Shown on the card and as the page heading. |
+| `year` | content.json | yes | String. Sorts the grid, newest first. `'2024'` or `'2024 to 2025'` both work; sorting reads the first four digits. |
+| `summary` | content.json | yes | One sentence for the card. |
+| `description` | content.json | yes | Array of paragraphs. Follow the voice guide in the Noodin Studio Website project. |
+| `kind` | project.js | no | Medium. Drives the filter buttons on the home page. Default `'Augmented reality'`. Use the same wording across works, for example `'Interactive projection'`, `'Virtual reality'`. |
+| `categories` | project.js | no | How the work is experienced: any of `'image-target'`, `'world-tracking'`, `'3d'`. A work can hold more than one, for example `['image-target', '3d']` for an AR work with a 3D view. Each is a coloured tag on the card and a filter button on the home page. A filter button only appears once a listed work uses its category. The list, labels and colours live in `CATEGORIES` in `src/projects/schema.js`. |
+| `status` | content.json | no | `live`, `migrating`, `in-development` or `archived`. Default `live`. Anything but `live` shows a pill. |
+| `venue`, `location` | content.json | no | Shown in the page header. |
+| `howTo` | content.json | no | Array of steps for the "How to try it" list. |
+| `credits` | content.json | no | `[{ "role": "Commissioned by", "name": "City of Toronto" }]` |
+| `launch` | project.js | no | Where the Launch button goes. See below. `null` hides the button. |
+| `legacy` | project.js | no | `{ url: 'https://8th.io/xxxxx', until: '2027-02-28' }`. When `launch.url` matches, the page shows the shutdown date and hides the button after it. |
+| `cover` | project.js | no | Imported image. Without one, the card shows the title set in type. |
+| `coverAlt` | content.json | no | Alt text for the cover on the work page. |
+| `award` | project.js | no | `{ label, short, logo, logoOnDark }`. Puts the award's logo on a black tab at the top right of the home card and adds an Award line to the page header. `label` is the full name and the logo's alt text, for example `'Winner, 2024 Emerging Digital Artists Award, XR'`. `short` is the small line under the logo. `logoOnDark` is the logo with a clear background, drawn for a black ground. |
+| `bookable` | content.json | no | One or two sentences saying the work is available for events. Shown under the description as "For events", followed by a "Get in touch" link to the contact page in `src/brand/site.js`. |
+| `targets` | project.js | no | `[{ src: importedImage, label: 'Panel 1', alt: '...' }]`. Listed so people can try the work away from the site. |
+| `models` | project.js | no | 3D pieces this work adds to the floating background on every page. See "Floating models" below. |
+| `embedNote` | content.json | no | Caption under an embedded build. Default: "Enter to explore. On a phone, tap AR to open the camera." |
+| `tags` | content.json | no | Free-form, not shown yet. |
+| `order` | content.json | no | Higher numbers sit first within the same year. |
+| `hidden` | content.json | no | `true` keeps the work off the home grid, the filters and the floating background. Its page still opens at `/xr/<slug>`, so it can be tested on the live site before it is listed. Default `false`. |
+| `slug` | project.js | no | Overrides the folder name. Leave it out. |
 
 ### Images
 
@@ -125,7 +132,7 @@ Every model listed in `models` is shown, so the field is curated by what each wo
 
 ```bash
 npm run dev      # http://localhost:5173/xr/<slug>
-npm run check    # validates every project.js
+npm run check    # validates every project.js and content.json
 npm run build    # runs check, then builds to dist/
 ```
 
@@ -135,6 +142,6 @@ Push to `main` and Amplify deploys. Phones need HTTPS for the camera, so test AR
 
 1. Build the export with the self-hosted engine (see the AR Catalogue 2026 README for that work).
 2. Copy the output to `public/builds/<slug>/`.
-3. Change `launch` from `external` to `build`, delete `legacy`, set `status: 'live'`.
+3. In `project.js`, change `launch` from `external` to `build` and delete `legacy`. Set the status to Live in the dashboard, or `"status": "live"` in `content.json`.
 
 The QR code follows `launch`: once the work is a build, the code opens `/builds/<slug>/index.html?view=ar`. Every build must open the camera AR when it sees `?view=ar`. Codes printed while the work was on 8th Wall point at the old link, so reprint them from the work page.
