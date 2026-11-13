@@ -1,0 +1,41 @@
+{
+  "title": "Sacred Tags",
+  "year": "2026",
+  "status": "live",
+  "hidden": true,
+  "venue": "Nuit Blanche Toronto, MUTEK Montréal, Thunder Bay, Vancouver",
+  "location": "",
+  "summary": "Wear the paint off a graffitied shipping container and find the seven teachings in Anishinaabemowin on the rock underneath.",
+  "description": [
+    "Sacred Tags is a projection that answers the people standing in front of it. The graffitied side of a shipping container is the screen. A depth sensor reads the bodies at the wall, and where they stand the paint wears away to rock.",
+    "The wall carries the Seven Grandfather Teachings as English tags. On the rock under each tag is the same teaching in Anishinaabemowin, painted beside its animal relative. The mark you make holds, thins out, and goes.",
+    "This is the version for a screen. Your mouse, your finger or your webcam stands in for your body. Stay on a word and it opens fully, with the parts the word is built from.",
+    "The City of Toronto commissioned Sacred Tags for Nuit Blanche 2025. The 2026 version showed at MUTEK Montréal, in Thunder Bay and in Vancouver."
+  ],
+  "howTo": [
+    "Press Enter in the frame above.",
+    "Move your mouse across the wall to wear the paint away. On a phone, drag one finger. Near the sides of a phone screen, the wall slides along.",
+    "Stay on a tag until it opens. The word, its English and the parts it is built from come up under the wall.",
+    "For the webcam, press Camera off at the top right and allow the camera. Step back and move. The wall reads movement and nothing is recorded or sent anywhere.",
+    "The seven buttons under the wall open each word by name. Arrow keys move across the wall."
+  ],
+  "embedNote": "Enter, then move across the wall. Stay on a word to read it.",
+  "credits": [
+    {
+      "role": "Commissioned by",
+      "name": "City of Toronto, Nuit Blanche 2025"
+    },
+    {
+      "role": "Supported by",
+      "name": "Ontario Arts Council"
+    }
+  ],
+  "coverAlt": "The side of a blue shipping container covered in graffiti. SACRED TAGS runs across it in orange, teal and purple letters around an eagle feather, with seven smaller tags around it: honesty, humility, wisdom, love, truth, bravery, respect.",
+  "tags": [
+    "projection",
+    "interactive",
+    "Anishinaabemowin",
+    "seven teachings"
+  ],
+  "order": 0
+}

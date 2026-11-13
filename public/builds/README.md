@@ -119,3 +119,17 @@ Copy `dist/` here. `image-targets/` holds only `mural-target.json` and `mural-ta
 - `reflections` and `xr-light` came from 8th Wall's Reflections module, which the hosted app loaded at runtime. They are rebuilt in the source's `src/components/reflections.js`. The cube map is `assets/cube_up.png` on all six faces, as the project's module config had it.
 - The export's `target` image target is 8th Wall's jellyfish sample and is not here. `sound2.mp3` and five of the six cube map pictures were unused and are not here.
 - Tested in headless Chromium: 3D on desktop and phone sizes, AR with a fake camera showing the mural (found as `mural-target`, 1 by 0.75). Sound, video capture and tracking on the real wall need a phone.
+
+## Sacred Tags
+
+Not an 8th Wall build and not AR: the web version of the projection installation, written new. Plain WebGL, no libraries and no build step, so the files here are the source. The installation's TouchDesigner files are in `Documents\Art\2026\Sacred Tags`.
+
+- `teachings.js`: the seven words. Each row has the Anishinaabemowin word, its English, the gloss shown in the caption, the relative painted beside it, and where each sits on the wall. The words and glosses are from the MUTEK 2026 wall text (`sacred_tags_wall_text_v7.md`). The installation's tag art spells three of them another way (Dabaadendiziwin, Aakode'ewin, Minaadendamowin). Change a word here and the rock, the caption, the buttons and the screen reader text all follow, and the opening resizes to fit it.
+- `main.js`: the wall. Three layers, after the installation's `fx_reveal`: the container with its English tags (`assets/container.jpg`), the rock with the words and relatives painted on it in the page (`buildRock`), and the caption. A small feedback texture remembers where the paint has been worn and fades in about 3.5 seconds. A pointer wears a round mark. Staying on a tag opens that word's whole box and, once it is open, shows its caption. Left alone for 5 seconds the wall wears a little on its own. The numbers at the top of the file set all of this.
+- `camera.js`: the webcam. The installation uses a depth sensor and reads silhouettes. A webcam has no depth, so this compares each frame with the one before and uses what moved, mirrored. Frames are drawn to a 96 by 41 canvas, compared and dropped. Nothing leaves the page.
+- On a screen too narrow for the whole wall, part of it shows larger and it slides when a pointer is near either side, when a button is pressed, or toward the movement the camera sees.
+- There is no camera AR. `?view=ar` opens the same view, and the work's categories are `['3d']` so its QR code leaves `?view=ar` off.
+- Pictures: `container.jpg` is `SACREDTAGS_ShippingContainer-7Teachings-English.png` (MUTEK build) at 2880 px. `rock.jpg` is `rockart_02.jpg` at 2048 px. The seven relatives are the `7GTs-*.png` pictographs, cropped and recoloured in the page to match the words.
+- Fonts are self-hosted and open licence (SIL OFL, licences in `fonts/`): Finger Paint for the words on the rock, Sora and Inter for the rest. The installation's Hooey is a demo cut and is not here.
+- Not carried over from the installation: the portal that opens on its own and the land seen through it, the pictograph stamps, the laser echo, the French wall, the Anishinaabemowin wall (Wall Language `oj`), and sound.
+- Tested in headless Chromium: desktop, a phone size with touch, and the camera with Chromium's fake device. A real webcam and a real phone still need trying.
