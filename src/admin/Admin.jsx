@@ -97,6 +97,7 @@ export default function Admin() {
   const [loaded, setLoaded] = useState(null); // { head, files }
   const [forms, setForms] = useState({}); // path -> form
   const [intro, setIntro] = useState('');
+  const [eventsNote, setEventsNote] = useState('');
   const [open, setOpen] = useState(null); // path of the work being edited
   const [busy, setBusy] = useState(false);
   const [deploy, setDeploy] = useState(null); // { sha, state: building | live | sent | slow }
@@ -124,6 +125,7 @@ export default function Admin() {
     });
     setForms(next);
     setIntro(content.files[COPY_PATH]?.data.homeIntro || '');
+    setEventsNote(content.files[COPY_PATH]?.data.eventsNote || '');
   }, []);
 
   const load = useCallback(
@@ -166,16 +168,21 @@ export default function Admin() {
       list.push({ path, data, note: `${verb} ${title}`, problems: contentProblems(data) });
     });
     const copy = loaded.files[COPY_PATH];
-    if (copy && intro.trim() !== (copy.data.homeIntro || '')) {
+    const introChanged = copy && intro.trim() !== (copy.data.homeIntro || '');
+    const eventsChanged = copy && eventsNote.trim() !== (copy.data.eventsNote || '');
+    if (introChanged || eventsChanged) {
+      // One file, so one entry: both site texts go out in the same edit.
       list.push({
         path: COPY_PATH,
-        data: { ...copy.data, homeIntro: intro.trim() },
-        note: 'edit the home intro',
+        data: { ...copy.data, homeIntro: intro.trim(), eventsNote: eventsNote.trim() },
+        note: [introChanged && 'edit the home intro', eventsChanged && 'edit the events note']
+          .filter(Boolean)
+          .join(' and '),
         problems: intro.trim() ? [] : ['the home intro is empty'],
       });
     }
     return list;
-  }, [forms, intro, loaded]);
+  }, [forms, intro, eventsNote, loaded]);
 
   const blocked = changes.some((c) => c.problems.length);
 
@@ -384,6 +391,19 @@ export default function Admin() {
                 <textarea id={id} rows={3} value={intro} onChange={(e) => setIntro(e.target.value)} />
               )}
             </Field>
+            <Field
+              label="Events note"
+              hint='Shown as "For events" on every work page, followed by a "Get in touch" email link. A work with its own "For events" sentence shows that one. Leave empty to show the block only on those works.'
+            >
+              {(id) => (
+                <textarea
+                  id={id}
+                  rows={3}
+                  value={eventsNote}
+                  onChange={(e) => setEventsNote(e.target.value)}
+                />
+              )}
+            </Field>
           </section>
 
           <p className="admin__foot">
@@ -541,7 +561,7 @@ function Work({ slug, form, change, open, onToggle, set }) {
           </Field>
           <Field
             label="For events"
-            hint='One or two sentences. The page adds a "Get in touch" link. Leave empty to hide it.'
+            hint='One or two sentences about bringing this work to an event. The page adds a "Get in touch" email link. Leave empty to show the events note from Site text.'
             wide
           >
             {area('bookable', 2)}

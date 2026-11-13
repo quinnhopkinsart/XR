@@ -6,7 +6,7 @@
   "description": "Noodin Studio XR: a modular home for Quinn Hopkins' augmented reality and XR works.",
   "scripts": {
     "dev": "vite",
-    "build": "npm run check && vite build",
+    "build": "npm run check && vite build && node scripts/prerender.mjs",
     "preview": "vite preview",
     "check": "node scripts/check-projects.mjs",
     "new": "node scripts/new-project.mjs"

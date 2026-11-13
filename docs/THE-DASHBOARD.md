@@ -4,7 +4,7 @@
 
 ## How it works
 
-The site has no database. Each work's text, status and hidden flag live in `src/projects/<slug>/content.json`, and the home intro lives in `src/brand/copy.json`. The dashboard reads those files from GitHub, and Publish writes every pending edit back as one commit on `main`. Amplify builds that commit, so an edit is live about three minutes after Publish. The status line at the top says when.
+The site has no database. Each work's text, status and hidden flag live in `src/projects/<slug>/content.json`, and the home intro and events note live in `src/brand/copy.json`. The dashboard reads those files from GitHub, and Publish writes every pending edit back as one commit on `main`. Amplify builds that commit, so an edit is live about three minutes after Publish. The status line at the top says when.
 
 `npm run check` runs before every build. If an edit breaks a rule (a missing title, say), the build fails and the live site stays on the earlier version. The dashboard checks the same rules before it lets you publish, through `contentProblems` in `src/projects/schema.js`.
 
@@ -23,7 +23,7 @@ The token is kept in that browser's localStorage and is sent only to `api.github
 
 - Shown or Hidden: the `hidden` flag. A hidden work is off the home grid, the filters and the floating background. Its page still opens at `/xr/<slug>`.
 - Edit text: title, year, status, order, venue, location, summary, description, how to try it, the note under the embed, the events line, credits, the cover's alt text and tags.
-- Site text: the home intro.
+- Site text: the home intro, and the events note shown as "For events" on every work page that has no sentence of its own.
 
 Images, targets and their labels, launch settings, categories, awards and 3D models stay in `project.js`. New works are still scaffolded with `npm run new`.
 
