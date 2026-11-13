@@ -17,9 +17,8 @@ export default {
   // Framed, the AR button opens the camera in a new tab (RS_FRAMED in the build).
   launch: { type: 'build', path: '/builds/root-and-stem-cover/index.html', embed: true },
 
-  // The slug of this work's page on the portfolio (noodinstudio.com/project.html?slug=...).
-  // Not set: the portfolio's CMS slug for this work is not confirmed.
-  // portfolio: 'root-and-stem-cover',
+  // This work's page on the portfolio: noodinstudio.com/project.html?slug=<this>.
+  portfolio: 'root-stem-issue-7-cover',
 
   cover,
   targets: [
