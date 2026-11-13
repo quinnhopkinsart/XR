@@ -1,0 +1,41 @@
+{
+  "title": "She Bends the Light to Her Will",
+  "year": "2024",
+  "status": "migrating",
+  "venue": "La Leun Waashisho, MuseumsQuartier",
+  "location": "Vienna",
+  "summary": "A moon floats in the room and sends its light to the ground. Move the light to find the words hidden there. A collaboration with Feather Miigwans.",
+  "description": [
+    "She Bends the Light to Her Will is a collaboration with Feather Miigwans. Feather designed the work from her first memory of Grandmother Moon, and I built it in augmented reality.",
+    "A moon floats in front of you and throws a cone of light down to a star on the ground. The star goes where you point. Seven words lie hidden in the dark, and each one shows for a few seconds when the light passes over it: she bends the light to her will.",
+    "We made it for La Leun Waashisho, an augmented reality exhibition presented by Harbour Collective with PIX FILM Collective and Setzkasten, which opened at the MuseumsQuartier in Vienna in November 2024."
+  ],
+  "howTo": [
+    "Press Enter in the frame above. The sound starts with it, and Sound on or off is at the top right.",
+    "Move your mouse across the ground to move the light. On a phone, drag one finger.",
+    "Pass the light over a word to show it. The words change places while they are hidden.",
+    "Drag with the mouse, or use two fingers, to look around. The arrow keys move the light too.",
+    "This is the 3D view. The camera AR version is moving to this site next."
+  ],
+  "embedNote": "Enter, then move the light across the ground to find the words.",
+  "credits": [
+    {
+      "role": "Concept and design",
+      "name": "Feather Miigwans"
+    },
+    {
+      "role": "AR and 3D",
+      "name": "Quinn Hopkins, Noodin Studio"
+    },
+    {
+      "role": "Presented by",
+      "name": "Harbour Collective with PIX FILM Collective and Setzkasten"
+    }
+  ],
+  "coverAlt": "Illustration of a woman in silhouette holding up a phone that sends out beams of light, in front of a large gold moon ringed with Anishinaabemowin text on a purple night sky.",
+  "tags": [
+    "collaboration",
+    "world tracking",
+    "moon"
+  ]
+}
