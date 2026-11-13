@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aabijijiwan | Noodin Studio XR</title>
+<meta name="description" content="Aabijijiwan, a suspended sculpture of five layered river channels for the John Innes Community Recreation Centre. Walk underneath it in 3D.">
+<meta name="theme-color" content="#ff3314">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Sora:wght@200;300;400;500&display=swap">
+<link rel="stylesheet" href="./style.css">
+<script>
+  // Inside the work page the page itself carries the title and the text.
+  if (window.top !== window.self) document.documentElement.classList.add('framed');
+</script>
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three.module.js",
+  "three/addons/": "./vendor/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="stage" tabindex="0" aria-label="3D view of Aabijijiwan hanging from the ceiling. Drag to look around, tap the floor to walk there, or use the arrow keys."></canvas>
+
+<header class="title">
+  <a class="back" href="/xr/aabijijiwan" target="_top">&larr; Noodin XR</a>
+  <h1><span class="plate">Aabijijiwan</span></h1>
+  <p><span class="plate">Quinn Hopkins, Noodin Studio</span></p>
+</header>
+
+<div id="loader" role="status" aria-live="polite">
+  <div class="bar"><span id="bar-fill"></span></div>
+  <p id="loader-text">Loading 0%</p>
+</div>
+
+<span class="scale" id="scale" aria-hidden="true">1.7 m</span>
+
+<nav class="views" aria-label="Places to stand">
+  <button type="button" data-view="approach">Approach</button>
+  <button type="button" data-view="under">Underneath</button>
+  <button type="button" data-view="along">Alongside</button>
+  <button type="button" data-view="end">End on</button>
+  <button type="button" data-view="balcony">From above</button>
+</nav>
+
+<div class="tools">
+  <button type="button" id="about-btn" aria-expanded="false" aria-controls="about">About</button>
+  <button type="button" id="fs">Full screen</button>
+</div>
+
+<aside id="about" hidden>
+  <button type="button" class="close" id="about-close">Close</button>
+  <h2>Aabijijiwan</h2>
+  <p class="meta">CNC-cut plywood, acrylic mirror, steel, steel cable. Suspended in the atrium of the John Innes Community Recreation Centre, Moss Park, Tkaronto.</p>
+  <p>Aabijijiwan is Anishinaabemowin for "it flows continuously." The sculpture is one river shown at five moments in its life, hung as five layers of CNC-cut wood. The youngest moment hangs highest, its channel almost straight. By the lowest layer the bends have grown until the river is two-thirds longer than where it began. The five channels run parallel through a shared space and never touch, the way the two rows do. Set into each one is a line of mirror tiles, like beads on a belt, clear on one layer and purple on the next.</p>
+  <p class="meta">Design model, Rev E. A City of Toronto public art commission. The figure is 1.7 m tall.</p>
+</aside>
+
+<p class="hint" id="hint"><span class="hint-mouse">Drag to look. Click the floor to walk there. Arrow keys or WASD move.</span><span class="hint-touch">Drag to look. Tap the floor to walk there. Pinch to step in and out.</span></p>
+
+<script type="module" src="./main.js"></script>
+<noscript><p class="nojs">This viewer needs JavaScript and WebGL.</p></noscript>
+</body>
+</html>

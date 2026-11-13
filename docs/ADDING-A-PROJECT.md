@@ -64,6 +64,8 @@ Keep covers around 1600 px on the long edge. The 2400 px web exports from the po
 launch: { type: 'build', path: '/builds/wildlife-portals-xr/index.html' },
 ```
 
+A build does not have to be AR: a plain 3D viewer works too (Aabijijiwan is one). Give it `categories: ['3d']` and its QR code opens the build without `?view=ar`, labelled "Scan to open on your phone".
+
 Copy the build output into `public/builds/<slug>/`. Asset paths in the build must be relative; see `public/builds/README.md`. `npm run check` fails if `index.html` is missing, so a half-moved work cannot ship.
 
 Add `embed: true` to play the build inside the work page, with a full-screen link beside it:

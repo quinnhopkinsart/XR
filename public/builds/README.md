@@ -52,3 +52,12 @@ npm run build
 ```
 
 Copy `dist/` here. The 3D view hangs one print at a time on a wall with its portal open. `?view=ar` runs the camera AR on all five targets at once: `PolarBearTarget`, `eagleTarget`, `deerTarget`, `lynxTarget`, `salmonTarget`. The models are meshopt-compressed and the decoder ships in `external/vendor/meshopt_decoder.js`, so nothing loads from 8th Wall's CDN. The camera's screen shows what a virtual camera on its lens sees (`live-view.js`). `arctic-sea-animals.glb` is fixed by `config/fix-animals.mjs` in the source folder: re-run it if that model is ever replaced.
+
+## Aabijijiwan
+
+Not an 8th Wall build: a plain three.js viewer (three 0.170 vendored in `vendor/`, no build step) for the design model of the suspended sculpture. It began as the standalone "Aabijijiwan 360 viewer" and was reworked for this site: the site's colours, type and cursor (copied into `style.css`, since a build cannot read `tokens.css`), the sculpture hung from a ceiling slab, a 1.7 m figure for scale, and a visitor's camera at eye height that walks the floor instead of orbiting.
+
+- The room is set by four numbers at the top of `main.js`: `CLEARANCE` (floor to the lowest point of the sculpture, 3.0 m, a placeholder until the real figure is known), `EYE`, `FIGURE` and `ROOM`.
+- To update the model, re-export from `Baketigweyaa_AR.blend` with Draco on and replace `models/aabijijiwan.glb`. Metres, Y up. The viewer measures the model and hangs it, so nothing else needs changing.
+- There is no camera AR. `?view=ar` is ignored, and the work's QR code opens the viewer without it (`hasAR` in `src/projects/launch.js`).
+- The statement text is from `AJW_statements.md` v3. The knowledge keeper review of the Kaswentha wording and the speaker check on the title were still open when this was added, so the work is `hidden: true`.
