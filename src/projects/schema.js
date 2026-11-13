@@ -79,6 +79,9 @@ export function validateProject(p, folder) {
   } else {
     p.models.forEach((m, i) => {
       if (!m?.src) errors.push(`${where}: models[${i}] needs a src (import x from './models/x.glb?url')`);
+      if (m?.turn != null && typeof m.turn !== 'number') {
+        errors.push(`${where}: models[${i}].turn must be a number of degrees`);
+      }
       if (m?.recolor && !String(m.recolor).startsWith('--')) {
         errors.push(`${where}: models[${i}].recolor must name a token like '--black'`);
       }

@@ -2,16 +2,25 @@
 // Plain three.js, loaded on demand by <FloatingField />, so the first paint
 // never waits on WebGL.
 //
+// Each model is one sculpture. A split model keeps its parts roughly where the
+// sculpture has them, each a little out of place, like a ruin: the whole still
+// hints at what it was. Sculptures sit at different depths, some in front of the
+// focal plane and some far behind, and the lens blurs whatever is off that plane.
+//
 // Interaction, kept slight on purpose:
 //   - the camera leans toward the pointer
-//   - pieces near the pointer drift away from it and swell a little
-//   - tapping a piece (on open page, not on text or links) sets it spinning
-//   - scrolling moves near pieces faster than far ones
-//   - on phones, tilting leans the camera and slides near pieces further than far ones
+//   - parts near the pointer drift away from it and swell a little
+//   - tapping a part (on open page, not on text or links) sets it spinning; it settles back
+//   - scrolling moves near sculptures faster than far ones
+//   - on phones, tilting leans the camera and slides near sculptures further than far ones
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { motion } from './motion.js';
 
 const INTERACTIVE = 'a, button, input, select, textarea, iframe, label, summary, [role="button"]';
@@ -31,12 +40,11 @@ function rng(seed = 7) {
 const token = (name, fallback) =>
   getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
 
-/** Wraps a mesh or scene in a pivot centred on its bounds, scaled to unit size. */
-function toPiece(object) {
+/** Wraps a mesh or scene in a pivot centred on its bounds. Keeps its authored size. */
+function toPart(object) {
   const box = new THREE.Box3().setFromObject(object);
   const size = box.getSize(new THREE.Vector3());
   const centre = box.getCenter(new THREE.Vector3());
-  const longest = Math.max(size.x, size.y, size.z) || 1;
 
   const inner = new THREE.Group();
   inner.add(object);
@@ -44,12 +52,7 @@ function toPiece(object) {
 
   const pivot = new THREE.Group();
   pivot.add(inner);
-  pivot.userData.unit = 1 / longest;
-  pivot.userData.weight = 0;
-  object.traverse((o) => {
-    if (o.isMesh) pivot.userData.weight += o.geometry.attributes.position?.count || 0;
-  });
-  return pivot;
+  return { pivot, centre, longest: Math.max(size.x, size.y, size.z) || 1 };
 }
 
 function recolor(root, colour) {
@@ -68,11 +71,15 @@ function recolor(root, colour) {
   });
 }
 
-/** Turns one model spec from a project.js into floating pieces. */
-function piecesFrom(gltf, spec) {
+/**
+ * Turns one model spec from a project.js into a sculpture: its parts, where each sat
+ * in the original (relative to the sculpture's centre), and the scale that brings the
+ * whole to unit size.
+ */
+function sculptureFrom(gltf, spec, maxParts) {
   const exclude = (spec.exclude || []).map((s) => s.toLowerCase());
   const skip = (name = '') => exclude.some((s) => name.toLowerCase().includes(s));
-  const pieces = [];
+  let parts = [];
 
   gltf.scene.updateMatrixWorld(true);
 
@@ -83,27 +90,47 @@ function piecesFrom(gltf, spec) {
     });
     for (const mesh of meshes) {
       const copy = mesh.clone();
-      // Bake the world transform so each piece keeps its authored shape.
+      // Bake the world transform so each part keeps its authored shape and place.
       copy.applyMatrix4(mesh.matrixWorld);
       copy.matrixAutoUpdate = true;
-      pieces.push(toPiece(copy));
+      parts.push(toPart(copy));
     }
+    // On small screens only the largest parts are kept; they carry the shape.
+    parts = parts.sort((a, b) => b.longest - a.longest).slice(0, maxParts);
   } else {
-    pieces.push(toPiece(gltf.scene));
+    parts.push(toPart(gltf.scene));
   }
+  if (!parts.length) return null;
 
-  for (const p of pieces) {
-    if (spec.recolor) recolor(p, token(spec.recolor, '#000000'));
-    p.userData.hero = !!spec.hero;
-    p.userData.scale = spec.scale || 1;
+  // The sculpture's extent: where its parts sit, padded by a typical part. Measured
+  // from centres so one oversized part cannot shrink everything else.
+  const bounds = new THREE.Box3();
+  parts.forEach((p) => bounds.expandByPoint(p.centre));
+  const centre = bounds.getCenter(new THREE.Vector3());
+  const spread = bounds.getSize(new THREE.Vector3());
+  const typical = parts.map((p) => p.longest).sort((a, b) => a - b)[Math.floor(parts.length / 2)];
+  const longest =
+    parts.length === 1 ? parts[0].longest : Math.max(spread.x, spread.y, spread.z) + typical;
+
+  for (const part of parts) {
+    if (spec.recolor) recolor(part.pivot, token(spec.recolor, '#000000'));
+    part.home = part.centre.clone().sub(centre);
   }
-  return pieces;
+  return {
+    parts,
+    unit: 1 / longest,
+    hero: !!spec.hero,
+    scale: spec.scale || 1,
+    turn: THREE.MathUtils.degToRad(spec.turn || 0),
+  };
 }
 
 export function createField(container, { models, reducedMotion }) {
   const mobile = window.matchMedia('(max-width: 760px), (pointer: coarse)').matches;
-  const maxPieces = mobile ? 10 : 22;
+  const maxParts = mobile ? 14 : 60; // per split sculpture
+  const lens = !mobile; // depth of field; phones get the haze only
   const random = rng(11);
+  const ground = new THREE.Color(token('--ground', '#ff3314'));
 
   const renderer = new THREE.WebGLRenderer({ antialias: !mobile, alpha: true, powerPreference: 'low-power' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.25 : 1.5));
@@ -113,6 +140,33 @@ export function createField(container, { models, reducedMotion }) {
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
   camera.position.set(0, 0, 14);
+
+  // Haze: sculptures further back sink into the ground colour.
+  scene.fog = new THREE.Fog(ground, 17, 46);
+
+  // Lens: sharp at the focal plane (z = 0), softer in front of it and behind.
+  let composer = null;
+  let bokeh = null;
+  if (lens) {
+    composer = new EffectComposer(
+      renderer,
+      new THREE.WebGLRenderTarget(1, 1, { samples: 4, type: THREE.HalfFloatType }),
+    );
+    composer.setPixelRatio(renderer.getPixelRatio());
+    composer.addPass(new RenderPass(scene, camera));
+    bokeh = new BokehPass(scene, camera, { focus: camera.position.z, aperture: 0.0011, maxblur: 0.009 });
+    // With the lens on, the canvas paints the ground itself: the blur needs an opaque
+    // frame. The depth pass must not see that colour, so it is lifted while it runs.
+    scene.background = ground;
+    const renderBokeh = bokeh.render.bind(bokeh);
+    bokeh.render = (...args) => {
+      scene.background = null;
+      renderBokeh(...args);
+      scene.background = ground;
+    };
+    composer.addPass(bokeh);
+    composer.addPass(new OutputPass());
+  }
 
   // Lit pieces take the site's palette: saffron from above, oxblood from below.
   scene.add(new THREE.HemisphereLight(token('--light-sky', '#ffb31a'), token('--light-floor', '#7a1004'), 2.4));
@@ -124,9 +178,11 @@ export function createField(container, { models, reducedMotion }) {
   const draco = new DRACOLoader();
   const loader = new GLTFLoader().setDRACOLoader(draco);
 
-  const floaters = [];
+  const floaters = []; // every part
+  const clusters = []; // every sculpture
+  const tmp = new THREE.Vector3();
+  const tmpQ = new THREE.Quaternion();
   const pointer = new THREE.Vector2(0, 0);
-  const pointerWorld = new THREE.Vector3();
   let pointerActive = false;
   let hovered = null;
   let running = false;
@@ -150,78 +206,145 @@ export function createField(container, { models, reducedMotion }) {
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    if (composer) {
+      composer.setSize(w, h);
+      bokeh.uniforms.aspect.value = camera.aspect;
+    }
     const height = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;
     view = { w: height * camera.aspect, h: height };
     if (!running) render();
   }
 
-  function place(pieces) {
-    // Heroes always float. The rest: favour pieces with enough geometry to read.
-    const heroes = pieces.filter((p) => p.userData.hero);
-    const rest = pieces
-      .filter((p) => !p.userData.hero)
-      .sort((a, b) => b.userData.weight - a.userData.weight)
-      .slice(0, Math.max(0, maxPieces * 2))
-      .sort(() => random() - 0.5)
-      .slice(0, Math.max(0, maxPieces - heroes.length));
-    const chosen = [...heroes, ...rest];
+  const BAND = 2.5; // screen heights the sculptures are spread over; scrolling wraps inside it
+  const BAND_TOP = -0.6;
 
-    // Spread across a band taller than the screen so scrolling never empties it.
+  function place(sculptures) {
+    const k = mobile ? 0.62 : 1; // sizes on a narrow screen
     // Heroes open the composition on the right of the first screen, beside the title.
-    const cols = mobile ? 2 : 4;
+    // Then the split sculptures, largest first, then the single pieces.
+    const heroes = sculptures.filter((s) => s.hero);
+    // The split sculptures are spaced evenly down the page, with single pieces between.
+    const others = sculptures.filter((s) => !s.hero);
+    const wholes = others.filter((s) => s.parts.length > 1).sort((a, b) => b.parts.length - a.parts.length);
+    const singles = others.filter((s) => s.parts.length === 1).sort(() => random() - 0.5);
+    const rest = [];
+    const gap = Math.max(1, Math.ceil(others.length / Math.max(1, wholes.length)));
+    while (wholes.length || singles.length) {
+      if (wholes.length && (rest.length % gap === 0 || !singles.length)) rest.push(wholes.shift());
+      else rest.push(singles.shift());
+    }
+
+    // Depths for the rest, in turn: near the focal plane, in front of it, far behind.
+    const depths = [-0.5, -2.5, 3.6, -6, 1.2, -8.5, 4.6, -4, -7, 2.4];
     let heroIndex = 0;
-    chosen.forEach((piece, i) => {
-      const hero = piece.userData.hero;
-      const depth = hero ? -1.5 - heroIndex * 2 : -1 - random() * 7; // 0 is the focal plane
-      const size = (hero ? (mobile ? 3.2 : 4.6) : 1.4 + random() * 1.8) * piece.userData.scale;
-      piece.scale.setScalar(size * piece.userData.unit);
-      const col = (i % cols) + random() * 0.8;
-      const base = hero
-        ? new THREE.Vector3(mobile ? 0.18 : 0.26 - heroIndex * 0.5, mobile ? 0.62 : 0.4 + heroIndex * 0.6, depth)
-        : new THREE.Vector3(
-            (col / cols - 0.5) * 1.15,               // fraction of view width
-            random() * 1.6 - 0.3,                    // fraction of view height, wraps
-            depth,
-          );
-      if (hero) heroIndex += 1;
-      const f = {
-        piece,
+    let wholeSide = 1; // sculptures alternate sides; single pieces keep to the other side
+
+    [...heroes, ...rest].forEach((s) => {
+      const group = new THREE.Group();
+      const whole = s.parts.length > 1;
+      let base;
+      let size;
+      if (s.hero) {
+        size = (mobile ? 3.8 : 6.6) * s.scale;
+        base = new THREE.Vector3(
+          mobile ? 0.18 : 0.26 - heroIndex * 0.5,
+          mobile ? 0.62 : 0.4 + heroIndex * 0.6,
+          -1.5 - heroIndex * 2,
+        );
+        heroIndex += 1;
+      } else {
+        const i = clusters.length - heroes.length;
+        const n = Math.max(1, rest.length);
+        if (whole) wholeSide = -wholeSide;
+        const side = whole ? wholeSide : -wholeSide;
+        size = (whole ? 8.5 + random() * 2 : 3.8 + random() * 2) * k * s.scale;
+        base = new THREE.Vector3(
+          side * (mobile ? 0.08 + random() * 0.18 : whole ? 0.16 + random() * 0.08 : 0.14 + random() * 0.28), // fraction of view width
+          BAND_TOP + 0.75 + ((i + random() * 0.6) / n) * BAND,              // fraction of view height, wraps
+          depths[i % depths.length],
+        );
+      }
+      const nearness = THREE.MathUtils.clamp(1 + base.z / 8, 0, 1.6); // 1 at the focal plane
+      const cluster = {
+        group,
         base,
         size,
+        whole,
+        turn: s.turn,
+        // Single pieces tumble slowly, so every side comes round. Sculptures only rock.
+        spin: whole
+          ? new THREE.Vector3()
+          : new THREE.Vector3((random() - 0.5) * 0.14, (random() - 0.5) * 0.26, (random() - 0.5) * 0.08),
+        sway: whole ? 0.2 : 0,
         phase: random() * Math.PI * 2,
-        bob: 0.15 + random() * 0.35,
-        speed: 0.25 + random() * 0.35,
-        spin: new THREE.Vector3((random() - 0.5) * 0.2, (random() - 0.5) * 0.35, (random() - 0.5) * 0.1),
-        kick: new THREE.Vector3(),
-        push: new THREE.Vector3(),
+        nearness,
+        parallax: 0.35 + nearness * 0.9, // near sculptures move more with scroll
         lean: new THREE.Vector2(),
-        nearness: 1 + depth / 8,                  // 1 at the focal plane, 0 at the back
-        swell: 1,
-        parallax: 0.35 + (1 + depth / 8) * 0.9,   // near pieces move more with scroll
       };
-      piece.rotation.set(random() * Math.PI, random() * Math.PI * 2, (random() - 0.5) * 0.6);
-      scene.add(piece);
-      floaters.push(f);
+      group.scale.setScalar(size * s.unit);
+      cluster.rot = whole
+        ? new THREE.Vector3((random() - 0.5) * 0.25, cluster.turn, (random() - 0.5) * 0.2)
+        : new THREE.Vector3(random() * Math.PI, random() * Math.PI * 2, (random() - 0.5) * 0.6);
+
+      const extent = 1 / s.unit; // the sculpture's size in its own units
+      for (const part of s.parts) {
+        // Out of place: pushed outward from the centre, nudged and turned a little.
+        const home = whole
+          ? part.home
+              .clone()
+              .multiplyScalar(1.22)
+              .add(new THREE.Vector3(random() - 0.5, random() - 0.5, random() - 0.5).multiplyScalar(extent * 0.09))
+          : new THREE.Vector3();
+        const rest = whole
+          ? new THREE.Euler((random() - 0.5) * 0.5, (random() - 0.5) * 0.6, (random() - 0.5) * 0.5)
+          : new THREE.Euler();
+        part.pivot.position.copy(home);
+        part.pivot.rotation.copy(rest);
+        group.add(part.pivot);
+        floaters.push({
+          piece: part.pivot,
+          cluster,
+          home,
+          rest,
+          radius: (part.longest * size * s.unit) / 2, // world units
+          phase: random() * Math.PI * 2,
+          bob: whole ? extent * (0.008 + random() * 0.014) : 0,
+          speed: 0.25 + random() * 0.35,
+          turnBy: new THREE.Vector3(),
+          kick: new THREE.Vector3(),
+          push: new THREE.Vector3(),
+          swell: 1,
+        });
+      }
+      scene.add(group);
+      clusters.push(cluster);
     });
   }
 
   function layout(t) {
     const scroll = window.scrollY / window.innerHeight; // in screen heights
-    const band = 1.6;
-    for (const f of floaters) {
-      const depthScale = (camera.position.z - f.base.z) / camera.position.z;
-      let y = f.base.y - scroll * f.parallax * 0.55; // rise with the page, slower when far
-      y = ((((y + 0.3) % band) + band) % band) - 0.3; // wrap inside the band
-      const x = f.base.x * view.w * depthScale;
+    for (const c of clusters) {
+      const depthScale = (camera.position.z - c.base.z) / camera.position.z;
+      let y = c.base.y - scroll * c.parallax * 0.55; // rise with the page, slower when far
+      y = ((((y - BAND_TOP) % BAND) + BAND) % BAND) + BAND_TOP; // wrap inside the band
+      const x = c.base.x * view.w * depthScale;
       const yy = (0.5 - y) * view.h * depthScale;
+      const still = reducedMotion ? 0 : 1;
+      const bob = Math.sin(t * 0.22 + c.phase) * 0.18 * still;
+      c.group.position.set(x + c.lean.x, yy + bob + c.lean.y, c.base.z);
+      c.group.rotation.set(c.rot.x, c.rot.y + Math.sin(t * 0.13 + c.phase) * c.sway * still, c.rot.z);
+    }
+    for (const f of floaters) {
       const bob = reducedMotion ? 0 : Math.sin(t * f.speed + f.phase) * f.bob;
-      f.piece.position.set(x + f.push.x + f.lean.x, yy + bob + f.push.y + f.lean.y, f.base.z);
+      f.piece.position.set(f.home.x + f.push.x, f.home.y + f.push.y + bob, f.home.z + f.push.z);
+      f.piece.rotation.set(f.rest.x + f.turnBy.x, f.rest.y + f.turnBy.y, f.rest.z + f.turnBy.z);
     }
   }
 
   function render(t = performance.now() / 1000) {
     layout(t);
-    renderer.render(scene, camera);
+    if (composer) composer.render();
+    else renderer.render(scene, camera);
   }
 
   function tick(now) {
@@ -239,37 +362,50 @@ export function createField(container, { models, reducedMotion }) {
     camera.position.y += (leanY - camera.position.y) * 0.04;
     camera.lookAt(0, 0, -3);
 
-    // Where the pointer sits on the focal plane.
-    pointerWorld.set(pointer.x * view.w * 0.5, pointer.y * view.h * 0.5, 0);
+    for (const c of clusters) {
+      c.rot.addScaledVector(c.spin, dt);
+      // Tilt slides sculptures downhill, near ones furthest, like things floating in water.
+      const slide = 0.5 + c.nearness * 1.3;
+      c.lean.x += (tilt.x * slide - c.lean.x) * 0.05;
+      c.lean.y += (tilt.y * slide - c.lean.y) * 0.05;
+    }
 
+    const TAU = Math.PI * 2;
     for (const f of floaters) {
       const p = f.piece;
-      p.rotation.x += (f.spin.x + f.kick.x - tilt.y * 0.5) * dt;
-      p.rotation.y += (f.spin.y + f.kick.y + tilt.x * 0.7) * dt;
-      p.rotation.z += (f.spin.z + f.kick.z) * dt;
-      f.kick.multiplyScalar(Math.pow(0.35, dt)); // spins settle over a few seconds
+      const g = f.cluster.group;
 
-      // Drift away from a nearby pointer, then ease home.
-      const dx = p.position.x - f.push.x - pointerWorld.x;
-      const dy = p.position.y - f.push.y - pointerWorld.y;
-      const dist = Math.hypot(dx, dy);
-      const reach = 2.4 + f.size * 0.6;
-      const target = new THREE.Vector2();
-      if (pointerActive && dist < reach) {
-        const strength = (1 - dist / reach) * 0.9;
-        target.set((dx / (dist || 1)) * strength, (dy / (dist || 1)) * strength);
+      // A tapped part spins, slows, then turns back to where it rests.
+      f.turnBy.addScaledVector(f.kick, dt);
+      f.kick.multiplyScalar(Math.pow(0.35, dt));
+      if (f.kick.lengthSq() < 0.05) {
+        const back = 1 - Math.exp(-dt * 1.6);
+        f.turnBy.x += (Math.round(f.turnBy.x / TAU) * TAU - f.turnBy.x) * back;
+        f.turnBy.y += (Math.round(f.turnBy.y / TAU) * TAU - f.turnBy.y) * back;
+        f.turnBy.z += (Math.round(f.turnBy.z / TAU) * TAU - f.turnBy.z) * back;
       }
-      f.push.x += (target.x - f.push.x) * 0.06;
-      f.push.y += (target.y - f.push.y) * 0.06;
 
-      // Tilt slides pieces downhill, near ones furthest, like things floating in water.
-      const slide = 0.5 + f.nearness * 1.3;
-      f.lean.x += (tilt.x * slide - f.lean.x) * 0.05;
-      f.lean.y += (tilt.y * slide - f.lean.y) * 0.05;
+      // Drift away from a nearby pointer, then ease home. Measured at the part's own depth.
+      p.getWorldPosition(tmp);
+      const depthScale = (camera.position.z - tmp.z) / camera.position.z;
+      const scale = g.scale.x;
+      const dx = tmp.x - pointer.x * view.w * 0.5 * depthScale;
+      const dy = tmp.y - pointer.y * view.h * 0.5 * depthScale;
+      const dist = Math.hypot(dx, dy);
+      const reach = 1.4 + f.radius;
+      tmp.set(0, 0, 0);
+      if (pointerActive && dist < reach) {
+        const strength = (1 - dist / reach) * 0.8;
+        // World push, turned into the sculpture's own space
+        tmp.set((dx / (dist || 1)) * strength, (dy / (dist || 1)) * strength, 0)
+          .applyQuaternion(tmpQ.copy(g.quaternion).invert())
+          .divideScalar(scale);
+      }
+      f.push.lerp(tmp, 0.06);
 
       const swellTo = f === hovered ? 1.12 : 1;
       f.swell += (swellTo - f.swell) * 0.12;
-      p.scale.setScalar(f.size * p.userData.unit * f.swell);
+      p.scale.setScalar(f.swell);
     }
 
     render(t);
@@ -380,16 +516,16 @@ export function createField(container, { models, reducedMotion }) {
   Promise.all(
     models.map((spec) =>
       loader.loadAsync(spec.src).then(
-        (gltf) => piecesFrom(gltf, spec),
+        (gltf) => sculptureFrom(gltf, spec, maxParts),
         (err) => {
           console.warn(`Floating field: could not load ${spec.src}`, err);
-          return [];
+          return null;
         },
       ),
     ),
-  ).then((groups) => {
+  ).then((sculptures) => {
     if (disposed) return;
-    place(groups.flat());
+    place(sculptures.filter(Boolean));
     render();
     container.classList.add('is-ready');
     start();
@@ -419,6 +555,7 @@ export function createField(container, { models, reducedMotion }) {
       }
     });
     draco.dispose();
+    composer?.dispose();
     renderer.dispose();
     renderer.domElement.remove();
   };

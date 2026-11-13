@@ -104,8 +104,9 @@ models: [
 | Option | What it does |
 |---|---|
 | `src` | The imported `.glb` URL. Draco-compressed files work. |
-| `split` | Breaks a scene into its separate meshes so each piece floats on its own. Good for AR scenes built from many objects. |
-| `exclude` | Mesh names to leave out when splitting (case-insensitive, partial match). Use it for backdrops, occluders and portal masks. |
+| `split` | Breaks a scene into its separate meshes. The parts stay roughly where the sculpture has them, each pushed a little out of place and turned, so the whole reads as a ruin of the original. Good for AR scenes built from many objects. Without `split` the model floats as one piece and tumbles slowly. |
+| `turn` | Degrees to turn a split sculpture about its upright axis so its front faces the page. Use it when the model faces sideways in its file, for example `turn: -90` for one that faces +x. |
+| `exclude` | Mesh names to leave out when splitting (case-insensitive, partial match). Use it for backdrops, occluders, portal masks and ground planes much larger than the sculpture. |
 | `hero` | Always shown, larger, on the first screen beside the title. |
 | `recolor` | Replaces the materials with a glossy finish in a token colour, for example `'--black'` or `'--saffron'`. Use it when a material relies on a custom shader or reads poorly on the red ground. |
 | `scale` | Multiplies the piece's size. Default 1. |
@@ -116,7 +117,7 @@ Keep each file under about 2 MB. Compress a heavy model before adding it:
 npx @gltf-transform/cli draco in.glb out.glb
 ```
 
-The field shows up to 22 pieces on desktop and 10 on phones, chosen from every work's models. It stays still for anyone with reduced motion turned on, and pauses when the tab is hidden.
+Every model in every listed work is shown. Sculptures sit at different depths: some in front of the focal plane, some far behind. On desktop a lens blurs whatever is off the focal plane; phones skip the lens, keep a light haze, and show only the 14 largest parts of each split sculpture. The field stays still for anyone with reduced motion turned on, and pauses when the tab is hidden.
 
 ## 4. Check and ship
 
