@@ -1,0 +1,25 @@
+{
+  "imagePath": "image-targets/mural-target_luminance.jpeg",
+  "resources": {
+    "originalImage": "mural-target_original.jpeg",
+    "croppedImage": "mural-target_cropped.jpeg",
+    "thumbnailImage": "mural-target_thumbnail.jpeg",
+    "geometryImage": "mural-target_geometry.jpeg",
+    "luminanceImage": "mural-target_luminance.jpeg"
+  },
+  "name": "mural-target",
+  "type": "PLANAR",
+  "properties": {
+    "top": 0,
+    "left": 26,
+    "width": 1500,
+    "height": 2000,
+    "isRotated": true,
+    "originalWidth": 1551,
+    "originalHeight": 2000
+  },
+  "userMetadataIsJson": true,
+  "loadAutomatically": true,
+  "created": 1697999488819,
+  "updated": 1697999508083
+}
