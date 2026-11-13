@@ -12,11 +12,19 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Sora:wght@200;300;400;500&display=swap">
 <link rel="stylesheet" href="./style.css">
 <script>
+  // ?view=ar opens the camera. Anything else is the 3D view.
   (function () {
+    var ar = new URLSearchParams(location.search).get('view') === 'ar';
+    var mobile = /Android|iPhone|iPad|iPod|Mobile|Silk|Kindle/i.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     var framed;
     try { framed = window.self !== window.top; } catch (e) { framed = true; }
+    window.SBL_MODE = ar ? 'ar' : '3d';
     window.SBL_FRAMED = framed;
-    if (framed) document.documentElement.classList.add('is-framed');
+    var c = document.documentElement.classList;
+    c.add(ar ? 'is-ar' : 'is-3d', mobile ? 'is-mobile' : 'is-desktop');
+    if (framed) c.add('is-framed');
+    if (ar) document.querySelector('meta[name="theme-color"]').setAttribute('content', '#000000');
   })();
 </script>
 <script type="importmap">
@@ -29,15 +37,17 @@
 <body>
 <canvas id="stage" tabindex="0" aria-label="A moon floats over dark ground and sends a cone of light down to a star. Move the star across the ground to find seven words lying there: She bends the light to her will. Arrow keys move the star."></canvas>
 
-<a id="brand-home" href="/" target="_top" aria-label="Noodin Studio XR, back to the works"><img src="assets/logo.png" alt=""></a>
+<a id="brand-home" class="only-3d" href="/" target="_top" aria-label="Noodin Studio XR, back to the works"><img src="assets/logo.png" alt=""></a>
 
 <div id="top-actions" hidden>
   <button id="sound-btn" type="button" aria-pressed="false">Sound off</button>
   <button id="motion-btn" type="button" aria-pressed="true">Motion on</button>
+  <a id="ar-btn" class="btn only-3d" href="?view=ar" aria-label="Open in AR with your camera">AR</a>
+  <a id="exit-btn" class="btn only-ar" href="./" aria-label="Leave AR and open the 3D view">3D view</a>
 </div>
 
 <!-- The opening picture. Enter is the tap that lets the sound start. -->
-<section id="splash" aria-labelledby="splash-title">
+<section id="splash" class="only-3d" aria-labelledby="splash-title">
   <div class="splash-text">
     <h1 id="splash-title">She Bends the Light to Her Will</h1>
     <p>Feather Miigwans with Quinn Hopkins</p>
@@ -45,10 +55,34 @@
   </div>
 </section>
 
+<!-- AR: the start panel. The tap is what lets a phone ask for the camera and motion sensors. -->
+<section id="ar-start" class="only-ar" aria-labelledby="ar-title">
+  <h1 id="ar-title">She Bends the Light to Her Will</h1>
+  <p class="by">Feather Miigwans with Quinn Hopkins</p>
+  <p id="ar-text">A moon appears in the room in front of you. This uses your camera and motion sensors, and plays sound. Nothing is recorded or sent anywhere.</p>
+  <button id="ar-go" type="button" disabled>Loading</button>
+  <a class="btn" href="./">Open the 3D view</a>
+</section>
+
+<p id="status" class="only-ar" role="status" aria-live="polite" hidden></p>
+
+<button id="shutter" class="only-ar" type="button" aria-label="Take a photo" hidden><span></span></button>
+
 <p id="hint" hidden>
-  <span class="hint-mouse">Move the light across the ground to find the words. Drag to look around.</span>
-  <span class="hint-touch">Drag the light across the ground to find the words. Two fingers look around.</span>
+  <span class="only-3d hint-mouse">Move the light across the ground to find the words. Drag to look around.</span>
+  <span class="only-3d hint-touch">Drag the light across the ground to find the words. Two fingers look around.</span>
+  <span class="only-ar">Point your phone at the ground ahead of you. The star follows. Pass it over the ground to find the words. Tap to bring the moon back in front of you.</span>
 </p>
+
+<!-- AR: the photo just taken -->
+<div id="photo" role="dialog" aria-modal="true" aria-label="Your photo" hidden>
+  <img id="photo-img" alt="Photo of the moon and its light in your space">
+  <div class="photo-actions">
+    <button id="photo-share" type="button" hidden>Share</button>
+    <a id="photo-save" class="btn">Save</a>
+    <button id="photo-close" type="button">Close</button>
+  </div>
+</div>
 
 <!-- The words as they are found, for anyone who cannot see the ground. -->
 <p id="found" class="sr" role="status" aria-live="polite"></p>

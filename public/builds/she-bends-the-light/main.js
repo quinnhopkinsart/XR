@@ -1,15 +1,15 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/GLTFLoader.js';
-import { OrbitControls } from 'three/addons/OrbitControls.js';
 
-// She Bends the Light to Her Will, by Feather Miigwans with Quinn Hopkins: the 3D view.
+// She Bends the Light to Her Will, by Feather Miigwans with Quinn Hopkins.
+// One scene, two views: viewer.js is the 3D view, ar.js the camera AR on ?view=ar.
 //
 // In the AR work (8th Wall project "she-bends-the-light-to-her-will") a moon floats in the
 // room and throws a cone of light to a star on the floor, which follows wherever the phone
 // points. Seven words lie hidden on the floor, SHE BENDS THE LIGHT TO HER WILL, and each
 // shows for a few seconds when the star passes over it. This file rebuilds that scene in
-// plain three.js with the visitor's pointer in place of the phone. The numbers below are
-// the ones in the project's body.html and components.js.
+// plain three.js and holds everything the two views share. The numbers below are the ones
+// in the project's body.html and components.js.
 const MOON = { y: 2, radius: 0.25, rise: 0.25, speed: 0.5 };       // float: amplitude, speed
 const RAYS = { count: 200, spread: Math.PI / 15, opacity: 0.4 };    // light-rays
 const STAR = { size: 0.5, opacity: 0.8, lift: 0.02 };               // #cursor
@@ -20,7 +20,6 @@ const WORD = { scale: 0.5, startZ: -2, zSpacing: 0.5, maxX: 1, every: 3, near: 0
 const REACH = 3.2;   // metres from the moon the star can travel
 
 const $ = (id) => document.getElementById(id);
-const canvas = $('stage');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const css = getComputedStyle(document.documentElement);
 const token = (name) => new THREE.Color(css.getPropertyValue(name).trim());
@@ -28,43 +27,11 @@ const NIGHT = token('--night');
 const DUSK = token('--dusk');
 const GOLD = token('--gold');
 
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.setClearColor(NIGHT, 1);
-
+const MODE = window.SBL_MODE;
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(NIGHT, 5, 16);
-
-const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 60);
-const orbit = new OrbitControls(camera, canvas);
-orbit.enableDamping = true;
-orbit.enablePan = false;
-orbit.minDistance = 2.5;
-orbit.maxDistance = 9;
-orbit.minPolarAngle = 0.25;
-orbit.maxPolarAngle = Math.PI / 2 - 0.08;
-orbit.target.set(0, 0.7, -0.4);
-// One finger belongs to the light. Two fingers look around and zoom.
-orbit.touches = { ONE: null, TWO: THREE.TOUCH.DOLLY_ROTATE };
-if (window.SBL_FRAMED) {
-  // Inside the work page the wheel scrolls the page. Hold ctrl, or pinch, to zoom.
-  canvas.addEventListener('wheel', (e) => { if (!e.ctrlKey) e.stopImmediatePropagation(); }, { capture: true });
-}
-
-function frame() {
-  const portrait = innerWidth < innerHeight;
-  camera.position.set(0, portrait ? 3.9 : 2.7, portrait ? 7.6 : 4.6);
-  orbit.update();
-}
-function resize() {
-  renderer.setSize(innerWidth, innerHeight, false);
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-}
-addEventListener('resize', resize);
-resize();
-frame();
+// What only the 3D view shows: the dark floor and the glows. In AR the room is the ground.
+const stage = new THREE.Group();
+scene.add(stage);
 
 // --- the ground: dark, with a soft pool of dusk around the middle so it reads as a floor
 const ground = new THREE.Mesh(
@@ -72,7 +39,7 @@ const ground = new THREE.Mesh(
   new THREE.MeshBasicMaterial({ color: NIGHT }),
 );
 ground.rotation.x = -Math.PI / 2;
-scene.add(ground);
+stage.add(ground);
 
 function glow(inner, outer) {
   const c = document.createElement('canvas');
@@ -93,7 +60,7 @@ const floorGlow = new THREE.Mesh(
 );
 floorGlow.rotation.x = -Math.PI / 2;
 floorGlow.position.y = 0.002;
-scene.add(floorGlow);
+stage.add(floorGlow);
 
 // --- the moon
 const loaderTex = new THREE.TextureLoader();
@@ -109,6 +76,7 @@ const halo = new THREE.Sprite(new THREE.SpriteMaterial({
   map: glow('rgba(255,255,255,.55)', 'rgba(255,255,255,0)'), color: GOLD, transparent: true, depthWrite: false,
 }));
 halo.scale.setScalar(MOON.radius * 7);
+halo.visible = MODE !== 'ar';
 moon.add(halo);
 
 // --- the star on the ground, and the pool of light it sits in
@@ -128,7 +96,7 @@ const pool = new THREE.Mesh(
 );
 pool.rotation.x = -Math.PI / 2;
 pool.renderOrder = 1;
-scene.add(pool);
+stage.add(pool);
 
 // --- the light: lines from the moon to a ring around the star
 const rayPos = new Float32Array(RAYS.count * 2 * 3);
@@ -186,43 +154,18 @@ function place(w) {
   );
 }
 
-// --- the pointer aims the light
-const ray = new THREE.Raycaster();
-const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-const hit = new THREE.Vector3();
-const ndc = new THREE.Vector2();
-const aim = new THREE.Vector3(0, 0, 1.2); // where the star is heading
-let touched = false;                      // has the visitor aimed the light yet
-const fingers = new Set();
+// --- where the star is heading. Each view decides what aims it.
+const aim = new THREE.Vector3(0, 0, 1.2);
+let touched = false; // has the visitor aimed the light yet
 
-function aimAt(x, y) {
-  ndc.set((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1);
-  ray.setFromCamera(ndc, camera);
-  if (!ray.ray.intersectPlane(plane, hit)) return;
-  setAim(hit.x, hit.z);
-}
-function setAim(x, z) {
+function setAim(x, z, limit = REACH) {
   const dx = x - moon.position.x;
   const dz = z - moon.position.z;
   const d = Math.hypot(dx, dz);
-  const k = d > REACH ? REACH / d : 1;
+  const k = d > limit ? limit / d : 1;
   aim.set(moon.position.x + dx * k, 0, moon.position.z + dz * k);
   touched = true;
-  $('hint').classList.add('gone');
 }
-canvas.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') fingers.add(e.pointerId); if (fingers.size < 2) aimAt(e.clientX, e.clientY); });
-canvas.addEventListener('pointermove', (e) => {
-  if (e.pointerType === 'touch' && fingers.size !== 1) return;
-  if (e.pointerType === 'mouse' && e.buttons) return; // dragging looks around
-  aimAt(e.clientX, e.clientY);
-});
-['pointerup', 'pointercancel'].forEach((n) => addEventListener(n, (e) => fingers.delete(e.pointerId)));
-canvas.addEventListener('keydown', (e) => {
-  const step = { ArrowLeft: [-0.25, 0], ArrowRight: [0.25, 0], ArrowUp: [0, -0.25], ArrowDown: [0, 0.25] }[e.key];
-  if (!step) return;
-  e.preventDefault();
-  setAim(aim.x + step[0], aim.z + step[1]);
-});
 
 // --- sound and motion
 const audio = new Audio('./assets/feather-ambient.mp3');
@@ -238,7 +181,8 @@ function setSound(on) {
 soundBtn.addEventListener('click', () => setSound(audio.paused));
 document.addEventListener('visibilitychange', () => { if (document.hidden && !audio.paused) setSound(false); });
 
-// Motion: the moon's rise and fall, and the light wandering before anyone has aimed it.
+// Motion: the moon's rise and fall, and in the 3D view the light wandering before anyone
+// has aimed it.
 // The words still change places while hidden: that is how the work hides them.
 let motion = !reduced;
 const motionBtn = $('motion-btn');
@@ -250,44 +194,22 @@ function setMotion(on) {
 motionBtn.addEventListener('click', () => setMotion(!motion));
 setMotion(motion);
 
-// --- start
-const start = $('start');
-Promise.all(loads).then(() => {
-  start.disabled = false;
-  start.textContent = 'Enter';
-  window.SBL_LOADED = true;
-}).catch((err) => {
-  console.error(err);
-  start.textContent = 'Could not load. Reload to try again.';
-});
-start.addEventListener('click', () => {
-  $('splash').classList.add('done');
-  $('top-actions').hidden = false;
-  $('hint').hidden = false;
-  setTimeout(() => $('hint').classList.add('gone'), 10000);
-  setSound(true);
-  canvas.focus({ preventScroll: true });
-  entered = true;
-  window.SBL_READY = true;
-});
-
-// --- the loop
+// --- one frame of the scene. The view calls this, then draws.
 let entered = false;
 let floatT = 0;
 let nextMove = WORD.every;
 const clock = new THREE.Clock();
 const flat = new THREE.Vector3();
 
-renderer.setAnimationLoop(() => {
+function step() {
   const dt = Math.min(clock.getDelta(), 0.1);
   const t = clock.elapsedTime;
 
   if (motion) floatT += dt * MOON.speed;
   moon.position.y = MOON.y + Math.sin(floatT) * MOON.rise;
-  if (motion) moon.rotation.y += dt * 0.05;
 
-  // Before the visitor aims it, the light drifts slowly over the rows of words.
-  if (entered && !touched && motion) {
+  // In the 3D view, before the visitor aims it, the light drifts slowly over the rows of words.
+  if (MODE !== 'ar' && entered && !touched && motion) {
     aim.set(Math.sin(t * 0.23) * 1.1, 0, -0.5 + Math.sin(t * 0.31 + 1) * 1.5);
   }
   star.position.x += (aim.x - star.position.x) * Math.min(1, dt * 6);
@@ -314,13 +236,22 @@ renderer.setAnimationLoop(() => {
     }
     const goal = w.shown ? 1 : 0;
     if (w.opacity !== goal) {
-      const step = reduced ? 1 : dt / WORD.fade;
-      w.opacity = goal > w.opacity ? Math.min(1, w.opacity + step) : Math.max(0, w.opacity - step);
+      const fade = reduced ? 1 : dt / WORD.fade;
+      w.opacity = goal > w.opacity ? Math.min(1, w.opacity + fade) : Math.max(0, w.opacity - fade);
       w.mats.forEach((m) => { m.opacity = w.opacity; });
       w.obj.visible = w.opacity > 0;
     }
   }
+  return dt;
+}
 
-  orbit.update();
-  renderer.render(scene, camera);
-});
+const ctx = {
+  THREE, scene, stage, moon, star, aim, setAim, step, setSound, $, reduced,
+  NIGHT, MOON, REACH,
+  ready: Promise.all(loads),
+  enter() { entered = true; },
+  get motion() { return motion; },
+};
+
+if (MODE === 'ar') (await import('./ar.js')).startAR(ctx);
+else (await import('./viewer.js')).startViewer(ctx);
