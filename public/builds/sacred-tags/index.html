@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sacred Tags | Noodin Studio XR</title>
+<meta name="description" content="Sacred Tags, by Quinn Hopkins. Wear the paint off a graffitied shipping container to find the seven teachings in Anishinaabemowin on the rock underneath.">
+<meta name="author" content="Quinn Hopkins">
+<meta name="theme-color" content="#08090c">
+<link rel="preload" href="./fonts/finger-paint-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="./style.css">
+<script>
+  // There is no camera AR for this work, so ?view=ar opens the same view.
+  (function () {
+    var mobile = /Android|iPhone|iPad|iPod|Mobile|Silk|Kindle/i.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var framed;
+    try { framed = window.self !== window.top; } catch (e) { framed = true; }
+    window.ST_FRAMED = framed;
+    var c = document.documentElement.classList;
+    c.add(mobile ? 'is-mobile' : 'is-desktop');
+    if (framed) c.add('is-framed');
+  })();
+</script>
+</head>
+<body>
+<canvas id="stage" tabindex="0" aria-label="The side of a blue shipping container covered in graffiti. SACRED TAGS runs across it in large letters around an eagle feather, with seven smaller tags in English: honesty, humility, wisdom, love, truth, bravery, respect. Moving across the wall wears the paint away and shows rock underneath, where each word is painted in Anishinaabemowin beside an animal relative. Arrow keys move across the wall, or use the seven buttons below."></canvas>
+
+<a id="brand-home" href="/" target="_top" aria-label="Noodin Studio XR, back to the works"><img src="assets/logo.png" alt=""></a>
+
+<div id="top-actions" hidden>
+  <button id="cam-btn" type="button" aria-pressed="false">Camera off</button>
+</div>
+
+<!-- The opening picture. Enter starts the wall. -->
+<section id="splash" aria-labelledby="splash-title">
+  <div class="splash-text">
+    <h1 id="splash-title">Sacred Tags</h1>
+    <p>Quinn Hopkins</p>
+    <button id="start" type="button" disabled>Loading</button>
+  </div>
+</section>
+
+<p id="status" role="status" aria-live="polite" hidden></p>
+
+<!-- The word that is open: Anishinaabemowin, English, and what the word is built from. -->
+<aside id="caption" class="gone" aria-hidden="true" hidden>
+  <p class="cap-head"><span id="cap-word" lang="oj"></span><span id="cap-english"></span></p>
+  <p id="cap-gloss"></p>
+</aside>
+
+<p id="hint" hidden>
+  <span class="hint-cam">Move in front of your camera. Stay on a word to read it.</span>
+  <span class="hint-mouse">Move across the wall to wear the paint away. Stay on a word to read it.</span>
+  <span class="hint-touch">Drag a finger across the wall to wear the paint away. Stay on a word to read it.</span>
+</p>
+
+<!-- Each word by name, for a keyboard or a screen reader. -->
+<ul id="teachings" aria-label="The seven teachings" hidden></ul>
+
+<!-- The words as they are found, for anyone who cannot see the wall. -->
+<p id="found" class="sr" role="status" aria-live="polite"></p>
+
+<script type="module" src="./main.js"></script>
+<noscript><p class="nojs">This work needs JavaScript and WebGL.</p></noscript>
+</body>
+</html>
