@@ -1,0 +1,38 @@
+{
+  "title": "Root & STEM, Issue 7 Cover",
+  "year": "2023",
+  "status": "live",
+  "hidden": true,
+  "venue": "Root & STEM magazine, Issue 7",
+  "location": "",
+  "summary": "The cover of a magazine opens onto a night sky, and a tree made of syllabics rises out of an open book.",
+  "description": [
+    "I made the cover for the Literacy Issue of Root & STEM, the magazine the Pinnguaq Association publishes for educators teaching STEAM and digital skills across Canada. A tree built from syllabics grows out of a book floating in the sky.",
+    "Hold a phone to the cover and it opens from edge to edge. The tree and the book come up from deep inside the page and stop just in front of it. The magazine's title hangs above them as a wampum belt, and syllabics drift out past the cover toward you.",
+    "Literacy is the growth of knowledge and storytelling for future generations. It is also recording and writing the truth of our history."
+  ],
+  "howTo": [
+    "Press Enter in the frame above. The cover opens in a 3D view on any device.",
+    "Drag to look at the tree from the side. On a phone, drag or tap Tilt. Scroll or pinch to step closer.",
+    "Tap Replay to close the cover and watch it open again.",
+    "For AR, use a printed copy of issue 7, or open the target below on another screen. Tap AR at the top right on a phone and point your camera at the cover."
+  ],
+  "embedNote": "Press Enter and drag to look around the tree. On a phone, tap AR to open the camera.",
+  "credits": [
+    {
+      "role": "Artwork and AR",
+      "name": "Quinn Hopkins"
+    },
+    {
+      "role": "Published by",
+      "name": "Pinnguaq Association"
+    }
+  ],
+  "coverAlt": "A magazine cover. A tree made of green syllabics grows out of an open book floating in a pink and violet night sky. The title reads Root & STEM, with the headline Language and Literacy: Digital Dialogues.",
+  "tags": [
+    "image target",
+    "magazine cover",
+    "portal"
+  ],
+  "order": 0
+}

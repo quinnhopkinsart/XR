@@ -122,6 +122,24 @@ Copy `dist/` here. `image-targets/` holds only `mural-target.json` and `mural-ta
 - The export's `target` image target is 8th Wall's jellyfish sample and is not here. `sound2.mp3` and five of the six cube map pictures were unused and are not here.
 - Tested in headless Chromium: 3D on desktop and phone sizes, AR with a fake camera showing the mural (found as `mural-target`, 1 by 0.75). Sound, video capture and tracking on the real wall need a phone.
 
+## Root & STEM, Issue 7 Cover
+
+Built from the `r-s-literacy-selfhosted` project folder (8th Wall Projects), the buildable 8th Wall export "r-s-literacy-2023" (A-Frame 1.3.0) given a 3D view. Same setup as Stellar Narratives and Future Ancestors. Its README lists every change from the hosted project.
+
+```
+npm run build
+```
+
+Copy `dist/` here. `image-targets/` holds only `root-stem-issue-7-cover.json` and `root-stem-issue-7-cover_luminance.jpeg`.
+
+- The one target is the printed cover of issue 7. The engine reports it 0.75 wide and 1 high: one unit is the cover's height, since the target is upright (not stored rotated). The export's three draft covers (`IMG_0492`, which the published hosted app still tracked, `IMG_0493-2` and `Root&Stem-Literacy-2023-Small`) are not here.
+- The opening meets the edges of the cover, at Quinn's request: four depth-only planes start on the cover's edges and a ring grows from the middle to 0.75, past the corners. The hosted side planes sat 0.015 outside the edges.
+- The 3D view stands a picture of the cover in the dark, then cuts the opening out of it as the ring grows (`cover-photo`), so the whole cover becomes the window. Replay closes it and plays the opening again. In AR the opening plays the first time the camera finds the cover, as hosted.
+- `reflections` came from 8th Wall's Reflections module, which the hosted app loaded at runtime. It is rebuilt in the source's `src/components/reflections.js`. The cube map is the module's default grey studio, saved from the hosted app at 256 px in `assets/cube/`.
+- `assets/Wampum-title.glb` carries its texture as 1280 px WebP (5.6 MB to 0.3 MB) and `skybox.jpg` replaces a 7 MB PNG. No Draco. The tree, the book and the syllabics are the export's files.
+- `assets/1.glb` has one plane with no texture (`Plane.040`), a small white square beside the tree. It is in the hosted app too and is left for Quinn to fix in the model.
+- Tested in headless Chromium: 3D on desktop and phone sizes, AR with a fake camera showing the cover (found as `root-stem-issue-7-cover`, 0.75 by 1). The fake camera only finds an upright target when its feed and the window are both portrait. Video capture and tracking on the printed magazine need a phone.
+
 ## Sacred Tags
 
 Not an 8th Wall build and not AR: the web version of the projection installation, written new. Plain WebGL, no libraries and no build step, so the files here are the source. The installation's TouchDesigner files are in `Documents\Art\2026\Sacred Tags`.

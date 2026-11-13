@@ -1,0 +1,25 @@
+{
+  "imagePath": "image-targets/root-stem-issue-7-cover_luminance.jpeg",
+  "resources": {
+    "originalImage": "root-stem-issue-7-cover_original.jpeg",
+    "croppedImage": "root-stem-issue-7-cover_cropped.jpeg",
+    "thumbnailImage": "root-stem-issue-7-cover_thumbnail.jpeg",
+    "geometryImage": "root-stem-issue-7-cover_geometry.jpeg",
+    "luminanceImage": "root-stem-issue-7-cover_luminance.jpeg"
+  },
+  "name": "root-stem-issue-7-cover",
+  "type": "PLANAR",
+  "properties": {
+    "top": 0,
+    "left": 23,
+    "width": 1500,
+    "height": 2000,
+    "isRotated": false,
+    "originalWidth": 1545,
+    "originalHeight": 2000
+  },
+  "userMetadataIsJson": true,
+  "loadAutomatically": true,
+  "created": 1683079269622,
+  "updated": 1683079269622
+}
