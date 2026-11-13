@@ -1,7 +1,7 @@
 {
   "title": "She Bends the Light to Her Will",
   "year": "2024",
-  "status": "migrating",
+  "status": "live",
   "venue": "La Leun Waashisho, MuseumsQuartier",
   "location": "Vienna",
   "summary": "A moon floats in the room and sends its light to the ground. Move the light to find the words hidden there. A collaboration with Feather Miigwans.",
@@ -14,10 +14,11 @@
     "Press Enter in the frame above. The sound starts with it, and Sound on or off is at the top right.",
     "Move your mouse across the ground to move the light. On a phone, drag one finger.",
     "Pass the light over a word to show it. The words change places while they are hidden.",
-    "Drag with the mouse, or use two fingers, to look around. The arrow keys move the light too.",
-    "This is the 3D view. The camera AR version is moving to this site next."
+    "For AR, tap AR on a phone to open the camera in a new tab, or scan the code. Tap Start AR and allow the camera and motion sensors.",
+    "The moon appears in front of you. Point your phone at the ground ahead and the star follows. Tap the screen to bring the moon back in front of you.",
+    "Tap the round camera button to take a photo, then save or share it."
   ],
-  "embedNote": "Enter, then move the light across the ground to find the words.",
+  "embedNote": "Enter, then move the light across the ground to find the words. On a phone, tap AR to open the camera.",
   "credits": [
     {
       "role": "Concept and design",

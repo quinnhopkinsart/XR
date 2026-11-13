@@ -18,16 +18,17 @@ html,body{margin:0;height:100%;background:var(--night);color:var(--white);overfl
 body{height:100dvh;font:400 var(--step-0)/1.6 var(--font-body);-webkit-font-smoothing:antialiased;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 [hidden]{display:none!important}
+.is-3d .only-ar,.is-ar .only-3d{display:none!important}
 :focus-visible{outline:2px solid var(--white);outline-offset:3px}
 .sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 
 #stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #stage:focus-visible{outline-offset:-4px}
 
-button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;padding:.4rem .9rem;
-  border:1px solid var(--white);border-radius:0;background:var(--black);color:var(--white);cursor:pointer;
+button,.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;padding:.4rem .9rem;
+  border:1px solid var(--white);border-radius:0;background:var(--black);color:var(--white);cursor:pointer;text-decoration:none;
   font:500 var(--step--1) var(--font-display);letter-spacing:var(--tracking-label);text-transform:uppercase;touch-action:manipulation}
-button:hover{background:var(--dusk)}
+button:hover,.btn:hover{background:var(--dusk)}
 button[disabled]{opacity:.7;cursor:default}
 
 #brand-home{position:fixed;z-index:3;top:var(--top);left:var(--pad);display:block;width:72px;padding:6px;background:var(--black);line-height:0}
@@ -52,5 +53,32 @@ button[disabled]{opacity:.7;cursor:default}
 #hint.gone{opacity:0}
 .hint-touch{display:none}
 @media (hover:none){.hint-mouse{display:none}.hint-touch{display:inline}}
+/* AR */
+.is-desktop #ar-btn{display:none}
+#ar-btn{background:var(--gold);border-color:var(--gold);color:var(--black)}
+#ar-btn:hover{background:var(--white);border-color:var(--white)}
+.is-ar,.is-ar body{background:var(--black)}
+#ar-start{position:fixed;inset:0;z-index:5;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1rem;
+  padding:var(--pad);padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right));background:var(--black)}
+#ar-start h1{margin:0;font:200 clamp(1.7rem,8vw,3rem)/1.08 var(--font-display);letter-spacing:-.01em;text-transform:uppercase}
+#ar-start p{margin:0;max-width:34em}
+#ar-start .by{font:400 var(--step--1)/1.3 var(--font-display);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--gold)}
+#ar-go{background:var(--gold);border-color:var(--gold);color:var(--black);padding:.7rem 1.4rem}
+#ar-go:hover{background:var(--white);border-color:var(--white)}
+#status{position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--top) + 60px);margin:0;padding:.35em .7em;width:max-content;
+  max-width:calc(100vw - 2*var(--pad));background:var(--black);text-align:center;font:400 var(--step--1)/1.4 var(--font-display);pointer-events:none}
+.is-ar #hint{bottom:calc(var(--bottom) + 100px)}
+/* The shutter: a white ring with a white disc, on a black plate so it reads on any room. */
+#shutter{position:fixed;left:50%;transform:translateX(-50%);bottom:var(--bottom);width:76px;height:76px;padding:0;
+  border:4px solid var(--white);border-radius:50%;background:var(--black)}
+#shutter span{display:block;width:54px;height:54px;border-radius:50%;background:var(--white);transition:transform .12s var(--ease)}
+#shutter:active span{transform:scale(.86)}
+#shutter:hover{background:var(--black)}
+#flash{position:fixed;inset:0;background:var(--white);pointer-events:none;animation:flash .35s var(--ease) forwards}
+@keyframes flash{from{opacity:.85}to{opacity:0}}
+#photo{position:fixed;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  padding:var(--top) var(--pad) var(--bottom);background:var(--black)}
+#photo img{max-width:100%;max-height:calc(100dvh - 140px);object-fit:contain;border:1px solid var(--white);-webkit-touch-callout:default}
+.photo-actions{display:flex;gap:8px}
 .nojs{position:fixed;inset:0;display:grid;place-items:center;margin:0}
-@media (prefers-reduced-motion:reduce){#splash,#hint{transition:none}}
+@media (prefers-reduced-motion:reduce){#splash,#hint,#shutter span{transition:none}#flash{animation:none;opacity:0}}

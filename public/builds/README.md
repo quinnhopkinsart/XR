@@ -79,12 +79,13 @@ Not an 8th Wall export: the work was a Spark AR effect, so this build is new and
 
 ## She Bends the Light to Her Will
 
-A collaboration with Feather Miigwans. The 3D view only, for now: plain three.js (0.170 in `vendor/`), no build step, so the files here are the source. It is rebuilt from the 8th Wall export `she-bends-the-light-to-her-will.zip` (8th Wall Projects\Archives), an A-Frame 1.4.1 world-tracking scene.
+A collaboration with Feather Miigwans. Plain three.js (0.170 in `vendor/`), no build step, so the files here are the source. It is rebuilt from the 8th Wall export `she-bends-the-light-to-her-will.zip` (8th Wall Projects\Archives), an A-Frame 1.4.1 world-tracking scene.
 
-- `main.js` is the whole scene. The numbers at the top (`MOON`, `RAYS`, `STAR`, `WORD`) are the ones in the export's `body.html` and `components.js`: the moon's height and float, 200 rays in a cone, the half-metre star, and words at half size that take a new place across their row every 3 seconds and show for 5 when the star is within half a metre.
-- In AR the star follows where the phone points. Here it follows the pointer: the mouse, one finger, or the arrow keys. Dragging with the mouse or two fingers looks around.
-- Changes from the AR scene: a word shows when the light is on its letters (the export measures from each model's origin, which sits off to one side); a word stays put while it is showing; words fade in and out; until someone aims the light it drifts on its own; the ground is a dark stage in the colours of the work's opening picture, in place of the black and white camera picture.
-- Sound: `assets/feather-ambient.mp3` is the export's `Feather_Ambient.mp3` at 128 kbps (2.5 MB, from 6.3 MB), looped at the export's volume, started by Enter.
-- Not carried over yet: the camera AR, the video capture button and the black and white camera filter. The export's three image targets are unused leftovers (two from 13 Moon Calendar, one 8th Wall sample).
-- `?view=ar` does nothing yet. The hosted AR stays at 8th.io/3ftfm until February 28, 2027.
-- Tested in headless Chromium only. Sound playback and touch on a real phone are not tested.
+- `main.js` is the scene both views share. The numbers at the top (`MOON`, `RAYS`, `STAR`, `WORD`) are the ones in the export's `body.html` and `components.js`: the moon's height and float, 200 rays in a cone, the half-metre star, and words at half size that take a new place across their row every 3 seconds and show for 5 when the star is within half a metre.
+- `viewer.js` is the 3D view. The star follows the pointer: the mouse, one finger, or the arrow keys. Dragging with the mouse or two fingers looks around. The ground is a dark stage in the colours of the work's opening picture, and until someone aims the light it drifts on its own.
+- `ar.js` is `?view=ar`: world tracking on the self-hosted engine (`external/xr/xr.js` and `xr-slam.js`, nothing else from 8th Wall). As in the export, the phone starts at (0, 2, 2) facing the moon at (0, 2, 0), the camera picture is black and white, darkened, with a vignette (the export's shader, unchanged), the star sits on the floor where the phone points, pulled 3 units back toward the visitor, a tap recentres the scene and a drag turns the moon. Start AR starts the sound.
+- Changes from the export, in both views: a word shows when the light is on its letters (the export measures from each model's origin, which sits off to one side); a word stays put while it is showing; words fade in and out.
+- Changes in AR: the star's 3-unit pull follows the visitor as they turn (the export pulls along a fixed axis, which only suits someone who never turns); the round button takes a photo with the engine's `CanvasScreenshot` and offers Share and Save, where the export recorded video through xrextras with a Noodin Studio watermark. No xrextras, landing page, A-Frame or 8frame.
+- Sound: `assets/feather-ambient.mp3` is the export's `Feather_Ambient.mp3` at 128 kbps (2.5 MB, from 6.3 MB), looped at the export's volume.
+- The export's three image targets are unused leftovers (two from 13 Moon Calendar, one 8th Wall sample) and are not here.
+- Tested in headless Chromium only, AR with a fake camera and no gyroscope. Tracking, the motion prompt on iOS, sound and the share sheet need a real phone.
