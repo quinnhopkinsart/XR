@@ -89,3 +89,15 @@ A collaboration with Feather Miigwans. Plain three.js (0.170 in `vendor/`), no b
 - Sound: `assets/feather-ambient.mp3` is the export's `Feather_Ambient.mp3` at 128 kbps (2.5 MB, from 6.3 MB), looped at the export's volume.
 - The export's three image targets are unused leftovers (two from 13 Moon Calendar, one 8th Wall sample) and are not here.
 - Tested in headless Chromium only, AR with a fake camera and no gyroscope. Tracking, the motion prompt on iOS, sound and the share sheet need a real phone.
+
+## The Erratics
+
+Built from `8th Wall Projects\Project Files\the-erratics-selfhosted`. It merges two 8th Wall Studio projects, "the-erratic-at-dunlop-gallery" (the three Central Branch walls) and "the-erratics-sherwood", into one scene with four spaces, one per wall. Studio runtime, like Biidaaban. The 3D view (`src/desktop/`), the wall list (`src/common/views.ts`) and the AR wall switching (`src/app.ts`) live in that folder's `src/`, and its README lists every change from the hosted projects.
+
+```
+npm run build
+```
+
+Copy `dist/` here (the webpack config cleans `dist/` first). `?view=ar` tracks all four targets at once and loads whichever wall the camera finds. `?wall=central-left|central-middle|central-right|sherwood` picks the first wall in either view.
+
+Models are Quinn's unlit bake (light baked into `COLOR_0`, grass and feathers decimated), brightened x2 with `tools/brighten-unlit.mjs` to match the lit runtime. The four doorways, the left wall's rock and the spiral line stay lit PBR (`tools/keep-default-scene.mjs` on the pre-unlit models), because the bake turned them black or dark. All Draco with WebP textures; the Studio runtime decodes Draco from its own `external/runtime/resources/draco/`.
