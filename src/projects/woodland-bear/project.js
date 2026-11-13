@@ -9,8 +9,9 @@ import bearModel from './models/woodland-bear.glb?url';
 // camera button.
 //
 // The model comes from WoodlandBear_mural.glb, cut from 633,000 triangles and 17 MB to
-// about 75,000 and 300 KB, with each colour part kept as its own node (optimize.mjs in the
-// project folder).
+// about 75,000 and 300 KB, with each colour part kept as its own node (Code\Web\optimize.mjs
+// in the project folder). The hosted 8th Wall version is 8th.io/tbete, which stops on
+// February 28, 2027; codes printed for it need reprinting from this work's page.
 //
 // To confirm with Quinn: the year (the files are from 2022, the portfolio index says 2021),
 // the curator and venue spellings, and the description, which is adapted from his portfolio
