@@ -27,8 +27,18 @@ export function arUrl(project) {
   if (!href) return `${site.url}${site.workPath}/${project.slug}`;
   if (project.launch.type === 'external') return href;
   const url = new URL(href, `${site.url}/`);
-  if (project.launch.type === 'build') url.searchParams.set('view', 'ar');
+  if (project.launch.type === 'build' && hasAR(project)) url.searchParams.set('view', 'ar');
   return url.toString();
+}
+
+/**
+ * Whether a work has a camera AR view. A work whose categories are all 3D (a design
+ * model, a viewer) has none, so its QR code opens the work itself and says so.
+ * A work with no categories is taken to be AR, as every work was before categories.
+ */
+export function hasAR(project) {
+  const c = project.categories || [];
+  return c.length === 0 || c.includes('image-target') || c.includes('world-tracking');
 }
 
 /** Builds and external links leave the React app, so they need a full page load. */

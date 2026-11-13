@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import BeadQR, { serializeBeadQR } from './BeadQR.jsx';
-import { arUrl } from '../projects/launch.js';
+import { arUrl, hasAR } from '../projects/launch.js';
 
 const PNG_SIZE = 2400;
 
@@ -19,7 +19,8 @@ function save(blob, name) {
 export default function QRBlock({ project }) {
   const ref = useRef(null);
   const url = arUrl(project);
-  const name = `${project.slug}-ar-qr`;
+  const ar = hasAR(project);
+  const name = `${project.slug}-${ar ? 'ar-' : ''}qr`;
 
   const downloadSvg = () => {
     if (!ref.current) return;
@@ -46,10 +47,10 @@ export default function QRBlock({ project }) {
   return (
     <figure className="qr">
       <div className="qr__code">
-        <BeadQR ref={ref} value={url} title={`QR code that opens ${project.title} in AR`} />
+        <BeadQR ref={ref} value={url} title={`QR code that opens ${project.title}${ar ? ' in AR' : ' on your phone'}`} />
       </div>
       <figcaption>
-        <span className="qr__label">Scan to open in AR</span>
+        <span className="qr__label">{ar ? 'Scan to open in AR' : 'Scan to open on your phone'}</span>
         <span className="qr__url">{url.replace(/^https:\/\//, '')}</span>
         <span className="qr__downloads">
           <button type="button" className="textbutton" onClick={downloadPng}>
