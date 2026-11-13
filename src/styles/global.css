@@ -10,11 +10,18 @@ html {
   background: var(--ground);
   color-scheme: light;
   -webkit-text-size-adjust: 100%;
+  cursor: var(--cursor);
 }
 
+/* The saffron centre lights up over anything clickable, floating pieces included */
+a,
+button,
+summary,
+label,
+[role='button'],
 html.field-hover,
 html.field-hover body {
-  cursor: pointer;
+  cursor: var(--cursor-link);
 }
 
 body {
@@ -39,6 +46,7 @@ a {
 
 a:hover {
   color: var(--heading);
+  text-decoration-thickness: 2px;
 }
 
 ::selection {
@@ -54,7 +62,6 @@ a:hover {
 button {
   font: inherit;
   color: inherit;
-  cursor: pointer;
 }
 
 .label {
@@ -79,6 +86,10 @@ button {
   text-decoration: none;
   color: inherit;
   border-bottom: 1px solid currentColor;
+}
+
+.textbutton:hover {
+  border-bottom-width: 2px;
 }
 
 /* Floating 3D field, behind everything */
@@ -138,8 +149,8 @@ main {
   gap: 1rem;
   padding: 0.6rem var(--gutter);
   background: var(--veil);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--line);
   font: 500 var(--step--1) var(--font-display);
   letter-spacing: var(--tracking-label);
@@ -211,8 +222,15 @@ main {
 }
 
 .masthead__nav a {
+  padding: 0.2em 0;
+  border-bottom: 1px solid transparent;
   text-decoration: none;
   white-space: nowrap;
+}
+
+.masthead__nav a:hover,
+.masthead__nav a[aria-current='page'] {
+  border-bottom-color: currentColor;
 }
 
 .footer {
@@ -227,13 +245,18 @@ main {
   font-size: var(--step--1);
 }
 
+.footer a {
+  text-decoration: none;
+}
+
 .footer a:hover {
   color: var(--on-panel-strong);
-  text-decoration-thickness: 2px;
+  text-decoration: underline;
 }
 
 .footer__links {
   display: flex;
+  flex-wrap: wrap;
   gap: 1.5rem;
 }
 
@@ -254,7 +277,7 @@ main {
 
 .hero__title {
   margin: 0;
-  font: var(--weight-display) var(--step-4) / 0.85 var(--font-display);
+  font: var(--weight-display) var(--step-4) / 0.95 var(--font-display);
   letter-spacing: var(--tracking-display);
   text-transform: uppercase;
   color: var(--heading);
@@ -265,7 +288,7 @@ main {
 }
 
 .hero__lede {
-  max-width: 32ch;
+  max-width: 34ch;
   margin: 2rem 0 0;
   font: 300 var(--step-1) / 1.45 var(--font-display);
   color: var(--ink);
@@ -431,6 +454,10 @@ main {
   text-transform: uppercase;
 }
 
+.filter:hover {
+  background: var(--ground-deep);
+}
+
 .filter[aria-pressed='true'] {
   background: var(--black);
   border-color: var(--black);
@@ -533,6 +560,7 @@ main {
   margin: 0.35rem 0 0.4rem;
   font: 300 var(--step-1) / 1.2 var(--font-display);
   text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 
 .card__summary {
@@ -584,7 +612,7 @@ main {
 
 .work__title {
   margin: 0;
-  font: var(--weight-display) var(--step-3) / 1.12 var(--font-display);
+  font: var(--weight-display) var(--step-3) / 1.05 var(--font-display);
   letter-spacing: var(--tracking-display);
   text-transform: uppercase;
   color: var(--heading);
@@ -666,10 +694,12 @@ main {
   margin: 0 0 1.25em;
 }
 
+.prose > p:last-child {
+  margin-bottom: 0;
+}
+
 .prose > p:first-child {
-  font-size: var(--step-1);
-  line-height: 1.5;
-  font-weight: 300;
+  font: 300 var(--step-1) / 1.5 var(--font-display);
   color: var(--heading);
 }
 
@@ -789,6 +819,7 @@ main {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
   width: 100%;
   padding: 1.1rem 1.25rem;
   background: var(--accent);

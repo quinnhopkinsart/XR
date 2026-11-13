@@ -73,6 +73,14 @@
   --step-3: clamp(2.2rem, 1.4rem + 4vw, 5rem);
   --step-4: clamp(3.4rem, 1.8rem + 8.5vw, 10rem);
 
+  /* Cursor, shared with the portfolio (noodinstudio.com): a black ring with four
+     tapered stems, fused without corners, and a saffron centre over anything
+     clickable. A data URI cannot read custom properties, so the three colours are
+     written out here: %23000 is --black, %23fff is --white, %23ffb31a is --saffron.
+     Change them with the palette. */
+  --cursor: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 32 32%22%3E%3Cpath d=%22M13.59 9.00C15.69 8.28 15.40 4.00 16.00 0.80C16.60 4.00 16.31 8.28 18.41 9.00A7.40 7.40 0 0 1 23.00 13.59C23.72 15.69 28.00 15.40 31.20 16.00C28.00 16.60 23.72 16.31 23.00 18.41A7.40 7.40 0 0 1 18.41 23.00C16.31 23.72 16.60 28.00 16.00 31.20C15.40 28.00 15.69 23.72 13.59 23.00A7.40 7.40 0 0 1 9.00 18.41C8.28 16.31 4.00 16.60 0.80 16.00C4.00 15.40 8.28 15.69 9.00 13.59A7.40 7.40 0 0 1 13.59 9.00ZM20.20 16.00 A4.20 4.20 0 1 0 11.80 16.00 A4.20 4.20 0 1 0 20.20 16.00 Z%22 fill=%22%23000%22 fill-rule=%22evenodd%22 stroke=%22%23fff%22 stroke-width=%221.1%22 stroke-linejoin=%22round%22 paint-order=%22stroke%22/%3E%3C/svg%3E") 16 16, auto;
+  --cursor-link: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%224.40%22 fill=%22%23ffb31a%22/%3E%3Cpath d=%22M13.59 9.00C15.69 8.28 15.40 4.00 16.00 0.80C16.60 4.00 16.31 8.28 18.41 9.00A7.40 7.40 0 0 1 23.00 13.59C23.72 15.69 28.00 15.40 31.20 16.00C28.00 16.60 23.72 16.31 23.00 18.41A7.40 7.40 0 0 1 18.41 23.00C16.31 23.72 16.60 28.00 16.00 31.20C15.40 28.00 15.69 23.72 13.59 23.00A7.40 7.40 0 0 1 9.00 18.41C8.28 16.31 4.00 16.60 0.80 16.00C4.00 15.40 8.28 15.69 9.00 13.59A7.40 7.40 0 0 1 13.59 9.00ZM20.20 16.00 A4.20 4.20 0 1 0 11.80 16.00 A4.20 4.20 0 1 0 20.20 16.00 Z%22 fill=%22%23000%22 fill-rule=%22evenodd%22 stroke=%22%23fff%22 stroke-width=%221.1%22 stroke-linejoin=%22round%22 paint-order=%22stroke%22/%3E%3C/svg%3E") 16 16, pointer;
+
   /* Space and shape */
   --gutter: clamp(16px, 4vw, 48px);
   --max: 1280px;
