@@ -1,18 +1,13 @@
 import { useState } from 'react';
 import ProjectCard from '../components/ProjectCard.jsx';
 import WideTitle from '../components/WideTitle.jsx';
-import { allCategories, allKinds, projects } from '../projects/registry.js';
+import { allCategories, projects } from '../projects/registry.js';
 import { CATEGORIES } from '../projects/schema.js';
 import copy from '../brand/copy.json';
 
 export default function Home() {
-  const [kind, setKind] = useState('All');
   const [category, setCategory] = useState('All');
-  const shown = projects.filter(
-    (p) =>
-      (kind === 'All' || p.kind === kind) &&
-      (category === 'All' || p.categories.includes(category)),
-  );
+  const shown = projects.filter((p) => category === 'All' || p.categories.includes(category));
 
   return (
     <>
@@ -46,27 +41,12 @@ export default function Home() {
                 ))}
               </div>
             )}
-            {allKinds.length > 1 && (
-              <div className="filters" role="group" aria-label="Filter by medium">
-                {['All', ...allKinds].map((k) => (
-                  <button
-                    key={k}
-                    type="button"
-                    className="filter"
-                    aria-pressed={kind === k}
-                    onClick={() => setKind(k)}
-                  >
-                    {k === 'All' ? 'All media' : k}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         </div>
 
         {shown.length === 0 && (
           <p className="note">
-            <span className="plate">No works match these filters.</span>
+            <span className="plate">No works match this filter.</span>
           </p>
         )}
 

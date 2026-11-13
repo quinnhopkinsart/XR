@@ -45,7 +45,6 @@ export const projects = all.filter((p) => !p.hidden);
 
 export const getProject = (slug) => all.find((p) => p.slug === slug);
 
-export const allKinds = [...new Set(projects.map((p) => p.kind))].sort();
 
 // Categories in use by listed works, in the order schema.js sets.
 export const allCategories = Object.keys(CATEGORIES).filter((c) =>
