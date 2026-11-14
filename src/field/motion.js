@@ -7,6 +7,8 @@
 //                (landing page only, see FlyMode.jsx)
 //   flyForward   the Fly button is held down (screens without touch)
 //   flyHome      a count; each change puts the flying camera back at its start
+//   flyTour      in the free camera, scrolling carries the camera along the dashed line
+//                from work to work, in place of flying freely
 
 const read = (key) => {
   try {
@@ -42,6 +44,7 @@ let state = {
   fly: false,
   flyForward: false,
   flyHome: 0,
+  flyTour: false,
 };
 
 // The touch joystick in the free camera: x is right (1) and left (-1), y is forward (1)

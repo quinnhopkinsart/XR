@@ -45,6 +45,10 @@ const LOOK_AT = new THREE.Vector3(0, 0, -3);
 // `turn` in radians a second for the arrow keys, `look` in radians per pixel dragged,
 // `wheel` in units per pixel scrolled, `reach` how far from the centre the camera may go.
 const FLY = { speed: 9, boost: 2.5, turn: 1.3, look: 0.0042, wheel: 0.016, reach: 75, pitch: 1.45 };
+// The tour: scrolling carries the camera along the dashed line (scenery.js). `wheel` and
+// `swipe` are units along the line per pixel scrolled or swiped, `keys` units a second for
+// the keys and the joystick, `ease` how quickly the camera catches up (higher is tighter).
+const TOUR = { wheel: 0.035, swipe: 0.12, keys: 16, ease: 4 };
 // Zones: `out` is the least distance from the centre to a zone, `step` the angle between
 // neighbours in degrees, `gap` the space between sculptures in one zone and between two
 // zones, `pad` the clear space round a zone's sculptures.
@@ -201,7 +205,9 @@ function sculptureFrom(gltf, spec, maxParts) {
 
 export function createField(container, { models, reducedMotion }) {
   const mobile = window.matchMedia('(max-width: 760px), (pointer: coarse)').matches;
-  const maxParts = mobile ? 22 : 60; // per split sculpture
+  // Per split sculpture. High enough to keep every piece of the works shown now (Woodland
+  // Be[AR] has 54, the Shaman 46): a lower number on phones dropped their small pieces.
+  const maxParts = mobile ? 64 : 120;
   const lens = !mobile; // depth of field; phones get the haze only
   const random = rng(11);
   const ground = new THREE.Color(token('--ground', '#ff3314'));
@@ -287,6 +293,12 @@ export function createField(container, { models, reducedMotion }) {
   let flyMix = 0; // 0 on the page, 1 in flight: sculptures in their zones, haze drawn back
   let shownMix = -1;
   let waveT = -1; // the time the line to follow was last drawn for
+  let touring = false; // riding the dashed line by scrolling
+  let tourS = 0; // how far along the line the camera is
+  let tourTo = 0; // how far along the visitor has scrolled it
+  let glance = { yaw: 0, pitch: 0 }; // looking aside from the tour's own view, by dragging
+  const tourEye = new THREE.Vector3();
+  const tourLook = new THREE.Vector3();
   let scenery = null;
   let placed = false;
   const pagePlace = new THREE.Vector3();
@@ -609,7 +621,13 @@ export function createField(container, { models, reducedMotion }) {
   /** Builds the zones' titles and the far scenery, once, the first time someone flies. */
   function ensureScenery() {
     if (scenery || !placed || !clusters.length) return;
-    scenery = buildScenery({ zones: planZones(), token, random: rng(23) });
+    scenery = buildScenery({
+      zones: planZones(),
+      token,
+      random: rng(23),
+      view: { fov: camera.fov, aspect: camera.aspect },
+    });
+    if (motion.get().flyTour) setTour(true);
     scenery.group.visible = false;
     scene.add(scenery.group);
     shownMix = -1;
@@ -734,7 +752,61 @@ export function createField(container, { models, reducedMotion }) {
     render(t);
   }
 
+  /** Starts or ends the tour. It starts from the nearest place on the line to the camera. */
+  function setTour(on) {
+    on = on && flying && !!scenery;
+    if (on === touring) return;
+    touring = on;
+    glide = 0;
+    velocity.set(0, 0, 0);
+    glance = { yaw: 0, pitch: 0 };
+    if (on) {
+      let near = Infinity;
+      for (let s = 0; s < scenery.tour.length; s += 2) {
+        scenery.tour.poseAt(s, tourEye, tourLook);
+        const d = tourEye.distanceToSquared(camera.position);
+        if (d < near) {
+          near = d;
+          tourS = s;
+        }
+      }
+      tourTo = tourS;
+    } else {
+      // Free flight carries on from where the tour was looking.
+      euler.setFromQuaternion(camera.quaternion, 'YXZ');
+      yaw = euler.y;
+      pitch = euler.x;
+    }
+  }
+
+  /** One frame of the tour: along the line by keys or joystick, then ease the camera to it. */
+  function tourStep(dt) {
+    const down = (...codes) => (codes.some((c) => keys.has(c)) ? 1 : 0);
+    const push = Math.max(down('KeyW', 'ArrowUp', 'ArrowRight'), motion.get().flyForward ? 1 : 0) - down('KeyS', 'ArrowDown', 'ArrowLeft') + flyStick.y;
+    tourTo += push * TOUR.keys * (down('ShiftLeft', 'ShiftRight') ? FLY.boost : 1) * dt;
+    tourS += (tourTo - tourS) * (1 - Math.exp(-dt * TOUR.ease));
+    scenery.tour.poseAt(tourS, tourEye, tourLook);
+    camera.position.lerp(tourEye, 1 - Math.exp(-dt * 5));
+    lookQ.setFromRotationMatrix(lookM.lookAt(camera.position, tourLook, camera.up));
+    if (!drag) {
+      // A glance aside drifts back to the tour's view once the hand lets go.
+      const back = Math.exp(-dt * 1.6);
+      glance.yaw *= back;
+      glance.pitch *= back;
+    }
+    euler.setFromQuaternion(lookQ, 'YXZ');
+    euler.y += glance.yaw;
+    euler.x = THREE.MathUtils.clamp(euler.x + glance.pitch, -FLY.pitch, FLY.pitch);
+    euler.z = 0;
+    lookQ.setFromEuler(euler);
+    camera.quaternion.slerp(lookQ, 1 - Math.exp(-dt * 5));
+  }
+
   function flyStep(dt) {
+    if (touring) {
+      tourStep(dt);
+      return;
+    }
     const down = (...codes) => (codes.some((c) => keys.has(c)) ? 1 : 0);
     const ahead = Math.max(down('KeyW', 'ArrowUp'), motion.get().flyForward ? 1 : 0) - down('KeyS', 'ArrowDown') + flyStick.y;
     const across = down('KeyD') - down('KeyA') + flyStick.x;
@@ -781,7 +853,7 @@ export function createField(container, { models, reducedMotion }) {
   const onFlyKeyDown = (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.code === 'Escape') {
-      motion.set({ fly: false });
+      motion.set({ fly: false, flyTour: false });
       return;
     }
     if (e.target.closest?.('input, select, textarea')) return;
@@ -799,12 +871,16 @@ export function createField(container, { models, reducedMotion }) {
     if (e.ctrlKey) return; // a pinch on a trackpad: leave the browser's zoom alone
     e.preventDefault();
     const px = e.deltaMode === 1 ? e.deltaY * 32 : e.deltaMode === 2 ? e.deltaY * window.innerHeight : e.deltaY;
+    if (touring) {
+      tourTo += px * TOUR.wheel;
+      return;
+    }
     // Scrolling down carries on forward, the way it brought the visitor in.
     glide = THREE.MathUtils.clamp(glide + px * FLY.wheel, -12, 12);
   };
   const onFlyDown = (e) => {
     if (drag || e.target.closest?.(INTERACTIVE)) return;
-    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, moved: false };
+    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, moved: false, touch: e.pointerType === 'touch' };
   };
   const onFlyMove = (e) => {
     if (!drag || e.pointerId !== drag.id) return;
@@ -814,6 +890,16 @@ export function createField(container, { models, reducedMotion }) {
     drag.y = e.clientY;
     if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 6) drag.moved = true;
     if (!drag.moved) return;
+    if (touring) {
+      // On the tour a finger scrolls the line, as it scrolls a page: swipe up to go on.
+      // A mouse has the wheel for that, so its drag looks aside.
+      if (drag.touch) tourTo -= dy * TOUR.swipe;
+      else {
+        glance.yaw = THREE.MathUtils.clamp(glance.yaw + dx * FLY.look, -1.2, 1.2);
+        glance.pitch = THREE.MathUtils.clamp(glance.pitch + dy * FLY.look, -0.9, 0.9);
+      }
+      return;
+    }
     // The view follows the hand, as in the Aabijijiwan viewer: drag right and the scene turns right.
     yaw += dx * FLY.look;
     pitch = THREE.MathUtils.clamp(pitch + dy * FLY.look, -FLY.pitch, FLY.pitch);
@@ -837,6 +923,7 @@ export function createField(container, { models, reducedMotion }) {
     window[listen]('pointermove', onFlyMove);
     window[listen]('pointerup', onFlyUp);
     window[listen]('pointercancel', onFlyUp);
+    if (!on) touring = false;
     keys.clear();
     drag = null;
     glide = 0;
@@ -955,9 +1042,11 @@ export function createField(container, { models, reducedMotion }) {
   const unsubscribe = motion.subscribe((s) => {
     setTilt(s.tilt);
     setFly(s.fly);
+    setTour(s.flyTour);
     if (s.flyHome !== flyHome) {
       flyHome = s.flyHome;
-      if (flying) flyHomeNow();
+      if (flying && touring) tourTo = tourS = 0; // back to the start of the line
+      else if (flying) flyHomeNow();
     }
     if (flying) return;
     if (isPaused()) {

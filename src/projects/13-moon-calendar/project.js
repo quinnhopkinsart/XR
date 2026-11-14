@@ -34,5 +34,7 @@ export default {
   // turtle, the shell, the moon, the ring of thirteen moons and the ring of phases, without
   // the image target under it. calendar.glb is put together from the build's own assets by
   // scripts/build-13-moon-field.mjs, tipped back so the rings read from the page.
-  models: [{ src: calendarModel, split: true }],
+  // scale: larger than its fit on the page, where its low, wide shape read small. flight:
+  // larger again in the landing page's free camera (Quinn's request for both).
+  models: [{ src: calendarModel, split: true, scale: 1.5, flight: { scale: 1.6 } }],
 };
