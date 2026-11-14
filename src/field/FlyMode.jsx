@@ -36,8 +36,8 @@ import Roadmap from './Roadmap.jsx';
 //   drain  how fast it empties, in bars a second
 //
 // The roadmap down the right edge of the screen (`fly-map`, drawn by Roadmap.jsx) shows the
-// way there: one slim line from the top of the screen to the bottom, in three lengths, one
-// for each part of the page (the intro, the works, the 3D part). A length fills in its own
+// way there: a glow of colour coming from the right edge of the screen, straight up and down
+// from top to bottom, in three lengths, one for each part of the page (the intro, the works, the 3D part). A length fills in its own
 // colour as its part of the page is scrolled, and the last one, in the spirit line's blue,
 // fills by scrolling on past the end. At the foot of the page an arrow under it points on
 // down. A length's name pops out beside it under the pointer. The line comes and goes like

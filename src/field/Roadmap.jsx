@@ -1,9 +1,11 @@
 import { useEffect, useId, useRef, useState } from 'react';
 
-// The roadmap: one slim line down the right edge of the screen, from top to bottom, in a few
-// lengths with a small gap between them, a length for each leg. It winds in a gentle S. A
-// leg fills along the line in its own colour, and its name pops out beside it under the
-// pointer or the keyboard.
+// The roadmap: a glow of colour coming from the right edge of the screen, straight up and
+// down from top to bottom, in a few lengths with a small gap between them, a length for
+// each leg. A leg lights along the edge in its own colour as it fills: a thin bright line
+// right at the edge and a soft glow of the same colour spreading in from it. What has not
+// filled yet is only a faint dark line. A leg's name pops out beside it under the pointer
+// or the keyboard.
 //
 // It comes and goes like smoke. It drifts in when there is something to show (the page is
 // scrolled, the tour moves on, the pointer or the keyboard comes to it) and, left alone,
@@ -15,19 +17,16 @@ import { useEffect, useId, useRef, useState } from 'react';
 // page, subtle but clear: organic, an S curve, top to bottom, thin, titles popping out on
 // hover. A Woodland spirit line with divided circles and hairs followed, which he did not
 // like in the end: he asked for something more modern that appears and disappears like
-// smoke, and no orbs. So: no circles, no hairs, no taper, no black outline round it. Keep
-// it one plain slim line.
+// smoke, and no orbs. He then had the S taken out (straight up and down, at the side) and
+// asked for it to be a coloured glow coming from the edge of the screen. So: no circles,
+// no hairs, no taper, no outline, no curve. Keep it a plain glow at the edge.
 //
-// Sizes are in pixels: the line is drawn to the height its CSS gives it. `wide` is the
-// line's width, `sway` how far the S swings to each side, `gap` the space between two
-// legs, `type` the size of the names, `pad` the room at the two ends. `slim` is for
-// phones, where the margin is narrow.
-const FULL = { wide: 4, sway: 7, gap: 7, type: 11, pad: 10 };
-const SLIM = { wide: 3, sway: 3, gap: 6, type: 10, pad: 8 };
-// About one whole S for every `PERIOD` pixels of length, always a whole number of them.
-const PERIOD = 420;
-// How far apart the points of the drawn curve are: close, so it reads as one smooth line.
-const STEP = 2;
+// Sizes are in pixels: it is drawn to the height its CSS gives it. `wide` is the width of
+// the bright line at the edge, `glow` how far the colour spreads in from it, `soft` how
+// blurred that spread is, `gap` the space between two legs, `type` the size of the names,
+// `pad` the room at the two ends. `slim` is for phones.
+const FULL = { wide: 4, glow: 30, soft: 9, gap: 8, type: 11, pad: 10 };
+const SLIM = { wide: 3, glow: 20, soft: 6, gap: 6, type: 10, pad: 8 };
 // The smoke. `linger` is how long the line stays once nothing is happening (ms), `first`
 // how long it stays when it is first drawn, `wisp` how far the turbulence pulls the line
 // about when it is gone (0 while it is here), `blur` how soft it gets for each unit of that
@@ -121,17 +120,12 @@ export default function Roadmap({ legs, slim = false, arrow = false, className =
   };
 
   const s = slim ? SLIM : FULL;
-  const width = 2 * (s.sway + s.wide + 4);
+  // The drawing is as wide as the glow reaches; the line itself stands on its right edge,
+  // which is the edge of the screen.
+  const width = s.glow + s.wide;
   const total = Math.max(0, tall - 2 * s.pad - (arrow ? 20 : 0));
-  const turns = Math.max(1, Math.round(total / PERIOD));
-  const x = (y) => width / 2 + s.sway * Math.sin((2 * Math.PI * turns * y) / (total || 1));
-  const point = (y) => `${x(y).toFixed(2)} ${(y + s.pad).toFixed(2)}`;
-  const curve = (from, to) => {
-    const points = [];
-    for (let y = from; y < to; y += STEP) points.push(point(y));
-    points.push(point(to));
-    return `M${points.join('L')}`;
-  };
+  const edge = width - s.wide / 2;
+  const curve = (from, to) => `M${edge} ${(from + s.pad).toFixed(2)}V${(to + s.pad).toFixed(2)}`;
   const weights = legs.reduce((sum, leg) => sum + (leg.weight || 1), 0);
   let at = 0;
   const drawn = legs.map((leg, i) => {
@@ -147,14 +141,19 @@ export default function Roadmap({ legs, slim = false, arrow = false, className =
     e.preventDefault();
     leg.onPress(e);
   };
-  const foot = point(total);
+  const foot = `${edge - 7} ${(total + s.pad).toFixed(2)}`;
 
   return (
-    <nav className={`fly-map ${here ? '' : 'is-gone'} ${className}`} ref={hold} aria-label={label} style={{ width, '--wide': `${s.wide}px` }}>
+    <nav className={`fly-map ${here ? '' : 'is-gone'} ${className}`} ref={hold} aria-label={label} style={{ width, '--wide': `${s.wide}px`, '--glow': `${s.glow}px` }}>
       {total > 40 && (
         <svg width={width} height={tall} viewBox={`0 0 ${width} ${tall}`} focusable="false">
           <defs>
-            <filter id={`${id}-smoke`} x="-400%" y="-10%" width="900%" height="120%">
+            {/* Both filters are sized in pixels: a straight line has no width of its own for
+                a filter to measure itself by. */}
+            <filter id={`${id}-glow`} filterUnits="userSpaceOnUse" x={-s.glow * 2} y="0" width={width + s.glow * 4} height={tall}>
+              <feGaussianBlur stdDeviation={`${s.soft} ${s.soft / 2}`} />
+            </filter>
+            <filter id={`${id}-smoke`} filterUnits="userSpaceOnUse" x={-120} y={-60} width={width + 240} height={tall + 120}>
               <feTurbulence type="fractalNoise" baseFrequency="0.05 0.03" numOctaves="3" seed="7" result="noise" />
               <feDisplacementMap ref={warp} in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G" result="wisps" />
               <feGaussianBlur ref={haze} in="wisps" stdDeviation="0" />
@@ -169,12 +168,14 @@ export default function Roadmap({ legs, slim = false, arrow = false, className =
               return (
                 <Leg key={leg.key} className={`fly-map__leg ${leg.className || ''}`} style={{ '--leg': `var(${leg.colour})` }} {...how}>
                   {/* Unseen and much wider than the line: what the pointer presses. */}
-                  <path className="fly-map__reach" d={leg.reach} strokeWidth={width} />
+                  <path className="fly-map__reach" d={leg.reach} strokeWidth={width * 2} />
                   <path className="fly-map__track" d={leg.d} />
+                  {/* The glow, then the bright line at the edge over it. */}
+                  <path className="fly-map__fill fly-map__fill--glow" d={leg.d} pathLength="1" filter={`url(#${id}-glow)`} />
                   <path className="fly-map__fill" d={leg.d} pathLength="1" />
                   {/* The name pops out beside the top of the leg, on a plate that is the
                       letters' own thick black outline. */}
-                  <text className="fly-map__tag" x={(x(leg.from) - s.wide - 12).toFixed(2)} y={(leg.from + s.pad + 8).toFixed(2)} fontSize={s.type} dy="0.35em" textAnchor="end">
+                  <text className="fly-map__tag" x={(edge - s.wide - 16).toFixed(2)} y={(leg.from + s.pad + 8).toFixed(2)} fontSize={s.type} dy="0.35em" textAnchor="end">
                     {leg.label}
                   </text>
                 </Leg>
@@ -183,8 +184,8 @@ export default function Roadmap({ legs, slim = false, arrow = false, className =
             {arrow && (
               <g className="fly-map__on" aria-hidden="true">
                 {/* Black under blue, so it shows on the red ground and over the black footer. */}
-                <path className="fly-map__on-rim" d={`M${foot}m-5 8l5 5 5-5`} />
-                <path className="fly-map__on-line" d={`M${foot}m-5 8l5 5 5-5`} />
+                <path className="fly-map__on-rim" d={`M${foot}m-5 6l5 5 5-5`} />
+                <path className="fly-map__on-line" d={`M${foot}m-5 6l5 5 5-5`} />
               </g>
             )}
           </g>

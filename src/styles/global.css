@@ -1105,10 +1105,11 @@ html.title-leads .field.is-ready {
   transform-origin: left;
 }
 
-/* The roadmap, down the right edge of the screen (Roadmap.jsx): one slim line that winds
-   in a gentle S from under the masthead to just over the motion button, in a length for
-   each leg with a small gap between. A leg fills along the line in its own colour
-   (`--fill`, 0 to 1), and its name pops out beside it under the pointer or the keyboard.
+/* The roadmap, at the right edge of the screen (Roadmap.jsx): a glow of colour coming from
+   the edge, straight up and down from under the masthead to just over the motion button,
+   in a length for each leg with a small gap between. A leg lights along the edge in its
+   own colour as it fills (`--fill`, 0 to 1): a thin bright line and a soft glow spreading
+   in. Its name pops out beside it under the pointer or the keyboard.
    It comes and goes like smoke: `is-gone` is the line dispersed, blurred and risen away.
    On the landing page the legs are the parts of the page; the last, in the spirit line's
    blue, fills by scrolling on into the flight */
@@ -1116,7 +1117,7 @@ html.title-leads .field.is-ready {
   position: fixed;
   top: 4.75rem;
   bottom: 4.5rem;
-  right: max(calc(var(--gutter) / 2 - 15px), 1px, env(safe-area-inset-right));
+  right: 0;
   z-index: 9;
   pointer-events: none;
   transition: opacity 0.5s var(--ease);
@@ -1175,11 +1176,17 @@ html.title-leads .field.is-ready {
   transition: stroke-width 0.2s var(--ease);
 }
 
+/* The colour spreading in from the edge */
+.fly-map path.fly-map__fill--glow {
+  stroke-width: var(--glow);
+  stroke-opacity: 0.85;
+}
+
 /* A leg under the pointer or the keyboard stands a little wider */
 .fly-map__leg:hover .fly-map__track,
-.fly-map__leg:hover .fly-map__fill,
+.fly-map__leg:hover .fly-map__fill:not(.fly-map__fill--glow),
 .fly-map__leg:focus-visible .fly-map__track,
-.fly-map__leg:focus-visible .fly-map__fill {
+.fly-map__leg:focus-visible .fly-map__fill:not(.fly-map__fill--glow) {
   stroke-width: calc(var(--wide) + 3px);
 }
 
@@ -1278,7 +1285,7 @@ html.is-flying .fly-map:not(.fly-map--flight) .fly-map__leg {
 html.is-flying .fly-map.fly-map--flight {
   top: 1rem;
   bottom: 5.75rem;
-  right: max(12px, env(safe-area-inset-right));
+  right: 0;
   z-index: 31;
   opacity: 1;
 }
@@ -1286,7 +1293,6 @@ html.is-flying .fly-map.fly-map--flight {
 /* Phones keep the taller controls along the bottom clear */
 @media (max-width: 760px) {
   html.is-flying .fly-map.fly-map--flight {
-    right: max(3px, env(safe-area-inset-right));
     bottom: 9.5rem;
   }
 }
