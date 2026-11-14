@@ -1208,11 +1208,6 @@ html.is-flying .field.is-ready {
   pointer-events: none;
 }
 
-/* A second way into the free camera, under the intro on the landing page */
-.hero__fly {
-  margin: 1.5rem 0 0;
-}
-
 /* "See more" under the first works on the landing page */
 .works__more {
   display: flex;

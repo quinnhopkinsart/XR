@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import ProjectCard from '../components/ProjectCard.jsx';
 import WideTitle from '../components/WideTitle.jsx';
-import FlyMode, { FlyButton } from '../field/FlyMode.jsx';
+import FlyMode from '../field/FlyMode.jsx';
 import { allCategories, projects } from '../projects/registry.js';
 import { CATEGORIES } from '../projects/schema.js';
 import copy from '../brand/copy.json';
@@ -25,9 +25,6 @@ export default function Home() {
         </WideTitle>
         <p className="hero__lede">
           <span className="plate">{copy.homeIntro}</span>
-        </p>
-        <p className="hero__fly">
-          <FlyButton />
         </p>
       </section>
 

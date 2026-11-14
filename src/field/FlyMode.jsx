@@ -23,8 +23,8 @@ import { fieldSupported } from './FloatingField.jsx';
 // the phone looks around (the same `tilt` the page's Tilt button sets, and on iOS the tap
 // that grants the gyroscope).
 //
-// `FlyButton` is a second way in, for the top of the page, so the flight is one tap away
-// without scrolling to the foot.
+// There is no way in at the top of the page: Quinn wants the flight to reward people who
+// scroll to the bottom and pay attention, so he had the button under the intro removed.
 //
 // How much scrolling past the end it takes:
 //   wheel  pixels of wheel or trackpad travel
@@ -102,16 +102,6 @@ const enter = (e) => {
   opener = e.currentTarget;
   motion.set({ fly: true, flyTour: true });
 };
-
-/** A way into the flight from anywhere on the landing page. FlyMode must be on the page too. */
-export function FlyButton({ children = 'Fly through the works' }) {
-  if (!fieldSupported()) return null;
-  return (
-    <button type="button" className="fly-gate__btn" onClick={enter}>
-      {children}
-    </button>
-  );
-}
 
 export default function FlyMode() {
   const { fly, flyTour, flyLens, flyHints, tilt } = useSyncExternalStore(motion.subscribe, motion.get, motion.get);
