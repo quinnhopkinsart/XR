@@ -286,6 +286,7 @@ export function createField(container, { models, reducedMotion }) {
   let flyHome = motion.get().flyHome;
   let flyMix = 0; // 0 on the page, 1 in flight: sculptures in their zones, haze drawn back
   let shownMix = -1;
+  let waveT = -1; // the time the line to follow was last drawn for
   let scenery = null;
   let placed = false;
   const pagePlace = new THREE.Vector3();
@@ -518,6 +519,7 @@ export function createField(container, { models, reducedMotion }) {
     const scroll = window.scrollY / window.innerHeight; // in screen heights
     const mix = flyMix * flyMix * (3 - 2 * flyMix); // eased
     applyMix(mix);
+    if (scenery && mix > 0 && t !== waveT) scenery.wave((waveT = t));
     for (const c of clusters) {
       const depthScale = (CAM_Z - c.base.z) / CAM_Z;
       let y = c.base.y - scroll * c.parallax * 0.55; // rise with the page, slower when far
