@@ -11,9 +11,9 @@
 //   - stick pine trees in groves, all standing at one level, further out than the camera
 //     can fly: flat and very simple, a few black lines, like a drawing on the horizon
 //   - + and * marks, nearer, between the zones
-// And one line to follow: a dashed sine wave that sets out from where the flight starts,
-// passes in front of every work in turn, rising to the ones that hang high and dropping to
-// the ones below, and comes back round. Its waves run slowly along it.
+// And one line to follow: a dashed sine wave that loops past a good place to see each work
+// from, in turn, rising to the ones that hang high and dropping to the ones below. Its
+// waves run slowly along it.
 //
 // Stars and marks always face the camera. Trees turn to it too but stay upright, so they
 // are only ever seen flat on. Fields stay where they are put, so flying round one shows
@@ -22,13 +22,13 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
-// How many of each, and how far from the centre (in units; a zone sits about 35 out).
+// How many of each, and how far from the centre (in units; a zone sits about 70 out).
 export const SCENERY = {
   floor: -7, // the level the trees stand at
-  fields: { count: 9, near: 80, far: 125, size: [9, 22] },
-  stars: { count: 46, near: 55, far: 120, size: [0.8, 3.2] },
-  marks: { count: 48, near: 24, far: 80, size: [0.5, 1.6] },
-  groves: { count: 8, near: 130, far: 190, trees: [3, 7], height: [12, 26] }, // field.js stops the camera 75 out
+  fields: { count: 9, near: 130, far: 200, size: [14, 32] },
+  stars: { count: 46, near: 80, far: 190, size: [1.2, 4.5] },
+  marks: { count: 48, near: 30, far: 120, size: [0.6, 2.2] },
+  groves: { count: 8, near: 200, far: 270, trees: [3, 7], height: [18, 38] }, // field.js stops the camera 135 out
 };
 
 // Colour fields: [fill, outline]. `FIELD_LINE` is the outline's width against the field's
@@ -49,8 +49,9 @@ const FIELD_LINE = 0.1;
 // `height` and `length` the wave's size, `speed` how fast the waves run along the line
 // (units a second), `under` how far the line runs below the viewpoints it joins, `frame`
 // how much room a work gets when it is fitted to the screen from its viewpoint (1 fills
-// it), `swing` the angle in radians a viewpoint stands to one side of a work.
-const TRAIL = { dash: 0.9, gap: 0.8, thick: 0.16, height: 1.1, length: 13, speed: 1.6, under: 3.2, frame: 1.3, swing: 0.2, colour: '--black' };
+// it), `swing` the angle in radians a viewpoint stands to one side of a work, `smooth` how
+// far the line's corners are rounded off (0 keeps them sharp).
+const TRAIL = { dash: 0.9, gap: 0.8, thick: 0.16, height: 1.1, length: 13, speed: 1.6, under: 3.2, frame: 1.3, swing: 0.15, smooth: 9, colour: '--black' };
 const FIELD_WOBBLE = 0.2;
 const STAR_COLOURS = ['--white', '--white', '--saffron'];
 const MARK_COLOURS = ['--black', '--black', '--white', '--saffron'];
@@ -163,7 +164,8 @@ function label(title, token) {
  * titles grow in as the flight begins, everything in `facing` is turned to the camera each
  * frame, everything in `upright` is turned to it round its own trunk only, and `wave(t)`
  * runs the waves along the line to follow. `tour` is that line as a camera track:
- * `tour.length`, and `tour.poseAt(s, eye, look)`, which fills in where a camera `s` units
+ * `tour.length`, `tour.start` (how far along it the first work's viewpoint is), and
+ * `tour.poseAt(s, eye, look)`, which fills in where a camera `s` units
  * along it stands and what it looks at.
  */
 export function buildScenery({ zones, token, random, view }) {
@@ -258,8 +260,8 @@ export function buildScenery({ zones, token, random, view }) {
     }
   }
 
-  // The line to follow: from where the flight starts, past a good place to see each work
-  // from, in turn (left to right along the arc), and back. The line runs a little under
+  // The line to follow: a loop past a good place to see each work from, in turn (left to
+  // right along the arc, then back across). The line runs a little under
   // those viewpoints, like the centre line of a road, so a camera that rides it (the tour,
   // `tour.poseAt`) sees the dashes lead away ahead.
   //
@@ -268,12 +270,13 @@ export function buildScenery({ zones, token, random, view }) {
   // hangs high it is close in and low, looking up, so the work towers. For a work sunk
   // below it is above, looking down into it.
   const half = Math.tan(THREE.MathUtils.degToRad(view.fov) / 2);
-  const eyes = zones.map((z, i) => {
+  const eyes = zones.map((z) => {
     const inward = new THREE.Vector3(-z.centre.x, 0, -z.centre.z).normalize();
     const side = new THREE.Vector3(-inward.z, 0, inward.x);
     const fit = (Math.max(z.height, z.width / view.aspect) / (2 * half)) * TRAIL.frame;
     const back = THREE.MathUtils.clamp(fit * (z.lift > 0 ? 0.85 : z.lift < 0 ? 0.8 : 1), 9, 60);
-    const swing = (i % 2 ? 1 : -1) * TRAIL.swing;
+    // Every viewpoint leans to the side the line arrives from, so the line does not zigzag.
+    const swing = TRAIL.swing;
     const eye = z.centre
       .clone()
       .addScaledVector(inward, back * Math.cos(swing))
@@ -281,12 +284,24 @@ export function buildScenery({ zones, token, random, view }) {
     eye.y = z.lift > 0 ? z.lift - z.height * 0.55 : z.lift < 0 ? z.lift + z.height * 0.8 : z.lift + z.height * 0.08;
     return { eye, look: z.centre.clone().setY(z.lift) };
   });
-  const ahead0 = zones.reduce((a, z) => (Math.abs(z.centre.x) < Math.abs(a.centre.x) ? z : a), zones[0]);
-  const first = { eye: new THREE.Vector3(0, 0.6, 13), look: ahead0.centre.clone().setY(ahead0.lift) };
   const under = (p) => p.clone().setY(p.y - TRAIL.under);
-  const start = under(first.eye);
   const stops = eyes.map((e) => under(e.eye));
-  const path = new THREE.CatmullRomCurve3([start, ...stops], true, 'centripetal');
+  // A loop needs three points. With fewer works, it also comes back by where the flight starts.
+  if (stops.length < 3) stops.push(new THREE.Vector3(0, -TRAIL.under, 13), new THREE.Vector3(6, -TRAIL.under, 20));
+  // The line through those points turns sharply at each one, so it is rounded off: evenly
+  // spaced points along it, each moved to the average of its neighbours a few times over.
+  // It then passes near each viewpoint instead of through it, which is close enough, since
+  // the camera on the tour looks at the work and not along the line.
+  const rough = new THREE.CatmullRomCurve3(stops, true, 'centripetal');
+  let round = rough.getSpacedPoints(240).slice(0, 240);
+  for (let pass = 0; pass < 4 && TRAIL.smooth > 0; pass += 1) {
+    round = round.map((_, i) => {
+      const mean = new THREE.Vector3();
+      for (let k = -TRAIL.smooth; k <= TRAIL.smooth; k += 1) mean.add(round[(i + k + 240) % 240]);
+      return mean.divideScalar(TRAIL.smooth * 2 + 1);
+    });
+  }
+  const path = new THREE.CatmullRomCurve3(round.filter((_, i) => i % 3 === 0), true, 'catmullrom', 0.5);
   const long = path.getLength();
   const count = Math.floor(long / (TRAIL.dash + TRAIL.gap));
   const waves = Math.max(1, Math.round(long / TRAIL.length)); // a whole number, so the loop closes
@@ -313,44 +328,45 @@ export function buildScenery({ zones, token, random, view }) {
   wave(0);
   group.add(dashes);
 
-  // The tour: the camera rides `under` above the line. Near a viewpoint it turns to the
-  // work; between two it looks along the line ahead.
-  const marks = [first, ...eyes].map((v) => {
-    // Where along the line this viewpoint is.
-    let best = 0;
-    let near = Infinity;
-    const p = under(v.eye);
-    for (let k = 0; k < 800; k += 1) {
-      const d = path.getPointAt(k / 800).distanceToSquared(p);
-      if (d < near) {
-        near = d;
-        best = k / 800;
-      }
-    }
-    return { at: best * long, look: v.look };
-  });
-  const around = (a, b) => {
-    const d = Math.abs(a - b) % long;
-    return Math.min(d, long - d);
-  };
-  marks.forEach((m, i) => {
-    const before = marks[(i + marks.length - 1) % marks.length];
-    const after = marks[(i + 1) % marks.length];
-    m.reach = Math.min(around(m.at, before.at), around(m.at, after.at)) * 0.48;
-  });
+  // The tour: the camera rides `under` above the line and always looks at a work. Between
+  // two viewpoints its gaze swings steadily from the one work to the next: it holds on a
+  // work for the first and last fifth of the way, and turns across the rest. The gaze is
+  // blended as a direction, never as a point in space, so it cannot whip round when the
+  // camera passes close to the straight line between two works.
+  // Where along the line each viewpoint is: its share of the way round the unrounded line,
+  // which the rounded one keeps, since it is made from evenly spaced points of it. (Looking
+  // for the nearest place on the line instead can pick the wrong pass where the line comes
+  // by a viewpoint twice, which sent the gaze back to a work already seen.)
+  const each = 60;
+  const lengths = rough.getLengths(stops.length * each);
+  const marks = eyes.map((v, i) => ({
+    at: (lengths[i * each] / lengths[lengths.length - 1]) * long,
+    look: v.look,
+  }));
   const wrap = (s) => (((s % long) + long) % long) / long;
+  const from = new THREE.Vector3();
+  const to = new THREE.Vector3();
+  // The tour begins at the work straight ahead of where the flight starts.
+  const ahead0 = zones.reduce((a, z, i) => (Math.abs(z.centre.x) < Math.abs(zones[a].centre.x) ? i : a), 0);
   const tour = {
     length: long,
+    start: marks[ahead0].at,
     poseAt(s, eye, look) {
       path.getPointAt(wrap(s), eye);
-      path.getPointAt(wrap(s + 7), look);
       eye.y += TRAIL.under;
-      look.y += TRAIL.under * 0.4;
       const here = wrap(s) * long;
-      for (const m of marks) {
-        const k = 1 - Math.min(1, around(here, m.at) / m.reach);
-        if (k > 0) look.lerp(m.look, k * k * (3 - 2 * k));
-      }
+      let i = marks.length - 1;
+      for (let k = 0; k < marks.length; k += 1) if (marks[k].at <= here) i = k;
+      if (here < marks[0].at) i = marks.length - 1;
+      const a = marks[i];
+      const b = marks[(i + 1) % marks.length];
+      const gap = (b.at - a.at + long) % long || long;
+      const f = THREE.MathUtils.clamp((((here - a.at + long) % long) / gap - 0.2) / 0.6, 0, 1);
+      const k = f * f * f * (f * (f * 6 - 15) + 10);
+      from.copy(a.look).sub(eye).normalize();
+      to.copy(b.look).sub(eye).normalize();
+      if (from.dot(to) < -0.95) to.x += 0.2; // nearly opposite: pick a side to turn through
+      look.copy(from).lerp(to, k).normalize().multiplyScalar(30).add(eye);
     },
   };
 

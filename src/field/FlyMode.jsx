@@ -9,10 +9,11 @@ import { fieldSupported } from './FloatingField.jsx';
 //   - scrolling on past the end of the page, which fills the bar on that button
 // Inside, the page steps aside and field.js hands the camera to the visitor. "Back to the
 // page" or Esc leaves. Rendered by Home.jsx only, so no other page has it.
-// "Follow the line" turns scrolling into a tour: the wheel, a swipe, the keys or the
-// joystick carry the camera along the dashed line, which stops at a good view of each work
-// (`flyTour` in motion.js, the tour in field.js and scenery.js). Pressed again, it hands
-// the camera back for free flight.
+// The flight opens as a tour (`flyTour` in motion.js, the tour in field.js and scenery.js):
+// the wheel, a swipe, the keys or the joystick carry the camera along the dashed line,
+// which passes a good view of each work. Since people come in by scrolling, scrolling on
+// simply continues. "Free roam" hands the camera over for free flight; pressed again, it
+// returns to the line.
 // On touch screens a joystick moves the camera (Quinn's choice over a hold-down button):
 // push it forward, back or to a side while another finger drags to look. Other screens
 // keep the hold-down Fly button beside the keys.
@@ -142,7 +143,7 @@ export default function FlyMode() {
       if (charge >= 1) {
         charge = 0;
         show();
-        motion.set({ fly: true });
+        motion.set({ fly: true, flyTour: true });
         return;
       }
       show();
@@ -210,7 +211,7 @@ export default function FlyMode() {
 
   return (
     <section className="fly-gate" ref={gate} aria-label="Free camera">
-      <button type="button" className="fly-gate__btn" ref={enterBtn} onClick={() => motion.set({ fly: true })}>
+      <button type="button" className="fly-gate__btn" ref={enterBtn} onClick={() => motion.set({ fly: true, flyTour: true })}>
         Fly through the works
         <span className="fly-gate__bar" aria-hidden="true" />
       </button>
@@ -240,10 +241,10 @@ export default function FlyMode() {
               <button
                 type="button"
                 className="motion__btn"
-                aria-pressed={flyTour}
+                aria-pressed={!flyTour}
                 onClick={() => motion.set({ flyTour: !flyTour })}
               >
-                Follow the line
+                Free roam
               </button>
               <button
                 type="button"

@@ -44,18 +44,22 @@ const LOOK_AT = new THREE.Vector3(0, 0, -3);
 // Free camera: `speed` in units a second (a screen is about 9 high), `boost` with Shift,
 // `turn` in radians a second for the arrow keys, `look` in radians per pixel dragged,
 // `wheel` in units per pixel scrolled, `reach` how far from the centre the camera may go.
-const FLY = { speed: 9, boost: 2.5, turn: 1.3, look: 0.0042, wheel: 0.016, reach: 75, pitch: 1.45 };
+const FLY = { speed: 13, boost: 2.5, turn: 1.3, look: 0.0042, wheel: 0.022, reach: 135, pitch: 1.45 };
 // The tour: scrolling carries the camera along the dashed line (scenery.js). `wheel` and
 // `swipe` are units along the line per pixel scrolled or swiped, `keys` units a second for
 // the keys and the joystick, `ease` how quickly the camera catches up (higher is tighter).
-const TOUR = { wheel: 0.035, swipe: 0.12, keys: 16, ease: 4 };
+const TOUR = { wheel: 0.035, swipe: 0.12, keys: 16, ease: 2.6 };
 // Zones: `out` is the least distance from the centre to a zone, `step` the angle between
 // neighbours in degrees, `gap` the space between sculptures in one zone and between two
 // zones, `pad` the clear space round a zone's sculptures.
-const ZONES = { out: 34, step: 52, gap: 2.5, pad: 4 };
+const ZONES = { out: 70, step: 52, gap: 2.5, pad: 4 };
 // Haze: where it starts and where it is complete, on the page and in flight. `far` is how
 // far the camera draws in flight.
-const HAZE = { page: [17, 46], flight: [60, 260], far: 500 };
+const HAZE = { page: [17, 46], flight: [90, 380], far: 700 };
+// The lens (desktop only): how quickly things soften away from what is in focus, on the
+// page and in flight, where distances are several times longer. In flight the focus
+// follows the work the camera is looking at.
+const LENS = { page: 0.0011, flight: 0.0002, maxblur: 0.009 };
 
 const SPIN = 0.35; // radians a second, for parts a model lists under `spin`
 
@@ -234,7 +238,7 @@ export function createField(container, { models, reducedMotion }) {
     );
     composer.setPixelRatio(renderer.getPixelRatio());
     composer.addPass(new RenderPass(scene, camera));
-    bokeh = new BokehPass(scene, camera, { focus: CAM_Z, aperture: 0.0011, maxblur: 0.009 });
+    bokeh = new BokehPass(scene, camera, { focus: CAM_Z, aperture: LENS.page, maxblur: LENS.maxblur });
     // With the lens on, the canvas paints the ground itself: the blur needs an opaque
     // frame. The depth pass must not see that colour, so it is lifted while it runs.
     scene.background = ground;
@@ -293,6 +297,7 @@ export function createField(container, { models, reducedMotion }) {
   let flyMix = 0; // 0 on the page, 1 in flight: sculptures in their zones, haze drawn back
   let shownMix = -1;
   let waveT = -1; // the time the line to follow was last drawn for
+  let focus = CAM_Z; // how far away the lens is focused, in flight
   let touring = false; // riding the dashed line by scrolling
   let tourS = 0; // how far along the line the camera is
   let tourTo = 0; // how far along the visitor has scrolled it
@@ -641,14 +646,36 @@ export function createField(container, { models, reducedMotion }) {
         o.rotation.y = Math.atan2(camera.position.x - o.position.x, camera.position.z - o.position.z);
       }
     }
+    if (bokeh) {
+      // In flight the lens focuses on the work nearest the middle of the view, and eases
+      // from one to the next.
+      let target = CAM_Z;
+      if (mix > 0) {
+        camera.getWorldDirection(tmp);
+        let best = -Infinity;
+        for (const c of clusters) {
+          if (c.front) continue;
+          const along = pagePlace.copy(c.group.position).sub(camera.position).dot(tmp);
+          const aim = along / (pagePlace.length() || 1); // 1 when dead ahead
+          if (along > 1 && aim > best) {
+            best = aim;
+            target = along;
+          }
+        }
+      }
+      focus += (target - focus) * (mix > 0 && shownMix > 0 ? 0.05 : 1);
+      bokeh.uniforms.focus.value = THREE.MathUtils.lerp(CAM_Z, focus, mix);
+    }
     if (mix === shownMix) return;
     shownMix = mix;
+    if (bokeh) bokeh.uniforms.aperture.value = THREE.MathUtils.lerp(LENS.page, LENS.flight, mix);
     scene.fog.near = THREE.MathUtils.lerp(HAZE.page[0], HAZE.flight[0], mix);
     scene.fog.far = THREE.MathUtils.lerp(HAZE.page[1], HAZE.flight[1], mix);
     const far = mix > 0 ? HAZE.far : 100;
     if (camera.far !== far) {
       camera.far = far;
       camera.updateProjectionMatrix();
+      if (bokeh) bokeh.uniforms.farClip.value = far;
     }
     if (scenery) {
       scenery.group.visible = mix > 0;
@@ -760,7 +787,10 @@ export function createField(container, { models, reducedMotion }) {
     glide = 0;
     velocity.set(0, 0, 0);
     glance = { yaw: 0, pitch: 0 };
-    if (on) {
+    if (on && flyMix < 0.5) {
+      // Coming in from the page: the tour begins at the work straight ahead.
+      tourS = tourTo = scenery.tour.start;
+    } else if (on) {
       let near = Infinity;
       for (let s = 0; s < scenery.tour.length; s += 2) {
         scenery.tour.poseAt(s, tourEye, tourLook);
@@ -786,7 +816,7 @@ export function createField(container, { models, reducedMotion }) {
     tourTo += push * TOUR.keys * (down('ShiftLeft', 'ShiftRight') ? FLY.boost : 1) * dt;
     tourS += (tourTo - tourS) * (1 - Math.exp(-dt * TOUR.ease));
     scenery.tour.poseAt(tourS, tourEye, tourLook);
-    camera.position.lerp(tourEye, 1 - Math.exp(-dt * 5));
+    camera.position.lerp(tourEye, 1 - Math.exp(-dt * 3.5));
     lookQ.setFromRotationMatrix(lookM.lookAt(camera.position, tourLook, camera.up));
     if (!drag) {
       // A glance aside drifts back to the tour's view once the hand lets go.
@@ -799,7 +829,7 @@ export function createField(container, { models, reducedMotion }) {
     euler.x = THREE.MathUtils.clamp(euler.x + glance.pitch, -FLY.pitch, FLY.pitch);
     euler.z = 0;
     lookQ.setFromEuler(euler);
-    camera.quaternion.slerp(lookQ, 1 - Math.exp(-dt * 5));
+    camera.quaternion.slerp(lookQ, 1 - Math.exp(-dt * 3)); // unhurried, so the view never snaps
   }
 
   function flyStep(dt) {
@@ -928,8 +958,6 @@ export function createField(container, { models, reducedMotion }) {
     drag = null;
     glide = 0;
     velocity.set(0, 0, 0);
-    // The lens is focused for the page's camera. In flight everything is sharp.
-    if (bokeh) bokeh.enabled = !on;
     if (on) {
       returning = false;
       onLeave();
@@ -1045,7 +1073,7 @@ export function createField(container, { models, reducedMotion }) {
     setTour(s.flyTour);
     if (s.flyHome !== flyHome) {
       flyHome = s.flyHome;
-      if (flying && touring) tourTo = tourS = 0; // back to the start of the line
+      if (flying && touring) tourTo = tourS = scenery.tour.start; // back to the first work
       else if (flying) flyHomeNow();
     }
     if (flying) return;
