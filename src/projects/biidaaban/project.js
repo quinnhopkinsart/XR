@@ -22,8 +22,9 @@ export default {
   launch: { type: 'build', path: '/builds/biidaaban/index.html', embed: true },
 
   // The floating background shows the middle panel's 3D scene only, at Quinn's request
-  // (November 14, 2026): the rock of the mine, the lodge, the neutrino detector and the
-  // spiral of particles, without the panel's picture. mine.glb is made from the build's
+  // (November 14, 2026): the rock of the mine, the neutrino detector over its circle and
+  // the spiral of particles, without the panel's picture and without the dark half
+  // cylinder that backs the scene inside the panel (the mesh named skylodge). mine.glb is made from the build's
   // PANEL-2-v1.glb by scripts/build-biidaaban-field.mjs, set to one moment of its clip.
   // The scene faces +x in its file, so it turns to face the page. The spiral turns.
   // flight: in the landing page's free camera it sits well below the camera, larger,
