@@ -62,6 +62,8 @@
      purple 8.2:1, green 4.8:1, teal 5.0:1. The portfolio's green (#008a3a) is
      4.47:1 with white, so it is a shade deeper here. */
   --tag-purple: #5a1ad8;
+  /* The colour field behind Trading Post Humanism in the free camera (scenery.js). Never text. */
+  --field-pink: #ff7ab8;
   --tag-green: #00843a;
   --tag-teal: #007c85;
   --on-tag: var(--white);

@@ -18,7 +18,10 @@ export default {
 
   // Pieces this work adds to the floating background on every page.
   models: [
-    { src: thunderbirdModel, hero: true, recolor: '--black' },
+    // flight.backdrop: in the landing page's free camera a colour field stands behind this
+    // work's pieces, pink with a yellow outline (Quinn's request). One model carries it for
+    // the whole work.
+    { src: thunderbirdModel, hero: true, recolor: '--black', flight: { backdrop: ['--field-pink', '--saffron'] } },
     // foreground: the barbed wire and the spirit lines leave their sculpture and hang close
     // to the camera, very large, running off the screen. The spirit lines are the Shaman's
     // blue loops (SP_RingA, B and C). The red branching line (AR_GlowPaper) is a thunderbird

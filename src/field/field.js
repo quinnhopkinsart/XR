@@ -423,6 +423,7 @@ export function createField(container, { models, reducedMotion }) {
         // (`flight: { scale, lift }` in project.js).
         flightScale: s.flight?.scale || 1,
         flightLift: s.flight?.lift || 0,
+        backdrop: s.flight?.backdrop,
         title: s.title,
         // Single pieces tumble slowly, so every side comes round. Sculptures only rock.
         spin: steady
@@ -585,6 +586,7 @@ export function createField(container, { models, reducedMotion }) {
       z.height = Math.max(...z.members.map((c) => c.h * c.flightScale));
       z.radius = Math.max(9, z.width / 2 + ZONES.pad);
       // The zone hangs as high, or sinks as low, as its member that goes furthest.
+      z.backdrop = z.members.find((c) => c.backdrop)?.backdrop;
       z.lift = z.members.map((c) => c.flightLift).reduce((a, b) => (Math.abs(b) > Math.abs(a) ? b : a), 0);
       // Where the title goes: just under the sculptures, or just over them when the zone is
       // sunk below the camera, so it is read on the way down.

@@ -134,6 +134,9 @@ export function validateProject(p, folder) {
       if (m?.flight != null && (typeof m.flight !== 'object' || [m.flight.scale, m.flight.lift].some((n) => n != null && typeof n !== 'number'))) {
         errors.push(`${where}: models[${i}].flight must be { scale, lift } in numbers`);
       }
+      if (m?.flight?.backdrop != null && !(Array.isArray(m.flight.backdrop) && m.flight.backdrop.length === 2 && m.flight.backdrop.every((c) => String(c).startsWith('--')))) {
+        errors.push(`${where}: models[${i}].flight.backdrop must be two colour tokens, [fill, outline]`);
+      }
       if (m?.spin != null && (!Array.isArray(m.spin) || !m.spin.every((n) => typeof n === 'string' && n.trim()) || !m.split)) {
         errors.push(`${where}: models[${i}].spin must be a list of mesh names, on a split model`);
       }
