@@ -5,7 +5,7 @@
 //   tilt         phone tilt drives the field (gyroscope)
 //   fly          free camera: the page steps aside and the visitor flies through the field
 //                (landing page only, see FlyMode.jsx)
-//   flyForward   the Fly button is held down
+//   flyForward   the Fly button is held down (screens without touch)
 //   flyHome      a count; each change puts the flying camera back at its start
 
 const read = (key) => {
@@ -43,6 +43,11 @@ let state = {
   flyForward: false,
   flyHome: 0,
 };
+
+// The touch joystick in the free camera: x is right (1) and left (-1), y is forward (1)
+// and back (-1). The field reads it every frame, so it is a plain object and moving the
+// stick tells no listener.
+export const flyStick = { x: 0, y: 0 };
 
 const listeners = new Set();
 

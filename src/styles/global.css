@@ -1180,3 +1180,29 @@ html.is-flying .field.is-ready {
   border-color: var(--accent);
   color: var(--on-accent);
 }
+
+/* The joystick, on touch screens: a black disc with a saffron knob, at the left above the
+   buttons, where a thumb rests */
+.fly-stick {
+  align-self: flex-start;
+  display: grid;
+  place-items: center;
+  width: 128px;
+  height: 128px;
+  margin: 0 0 4px max(4px, env(safe-area-inset-left));
+  border: 1px solid var(--ground);
+  border-radius: 50%;
+  background: var(--panel);
+  box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.6);
+  pointer-events: auto;
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+
+.fly-stick__knob {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--accent);
+  pointer-events: none;
+}

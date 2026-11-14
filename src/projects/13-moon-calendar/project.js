@@ -1,6 +1,6 @@
 import cover from './cover.jpg';
 import turtle from './targets/turtle.jpg';
-import moonModel from './models/moon.glb?url';
+import calendarModel from './models/calendar.glb?url';
 
 // Rebuilt from the 8th Wall project "dibiki-giizis" (code-only export) for the
 // self-hosted engine. Source and notes: the dibiki-giizis-selfhosted project folder, README.md.
@@ -30,5 +30,9 @@ export default {
   ],
 
   // The moon joins the floating background with its own surface.
-  models: [{ src: moonModel }],
+  // The floating background shows the whole work as it stands once it has opened: the stone
+  // turtle, the shell, the moon, the ring of thirteen moons and the ring of phases, without
+  // the image target under it. calendar.glb is put together from the build's own assets by
+  // scripts/build-13-moon-field.mjs, tipped back so the rings read from the page.
+  models: [{ src: calendarModel, split: true }],
 };
