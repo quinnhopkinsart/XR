@@ -136,10 +136,14 @@ export default function Roadmap({ legs, slim = false, arrow = false, className =
     const b = at - (i < legs.length - 1 ? s.gap / 2 : 0);
     return { ...leg, from: a, d: curve(a, b), reach: curve(from, at) };
   });
+  // A press with the pointer lets go of the leg afterwards, or its focus would hold the
+  // glow here for good. The keyboard keeps its place.
+  const letGo = (e) => e.detail > 0 && e.currentTarget.blur?.();
   const press = (leg) => (e) => {
     if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();
     leg.onPress(e);
+    letGo(e);
   };
   const foot = `${edge - 7} ${(total + s.pad).toFixed(2)}`;
 
@@ -163,7 +167,7 @@ export default function Roadmap({ legs, slim = false, arrow = false, className =
             {drawn.map((leg) => {
               const Leg = leg.href ? 'a' : 'g';
               const how = leg.href
-                ? { href: leg.href, onClick: leg.onPress }
+                ? { href: leg.href, onClick: (e) => (leg.onPress(e), letGo(e)) }
                 : { role: 'button', tabIndex: 0, onClick: press(leg), onKeyDown: press(leg) };
               return (
                 <Leg key={leg.key} className={`fly-map__leg ${leg.className || ''}`} style={{ '--leg': `var(${leg.colour})` }} {...how}>
