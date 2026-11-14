@@ -18,7 +18,8 @@
 // Round all the works runs one large spirit line: a thick light-blue line that goes round
 // each work in turn, over one and under the next, and crosses the gaps between them, with orbs strung on it like beads on a
 // string: the line swells round each one and narrows again in one smooth curve, so the
-// bead's rim is the line itself. Two sine waves move along it, one up and
+// bead's rim is the line itself, one even width all round. Inside the rim each bead is a
+// flat card that faces the camera: a fill with a thick outline of its own. Two sine waves move along it, one up and
 // down and one in and out, so it snakes, and its thickness swells and eases in a gentle
 // pulse; the orbs ride the waves and breathe with it.
 //
@@ -57,8 +58,9 @@ const FIELD_LINE = 0.1;
 // (units a second), `under` how far the line runs below the viewpoints it joins, `frame`
 // how much room a work gets when it is fitted to the screen from its viewpoint (1 fills
 // it), `swing` the angle in radians a viewpoint stands to one side of a work, `smooth` how
-// far the line's corners are rounded off (0 keeps them sharp).
-const TRAIL = { dash: 0.9, gap: 0.8, thick: 0.16, height: 1.1, length: 13, speed: 1.6, under: 3.2, frame: 1.3, swing: 0.15, smooth: 9, colour: '--black' };
+// far the line's corners are rounded off (0 keeps them sharp), `low` how far below its
+// middle the camera aims at a work that hangs high, as a share of its height.
+const TRAIL = { dash: 0.9, gap: 0.8, thick: 0.16, height: 1.1, length: 13, speed: 1.6, under: 3.2, frame: 1.3, swing: 0.15, smooth: 9, low: 0.22, colour: '--black' };
 const FIELD_WOBBLE = 0.2;
 // The spirit line. It goes round each work: `clear` is how far it stays from a work's
 // sides, from its top or foot, and how far behind the middle of the work it runs. `thick`
@@ -71,14 +73,20 @@ const FIELD_WOBBLE = 0.2;
 // and out again, which travels the other way, so the line snakes. `pulse` is how much the
 // thickness swells (a share of `thick`), `beats` how many swells are on the line at once,
 // `beat` how fast they travel. `orbs` is how many orbs are strung on it, `orb` their radius
-// out to the rim, `core` the share of that which is the ball of colour (the rest is rim),
-// `taper` how long the line takes to swell to a bead and narrow again (a share of the
+// out to the edge of the line's colour round them; `rim` is how wide that ring of the
+// line's colour is and `edge` how wide the orb's own outline inside it, both as shares of
+// the radius, and what is left in the middle is the orb's fill. `taper` is how long the line takes to swell to a bead and narrow again (a share of the
 // bead's size: smaller is rounder, larger is more of a spindle).
 // Quinn first asked for a subtle pulse and wave, then for more sine wave motion and more
 // meander than the first version had (wave 1.6, no sway, meander 5): the pulse stays
 // gentle, the waves are plain to see. He then asked for larger orbs with more colour
 // inside (they were 1.8 to 3.2 with a 0.76 core), and for the line to go round the models
-// and fill the space between them, where it had only passed behind each one.
+// and fill the space between them, where it had only passed behind each one. Last, he
+// had the orbs made smaller again (they were 3.2 to 5.4) and their balls of colour
+// replaced by flat cards that face the camera, each a fill with a thick outline of its
+// own in another colour, inside a thick even ring of the line's colour that merges with
+// the line. He tried the line black
+// and thinner and went back: he likes it light blue and this thick, so leave both.
 const SPIRIT = {
   clear: [7, 6, 4],
   thick: 0.85,
@@ -94,11 +102,12 @@ const SPIRIT = {
   beats: 9,
   beat: 0.12,
   orbs: 20,
-  orb: [3.2, 5.4],
-  core: 0.86,
-  taper: 0.85,
+  orb: [2.3, 3.7],
+  rim: 0.27,
+  edge: 0.23,
+  taper: 0.62,
   colour: '--spirit-line',
-  fills: ['--saffron', '--field-pink', '--tag-teal', '--white', '--oxblood'],
+  fills: ['--saffron', '--tag-purple', '--field-pink', '--black', '--white', '--tag-teal', '--oxblood', '--tag-green'],
 };
 const STAR_COLOURS = ['--white', '--white', '--saffron'];
 const MARK_COLOURS = ['--black', '--black', '--white', '--saffron'];
@@ -331,7 +340,9 @@ export function buildScenery({ zones, token, random, view }) {
       .addScaledVector(inward, back * Math.cos(swing))
       .addScaledVector(side, back * Math.sin(swing));
     eye.y = z.lift > 0 ? z.lift - z.height * 0.55 : z.lift < 0 ? z.lift + z.height * 0.8 : z.lift + z.height * 0.08;
-    return { eye, look: z.centre.clone().setY(z.lift) };
+    // A work that hangs high is looked at below its middle: the body of Aabijijiwan hangs
+    // under its plate, and Quinn found the view aimed too high on it.
+    return { eye, look: z.centre.clone().setY(z.lift > 0 ? z.lift - z.height * TRAIL.low : z.lift) };
   });
   const under = (p) => p.clone().setY(p.y - TRAIL.under);
   const stops = eyes.map((e) => under(e.eye));
@@ -520,32 +531,45 @@ export function buildScenery({ zones, token, random, view }) {
     };
     return material;
   };
-  const spiritColour = new THREE.Color(token(SPIRIT.colour, '#7cc7d9'));
-  // The line is two skins. The string: a plain tube, which runs on through each bead. The
-  // swell: the same tube humped out round each bead and drawn inside out (its far wall
-  // only), so it shows as a rim round whatever is in front of it, the way an outline is
-  // drawn round a figure. A bead's ball of colour sits in front of that wall, and the rim
-  // round it runs on into the string without a join.
-  const string = new THREE.Mesh(
-    new THREE.TubeGeometry(spiritPath, 720, SPIRIT.thick, 10, true),
-    moving(new THREE.MeshBasicMaterial({ color: spiritColour })),
-  );
+  // The line is one skin: the tube, humped out round each bead (`swell`) and drawn inside
+  // out, its far wall only. From any side that reads as the same flat line, and it lets
+  // whatever stands inside it show: a bead's card sits in the hump, and the hump's two
+  // ends carry the card's outer ring on into the line without a join.
   const swollen = new THREE.Mesh(
     stringTube(2400, 14, swell),
-    moving(new THREE.MeshBasicMaterial({ color: spiritColour, side: THREE.BackSide })),
+    moving(new THREE.MeshBasicMaterial({ color: new THREE.Color(token(SPIRIT.colour, '#7cc7d9')), side: THREE.BackSide })),
   );
-  for (const m of [string, swollen]) {
-    m.frustumCulled = false; // it runs all round the camera, and moves
-    group.add(m);
-  }
+  swollen.frustumCulled = false; // it runs all round the camera, and moves
+  group.add(swollen);
 
-  const ball = new THREE.SphereGeometry(1, 28, 18);
-  const orbs = beads.map((b) => {
+  // Each bead is a flat round card that always faces the camera (Quinn's choice over a
+  // ball), in three rings from the outside in:
+  //   - the line's own colour, one even width all the way round (`rim`). It is as big as
+  //     the hump in the line, so it is the line's outline carried round the bead, and the
+  //     hump's two ends run it on into the line with no corner;
+  //   - the orb's own outline, thick, in a second colour (`edge`);
+  //   - the orb's fill, in a third.
+  const disc = new THREE.CircleGeometry(1, 48);
+  const lineColour = paint(SPIRIT.colour);
+  const orbs = beads.map((b, i) => {
     const on = spiritPath.getPointAt(b.u);
-    const orb = new THREE.Mesh(ball, paint(b.fill));
-    orb.position.copy(on);
-    group.add(orb);
-    return { orb, u: b.u, at: on.clone(), out: new THREE.Vector3(on.x, 0, on.z).normalize(), size: b.size * SPIRIT.core };
+    const card = new THREE.Group();
+    const fill = SPIRIT.fills[i % SPIRIT.fills.length];
+    const edge = SPIRIT.fills[(i + 2 + (i % 3)) % SPIRIT.fills.length];
+    [
+      [lineColour, 1],
+      [paint(edge === fill ? SPIRIT.fills[(i + 1) % SPIRIT.fills.length] : edge), 1 - SPIRIT.rim],
+      [paint(fill), 1 - SPIRIT.rim - SPIRIT.edge],
+    ].forEach(([material, radius], k) => {
+      const ring = new THREE.Mesh(disc, material);
+      ring.scale.setScalar(radius);
+      ring.position.z = k * 0.03; // each a hair nearer the camera than the one it sits on
+      card.add(ring);
+    });
+    card.position.copy(on);
+    group.add(card);
+    facing.push(card);
+    return { orb: card, u: b.u, at: on.clone(), out: new THREE.Vector3(on.x, 0, on.z).normalize(), size: b.size };
   });
   function wave(t) {
     trailWave(t);
