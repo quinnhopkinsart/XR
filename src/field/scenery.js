@@ -75,7 +75,9 @@ const FIELD_WOBBLE = 0.2;
 // `beat` how fast they travel. `orbs` is how many orbs are strung on it, `orb` their radius
 // out to the edge of the line's colour round them; `rim` is how wide that ring of the
 // line's colour is and `edge` how wide the orb's own outline inside it, both as shares of
-// the radius, and what is left in the middle is the orb's fill. `taper` is how long the line takes to swell to a bead and narrow again (a share of the
+// the radius, and what is left in the middle is the orb's fill. Every `smile`th orb is a
+// smiley face, which Quinn asked for: its fill is the first colour of `face` (yellow) and
+// its eyes and smile the second. `taper` is how long the line takes to swell to a bead and narrow again (a share of the
 // bead's size: smaller is rounder, larger is more of a spindle).
 // Quinn first asked for a subtle pulse and wave, then for more sine wave motion and more
 // meander than the first version had (wave 1.6, no sway, meander 5): the pulse stays
@@ -106,6 +108,8 @@ const SPIRIT = {
   rim: 0.27,
   edge: 0.23,
   taper: 0.62,
+  smile: 3,
+  face: ['--saffron', '--black'],
   colour: '--spirit-line',
   fills: ['--saffron', '--tag-purple', '--field-pink', '--black', '--white', '--tag-teal', '--oxblood', '--tag-green'],
 };
@@ -555,15 +559,36 @@ export function buildScenery({ zones, token, random, view }) {
   //   - the orb's fill, in a third.
   const disc = new THREE.CircleGeometry(1, 48);
   const lineColour = paint(SPIRIT.colour);
+  // The smile: the lower part of a ring, for a fill of radius 1.
+  const smileArc = new THREE.RingGeometry(0.5, 0.64, 28, 1, Math.PI * 1.13, Math.PI * 0.74);
   const orbs = beads.map((b, i) => {
     const on = spiritPath.getPointAt(b.u);
     const card = new THREE.Group();
-    const fill = SPIRIT.fills[i % SPIRIT.fills.length];
-    const edge = SPIRIT.fills[(i + 2 + (i % 3)) % SPIRIT.fills.length];
+    const smiley = i % SPIRIT.smile === 1;
+    const fill = smiley ? SPIRIT.face[0] : SPIRIT.fills[i % SPIRIT.fills.length];
+    let edge = SPIRIT.fills[(i + 2 + (i % 3)) % SPIRIT.fills.length];
+    if (edge === fill) edge = SPIRIT.fills[(i + 1) % SPIRIT.fills.length];
+    if (smiley && (edge === SPIRIT.face[0] || edge === SPIRIT.face[1])) edge = '--tag-purple';
+    const inner = 1 - SPIRIT.rim - SPIRIT.edge;
+    if (smiley) {
+      // Two eyes and a smile on the fill. The card copies the camera's turn, so the face
+      // is always the right way up on screen.
+      const ink = paint(SPIRIT.face[1]);
+      for (const side of [-1, 1]) {
+        const eye = new THREE.Mesh(disc, ink);
+        eye.scale.set(inner * 0.13, inner * 0.19, 1);
+        eye.position.set(side * inner * 0.32, inner * 0.24, 0.09);
+        card.add(eye);
+      }
+      const mouth = new THREE.Mesh(smileArc, ink);
+      mouth.scale.setScalar(inner);
+      mouth.position.set(0, inner * 0.06, 0.09);
+      card.add(mouth);
+    }
     [
       [lineColour, 1],
-      [paint(edge === fill ? SPIRIT.fills[(i + 1) % SPIRIT.fills.length] : edge), 1 - SPIRIT.rim],
-      [paint(fill), 1 - SPIRIT.rim - SPIRIT.edge],
+      [paint(edge), 1 - SPIRIT.rim],
+      [paint(fill), inner],
     ].forEach(([material, radius], k) => {
       const ring = new THREE.Mesh(disc, material);
       ring.scale.setScalar(radius);

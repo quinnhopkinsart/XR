@@ -35,8 +35,10 @@ import { fieldSupported } from './FloatingField.jsx';
 //   drain  how fast it empties, in bars a second
 //
 // The roadmap down the right edge of the screen (`fly-map`) shows the way there. It has a
-// leg for each part of the page, each in its own colour, with a stop where the leg begins:
-// the intro, the works, and the 3D part. A leg fills as its part of the page is scrolled,
+// leg for each part of the page, each in its own colour with its name written down it:
+// the intro, the works, and the 3D part. An empty leg is black with its name in its colour;
+// the filled part is the colour with the name in black. At the foot of the page an arrow
+// under the last leg points on down. A leg fills as its part of the page is scrolled,
 // and the last one, in the spirit line's blue, fills by scrolling on past the end. Quinn
 // asked for it: on the right, like a roadmap, a colour for each section, filling as you
 // scroll (his first idea, a yellow bar that turns blue at the 3D part, ran across the top).
@@ -314,12 +316,19 @@ export default function FlyMode() {
         <div className="fly-map" ref={meter} aria-hidden="true">
           {LEGS.map((leg) => (
             <span key={leg.name} className={`fly-map__leg fly-map__leg--${leg.name}`}>
-              <span className="fly-map__stop" />
-              <span className="fly-map__label">{leg.label}</span>
-              <span className="fly-map__road" />
+              <span className="fly-map__name">{leg.label}</span>
+              {/* The filled part: the same name again in black on the leg's colour, cut off
+                  at how far the leg has filled, so the letters change as the colour passes. */}
+              <span className="fly-map__fill">
+                <span className="fly-map__name">{leg.label}</span>
+              </span>
             </span>
           ))}
-          <span className="fly-map__stop fly-map__stop--end" />
+          {/* Black under blue, so it shows on the red ground and over the black footer. */}
+          <svg className="fly-map__on" viewBox="0 0 20 14" focusable="false">
+            <path className="fly-map__on-rim" d="M4 4l6 6 6-6" />
+            <path className="fly-map__on-line" d="M4 4l6 6 6-6" />
+          </svg>
         </div>,
         document.body,
       )}
