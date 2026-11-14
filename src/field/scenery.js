@@ -47,8 +47,10 @@ const FIELD_COLOURS = [
 const FIELD_LINE = 0.1;
 // The line to follow. `dash` and `gap` are lengths along it, `thick` the dash's width,
 // `height` and `length` the wave's size, `speed` how fast the waves run along the line
-// (units a second), `off` how far in front of a work it passes.
-const TRAIL = { dash: 0.9, gap: 0.8, thick: 0.16, height: 1.3, length: 13, speed: 1.6, off: 5, colour: '--black' };
+// (units a second), `under` how far the line runs below the viewpoints it joins, `frame`
+// how much room a work gets when it is fitted to the screen from its viewpoint (1 fills
+// it), `swing` the angle in radians a viewpoint stands to one side of a work.
+const TRAIL = { dash: 0.9, gap: 0.8, thick: 0.16, height: 1.1, length: 13, speed: 1.6, under: 3.2, frame: 1.3, swing: 0.2, colour: '--black' };
 const FIELD_WOBBLE = 0.2;
 const STAR_COLOURS = ['--white', '--white', '--saffron'];
 const MARK_COLOURS = ['--black', '--black', '--white', '--saffron'];
@@ -154,14 +156,17 @@ function label(title, token) {
 }
 
 /**
- * zones: [{ title, centre: Vector3, radius, height, lift, floor }] from field.js (`lift`
- * is how high the zone hangs, `floor` the level just under its sculptures).
+ * zones: [{ title, centre: Vector3, radius, width, height, lift, floor }] from field.js
+ * (`lift` is how high the zone hangs, `floor` the level just under its sculptures).
+ * view: { fov, aspect } of the camera, for fitting each work to the screen.
  * Returns { group, zones: [Group], facing: [Object3D], upright: [Object3D], wave(t) }: the
  * titles grow in as the flight begins, everything in `facing` is turned to the camera each
  * frame, everything in `upright` is turned to it round its own trunk only, and `wave(t)`
- * runs the waves along the line to follow.
+ * runs the waves along the line to follow. `tour` is that line as a camera track:
+ * `tour.length`, and `tour.poseAt(s, eye, look)`, which fills in where a camera `s` units
+ * along it stands and what it looks at.
  */
-export function buildScenery({ zones, token, random }) {
+export function buildScenery({ zones, token, random, view }) {
   const group = new THREE.Group();
   const facing = [];
   const upright = [];
@@ -182,11 +187,14 @@ export function buildScenery({ zones, token, random }) {
   const out = (distance, around, up) =>
     new THREE.Vector3(Math.sin(around) * Math.cos(up), Math.sin(up), -Math.cos(around) * Math.cos(up)).multiplyScalar(distance);
 
-  // Zones: the title hangs just under the sculptures, a little toward the centre.
+  // Zones: the title hangs just under the sculptures, a little toward the centre. A zone
+  // sunk below the camera is seen from above, so its title stands behind the work, on the
+  // far side, where it does not cover it.
   const zoneGroups = zones.map((z) => {
     const g = new THREE.Group();
     const inward = new THREE.Vector3(-z.centre.x, 0, -z.centre.z).normalize();
-    g.position.copy(z.centre).addScaledVector(inward, z.radius * 0.5).setY(z.floor - 0.6);
+    if (z.lift < 0) g.position.copy(z.centre).addScaledVector(inward, -z.radius * 0.7).setY(z.lift + z.height * 0.3);
+    else g.position.copy(z.centre).addScaledVector(inward, z.radius * 0.5).setY(z.floor - 0.6);
     g.add(label(z.title, token));
     group.add(g);
     return g;
@@ -250,17 +258,34 @@ export function buildScenery({ zones, token, random }) {
     }
   }
 
-  // The line to follow: from where the flight starts, past the front of each zone in turn
-  // (left to right along the arc), and back. Each pass sits a little toward the centre from
-  // its zone and most of the way to its height, so following it brings each work into view.
-  const start = new THREE.Vector3(0, -2.6, 7);
-  const stops = zones.map((z) => {
+  // The line to follow: from where the flight starts, past a good place to see each work
+  // from, in turn (left to right along the arc), and back. The line runs a little under
+  // those viewpoints, like the centre line of a road, so a camera that rides it (the tour,
+  // `tour.poseAt`) sees the dashes lead away ahead.
+  //
+  // A viewpoint stands back from its zone, toward the centre, far enough for the whole work
+  // to fit the screen, and a little to one side for a three-quarter view. For a work that
+  // hangs high it is close in and low, looking up, so the work towers. For a work sunk
+  // below it is above, looking down into it.
+  const half = Math.tan(THREE.MathUtils.degToRad(view.fov) / 2);
+  const eyes = zones.map((z, i) => {
     const inward = new THREE.Vector3(-z.centre.x, 0, -z.centre.z).normalize();
-    return z.centre
+    const side = new THREE.Vector3(-inward.z, 0, inward.x);
+    const fit = (Math.max(z.height, z.width / view.aspect) / (2 * half)) * TRAIL.frame;
+    const back = THREE.MathUtils.clamp(fit * (z.lift > 0 ? 0.85 : z.lift < 0 ? 0.8 : 1), 9, 60);
+    const swing = (i % 2 ? 1 : -1) * TRAIL.swing;
+    const eye = z.centre
       .clone()
-      .addScaledVector(inward, z.radius + TRAIL.off)
-      .setY(z.lift * 0.75 - 2.6);
+      .addScaledVector(inward, back * Math.cos(swing))
+      .addScaledVector(side, back * Math.sin(swing));
+    eye.y = z.lift > 0 ? z.lift - z.height * 0.55 : z.lift < 0 ? z.lift + z.height * 0.8 : z.lift + z.height * 0.08;
+    return { eye, look: z.centre.clone().setY(z.lift) };
   });
+  const ahead0 = zones.reduce((a, z) => (Math.abs(z.centre.x) < Math.abs(a.centre.x) ? z : a), zones[0]);
+  const first = { eye: new THREE.Vector3(0, 0.6, 13), look: ahead0.centre.clone().setY(ahead0.lift) };
+  const under = (p) => p.clone().setY(p.y - TRAIL.under);
+  const start = under(first.eye);
+  const stops = eyes.map((e) => under(e.eye));
   const path = new THREE.CatmullRomCurve3([start, ...stops], true, 'centripetal');
   const long = path.getLength();
   const count = Math.floor(long / (TRAIL.dash + TRAIL.gap));
@@ -288,5 +313,46 @@ export function buildScenery({ zones, token, random }) {
   wave(0);
   group.add(dashes);
 
-  return { group, zones: zoneGroups, facing, upright, wave };
+  // The tour: the camera rides `under` above the line. Near a viewpoint it turns to the
+  // work; between two it looks along the line ahead.
+  const marks = [first, ...eyes].map((v) => {
+    // Where along the line this viewpoint is.
+    let best = 0;
+    let near = Infinity;
+    const p = under(v.eye);
+    for (let k = 0; k < 800; k += 1) {
+      const d = path.getPointAt(k / 800).distanceToSquared(p);
+      if (d < near) {
+        near = d;
+        best = k / 800;
+      }
+    }
+    return { at: best * long, look: v.look };
+  });
+  const around = (a, b) => {
+    const d = Math.abs(a - b) % long;
+    return Math.min(d, long - d);
+  };
+  marks.forEach((m, i) => {
+    const before = marks[(i + marks.length - 1) % marks.length];
+    const after = marks[(i + 1) % marks.length];
+    m.reach = Math.min(around(m.at, before.at), around(m.at, after.at)) * 0.48;
+  });
+  const wrap = (s) => (((s % long) + long) % long) / long;
+  const tour = {
+    length: long,
+    poseAt(s, eye, look) {
+      path.getPointAt(wrap(s), eye);
+      path.getPointAt(wrap(s + 7), look);
+      eye.y += TRAIL.under;
+      look.y += TRAIL.under * 0.4;
+      const here = wrap(s) * long;
+      for (const m of marks) {
+        const k = 1 - Math.min(1, around(here, m.at) / m.reach);
+        if (k > 0) look.lerp(m.look, k * k * (3 - 2 * k));
+      }
+    },
+  };
+
+  return { group, zones: zoneGroups, facing, upright, wave, tour };
 }

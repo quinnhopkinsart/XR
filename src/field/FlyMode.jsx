@@ -9,6 +9,10 @@ import { fieldSupported } from './FloatingField.jsx';
 //   - scrolling on past the end of the page, which fills the bar on that button
 // Inside, the page steps aside and field.js hands the camera to the visitor. "Back to the
 // page" or Esc leaves. Rendered by Home.jsx only, so no other page has it.
+// "Follow the line" turns scrolling into a tour: the wheel, a swipe, the keys or the
+// joystick carry the camera along the dashed line, which stops at a good view of each work
+// (`flyTour` in motion.js, the tour in field.js and scenery.js). Pressed again, it hands
+// the camera back for free flight.
 // On touch screens a joystick moves the camera (Quinn's choice over a hold-down button):
 // push it forward, back or to a side while another finger drags to look. Other screens
 // keep the hold-down Fly button beside the keys.
@@ -84,7 +88,7 @@ function Joystick() {
 }
 
 export default function FlyMode() {
-  const { fly } = useSyncExternalStore(motion.subscribe, motion.get, motion.get);
+  const { fly, flyTour } = useSyncExternalStore(motion.subscribe, motion.get, motion.get);
   const gate = useRef(null);
   const enterBtn = useRef(null);
   const exitBtn = useRef(null);
@@ -92,7 +96,7 @@ export default function FlyMode() {
   const supported = fieldSupported();
 
   // Leaving the landing page leaves the free camera.
-  useEffect(() => () => motion.set({ fly: false, flyForward: false }), []);
+  useEffect(() => () => motion.set({ fly: false, flyForward: false, flyTour: false }), []);
 
   // While flying the page is faded out, cannot be scrolled and is out of the tab order.
   useEffect(() => {
@@ -220,14 +224,26 @@ export default function FlyMode() {
         createPortal(
           <div className="fly-hud" role="region" aria-label="Free camera">
             <p className="fly-hud__hint" role="status">
-              {coarse
-                ? 'Drag to look. Push the stick to move.'
-                : 'Drag to look. Scroll, W A S D or the arrow keys to move. Esc to leave.'}
+              {flyTour
+                ? coarse
+                  ? 'Swipe up to follow the line from work to work.'
+                  : 'Scroll to follow the line from work to work. Drag to look aside. Esc to leave.'
+                : coarse
+                  ? 'Drag to look. Push the stick to move.'
+                  : 'Drag to look. Scroll, W A S D or the arrow keys to move. Esc to leave.'}
             </p>
             {coarse && <Joystick />}
             <div className="fly-hud__bar">
-              <button type="button" className="motion__btn" ref={exitBtn} onClick={() => motion.set({ fly: false })}>
+              <button type="button" className="motion__btn" ref={exitBtn} onClick={() => motion.set({ fly: false, flyTour: false })}>
                 Back to the page
+              </button>
+              <button
+                type="button"
+                className="motion__btn"
+                aria-pressed={flyTour}
+                onClick={() => motion.set({ flyTour: !flyTour })}
+              >
+                Follow the line
               </button>
               <button
                 type="button"

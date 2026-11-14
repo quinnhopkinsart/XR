@@ -29,7 +29,9 @@ export default {
   // The scene faces +x in its file, so it turns to face the page. The spiral turns.
   // flight: in the landing page's free camera it sits well below the camera, larger,
   // because the detector is in a mine: the visitor flies down to it.
-  models: [{ src: mineModel, split: true, turn: -90, spin: ['neutrino'], flight: { scale: 2, lift: -22 } }],
+  // scale: larger than its fit on the page, where it read small beside the others (Quinn's
+  // request).
+  models: [{ src: mineModel, split: true, turn: -90, spin: ['neutrino'], scale: 1.7, flight: { scale: 2, lift: -24 } }],
 
   cover: panel2,
   targets: [
