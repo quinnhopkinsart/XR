@@ -11,6 +11,10 @@
 //   - stick pine trees in groves, all standing at one level, further out than the camera
 //     can fly: flat and very simple, a few black lines, like a drawing on the horizon
 //   - + and * marks, nearer, between the zones
+// And one line to follow: a dashed sine wave that sets out from where the flight starts,
+// passes in front of every work in turn, rising to the ones that hang high and dropping to
+// the ones below, and comes back round. Its waves run slowly along it.
+//
 // Stars and marks always face the camera. Trees turn to it too but stay upright, so they
 // are only ever seen flat on. Fields stay where they are put, so flying round one shows
 // its edge.
@@ -41,6 +45,10 @@ const FIELD_COLOURS = [
   ['--oxblood', '--black'],
 ];
 const FIELD_LINE = 0.1;
+// The line to follow. `dash` and `gap` are lengths along it, `thick` the dash's width,
+// `height` and `length` the wave's size, `speed` how fast the waves run along the line
+// (units a second), `off` how far in front of a work it passes.
+const TRAIL = { dash: 0.9, gap: 0.8, thick: 0.16, height: 1.3, length: 13, speed: 1.6, off: 5, colour: '--black' };
 const FIELD_WOBBLE = 0.2;
 const STAR_COLOURS = ['--white', '--white', '--saffron'];
 const MARK_COLOURS = ['--black', '--black', '--white', '--saffron'];
@@ -148,9 +156,10 @@ function label(title, token) {
 /**
  * zones: [{ title, centre: Vector3, radius, height, lift, floor }] from field.js (`lift`
  * is how high the zone hangs, `floor` the level just under its sculptures).
- * Returns { group, zones: [Group], facing: [Object3D], upright: [Object3D] }: the titles
- * grow in as the flight begins, everything in `facing` is turned to the camera each frame,
- * and everything in `upright` is turned to it round its own trunk only.
+ * Returns { group, zones: [Group], facing: [Object3D], upright: [Object3D], wave(t) }: the
+ * titles grow in as the flight begins, everything in `facing` is turned to the camera each
+ * frame, everything in `upright` is turned to it round its own trunk only, and `wave(t)`
+ * runs the waves along the line to follow.
  */
 export function buildScenery({ zones, token, random }) {
   const group = new THREE.Group();
@@ -241,5 +250,43 @@ export function buildScenery({ zones, token, random }) {
     }
   }
 
-  return { group, zones: zoneGroups, facing, upright };
+  // The line to follow: from where the flight starts, past the front of each zone in turn
+  // (left to right along the arc), and back. Each pass sits a little toward the centre from
+  // its zone and most of the way to its height, so following it brings each work into view.
+  const start = new THREE.Vector3(0, -2.6, 7);
+  const stops = zones.map((z) => {
+    const inward = new THREE.Vector3(-z.centre.x, 0, -z.centre.z).normalize();
+    return z.centre
+      .clone()
+      .addScaledVector(inward, z.radius + TRAIL.off)
+      .setY(z.lift * 0.75 - 2.6);
+  });
+  const path = new THREE.CatmullRomCurve3([start, ...stops], true, 'centripetal');
+  const long = path.getLength();
+  const count = Math.floor(long / (TRAIL.dash + TRAIL.gap));
+  const waves = Math.max(1, Math.round(long / TRAIL.length)); // a whole number, so the loop closes
+  const dashes = new THREE.InstancedMesh(new THREE.BoxGeometry(TRAIL.thick, TRAIL.thick, TRAIL.dash), paint(TRAIL.colour), count);
+  dashes.frustumCulled = false; // the line runs all round the camera
+  const base = [];
+  for (let i = 0; i < count; i += 1) base.push(path.getPointAt(i / count));
+  const at = new THREE.Object3D();
+  const ahead = new THREE.Vector3();
+  const rise = (i, t) => Math.sin(((i / count) * waves - (t * TRAIL.speed) / TRAIL.length) * Math.PI * 2) * TRAIL.height;
+  function wave(t) {
+    for (let i = 0; i < count; i += 1) {
+      const next = (i + 1) % count;
+      at.position.copy(base[i]);
+      at.position.y += rise(i, t);
+      ahead.copy(base[next]);
+      ahead.y += rise(next, t);
+      at.lookAt(ahead);
+      at.updateMatrix();
+      dashes.setMatrixAt(i, at.matrix);
+    }
+    dashes.instanceMatrix.needsUpdate = true;
+  }
+  wave(0);
+  group.add(dashes);
+
+  return { group, zones: zoneGroups, facing, upright, wave };
 }
