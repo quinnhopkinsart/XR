@@ -3,7 +3,9 @@ import { projects } from '../projects/registry.js';
 import { motion, reducedMotion } from './motion.js';
 
 // Every work can add pieces to the field through `models` in its project.js.
-const models = projects.flatMap((p) => p.models);
+// Each piece carries its work's slug and title, so the free camera can gather a work's
+// pieces in one zone and name it.
+const models = projects.flatMap((p) => p.models.map((m) => ({ ...m, work: p.slug, title: p.title })));
 export const fieldHasModels = models.length > 0;
 
 function hasWebGL() {
