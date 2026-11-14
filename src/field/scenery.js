@@ -15,6 +15,12 @@
 // from, in turn, rising to the ones that hang high and dropping to the ones below. Its
 // waves run slowly along it.
 //
+// Behind all the works runs one large spirit line: a thick light-blue line that loops round
+// the outside of the ring of works, meandering, with orbs joined to it by short stems, as
+// spirit lines carry them in Woodland painting. Two sine waves move along it, one up and
+// down and one in and out, so it snakes, and its thickness swells and eases in a gentle
+// pulse; the orbs ride the waves and breathe with it.
+//
 // Stars and marks always face the camera. Trees turn to it too but stay upright, so they
 // are only ever seen flat on. Fields stay where they are put, so flying round one shows
 // its edge.
@@ -53,6 +59,37 @@ const FIELD_LINE = 0.1;
 // far the line's corners are rounded off (0 keeps them sharp).
 const TRAIL = { dash: 0.9, gap: 0.8, thick: 0.16, height: 1.1, length: 13, speed: 1.6, under: 3.2, frame: 1.3, swing: 0.15, smooth: 9, colour: '--black' };
 const FIELD_WOBBLE = 0.2;
+// The spirit line. `behind` is how far outside a zone it passes, `thick` its radius,
+// `meander` how far it strays side to side and up and down from the straight way round,
+// `bends` roughly how many such bends there are in the loop. Two sine waves move along
+// it: `wave` is the height of the one that lifts and drops it, `waves` how many of them
+// there are round the loop, `drift` how fast they move (turns of the wave a second);
+// `sway`, `sways` and `slide` are the same for the one that swings it in toward the centre
+// and out again, which travels the other way, so the line snakes. `pulse` is how much the
+// thickness swells (a share of `thick`), `beats` how many swells are on the line at once,
+// `beat` how fast they travel. `orbs` is how many orbs hang on it, `orb` their radius.
+// Quinn first asked for a subtle pulse and wave, then for more sine wave motion and more
+// meander than the first version had (wave 1.6, no sway, meander 5): the pulse stays
+// gentle, the waves are plain to see.
+const SPIRIT = {
+  behind: 11,
+  thick: 0.85,
+  meander: 9,
+  bends: 15,
+  wave: 4.2,
+  waves: 11,
+  drift: 0.09,
+  sway: 3.4,
+  sways: 8,
+  slide: 0.07,
+  pulse: 0.22,
+  beats: 9,
+  beat: 0.12,
+  orbs: 20,
+  orb: [1.3, 2.6],
+  colour: '--spirit-line',
+  fills: ['--saffron', '--field-pink', '--tag-teal', '--white', '--oxblood'],
+};
 const STAR_COLOURS = ['--white', '--white', '--saffron'];
 const MARK_COLOURS = ['--black', '--black', '--white', '--saffron'];
 
@@ -165,7 +202,7 @@ function label(title, token) {
  * Returns { group, zones: [Group], facing: [Object3D], upright: [Object3D], wave(t) }: the
  * titles grow in as the flight begins, everything in `facing` is turned to the camera each
  * frame, everything in `upright` is turned to it round its own trunk only, and `wave(t)`
- * runs the waves along the line to follow. `tour` is that line as a camera track:
+ * runs the waves along the line to follow and along the spirit line. `tour` is that line as a camera track:
  * `tour.length`, `tour.start` (how far along it the first work's viewpoint is), and
  * `tour.poseAt(s, eye, look)`, which fills in where a camera `s` units
  * along it stands and what it looks at.
@@ -314,7 +351,7 @@ export function buildScenery({ zones, token, random, view }) {
   const at = new THREE.Object3D();
   const ahead = new THREE.Vector3();
   const rise = (i, t) => Math.sin(((i / count) * waves - (t * TRAIL.speed) / TRAIL.length) * Math.PI * 2) * TRAIL.height;
-  function wave(t) {
+  function trailWave(t) {
     for (let i = 0; i < count; i += 1) {
       const next = (i + 1) % count;
       at.position.copy(base[i]);
@@ -327,8 +364,104 @@ export function buildScenery({ zones, token, random, view }) {
     }
     dashes.instanceMatrix.needsUpdate = true;
   }
-  wave(0);
   group.add(dashes);
+
+  // The spirit line. Its way round: behind each zone in turn, out past the zone's far side
+  // and at most of its height, then on round the back of the ring to close the loop. Points
+  // between those swing in and out and up and down, so it meanders.
+  const span = Math.PI * 2;
+  const angles = zones.map((z) => Math.atan2(z.centre.x, -z.centre.z)); // 0 is straight ahead
+  const outAt = (a) => {
+    // Its distance out and its height at a compass angle: taken from the zones either
+    // side of that angle, and from the nearest zone alone round the back.
+    let r = 0;
+    let y = 0;
+    let weight = 0;
+    zones.forEach((z, i) => {
+      let d = Math.abs(a - angles[i]) % span;
+      d = Math.min(d, span - d);
+      const w = 1 / (0.02 + d * d);
+      r += (Math.hypot(z.centre.x, z.centre.z) + z.radius * 0.6 + SPIRIT.behind) * w;
+      y += z.lift * 0.8 * w;
+      weight += w;
+    });
+    return { r: r / weight, y: y / weight };
+  };
+  const knots = [];
+  const steps = SPIRIT.bends * 2;
+  for (let i = 0; i < steps; i += 1) {
+    const a = (i / steps) * span - Math.PI;
+    const { r, y } = outAt(a);
+    const swing = i % 2 ? 1 : -1;
+    knots.push(
+      new THREE.Vector3(Math.sin(a), 0, -Math.cos(a))
+        .multiplyScalar(r + swing * SPIRIT.meander * (0.5 + random() * 0.5))
+        .setY(y + swing * SPIRIT.meander * (random() - 0.2)),
+    );
+  }
+  const spiritPath = new THREE.CatmullRomCurve3(knots, true, 'catmullrom', 0.5);
+  const spiritTime = { value: 0 };
+  const spiritPaint = new THREE.MeshBasicMaterial({ color: new THREE.Color(token(SPIRIT.colour, '#7cc7d9')) });
+  // The wave and the pulse are done where the line is drawn, from how far along it each
+  // point is (uv.x): the wave lifts and drops it, the pulse pushes its skin out and in.
+  spiritPaint.onBeforeCompile = (shader) => {
+    shader.uniforms.uTime = spiritTime;
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nuniform float uTime;')
+      .replace(
+        '#include <begin_vertex>',
+        `#include <begin_vertex>
+        transformed += normal * ${(SPIRIT.thick * SPIRIT.pulse).toFixed(4)} * sin(6.2832 * (uv.x * ${SPIRIT.beats.toFixed(1)} - uTime * ${SPIRIT.beat.toFixed(4)}));
+        transformed.y += ${SPIRIT.wave.toFixed(4)} * sin(6.2832 * (uv.x * ${SPIRIT.waves.toFixed(1)} - uTime * ${SPIRIT.drift.toFixed(4)}));
+        transformed.xz += normalize(position.xz) * ${SPIRIT.sway.toFixed(4)} * sin(6.2832 * (uv.x * ${SPIRIT.sways.toFixed(1)} + uTime * ${SPIRIT.slide.toFixed(4)}));`,
+      );
+  };
+  const spirit = new THREE.Mesh(new THREE.TubeGeometry(spiritPath, 640, SPIRIT.thick, 10, true), spiritPaint);
+  spirit.frustumCulled = false; // it runs all round the camera, and moves
+  group.add(spirit);
+
+  // The orbs: each a ball in one colour with a rim in the line's own, on a short stem that
+  // leaves the line to one side. They rise and fall with the wave where they are joined.
+  const ball = new THREE.SphereGeometry(1, 24, 16);
+  const rim = new THREE.MeshBasicMaterial({ color: spiritPaint.color, side: THREE.BackSide });
+  const orbs = [];
+  for (let i = 0; i < SPIRIT.orbs; i += 1) {
+    const u = (i + 0.2 + random() * 0.6) / SPIRIT.orbs;
+    const on = spiritPath.getPointAt(u);
+    const along = spiritPath.getTangentAt(u);
+    // To one side of the line, turned a different way round it each time.
+    const aside = new THREE.Vector3(0, 1, 0).cross(along).normalize().applyAxisAngle(along, random() * span);
+    const size = between(SPIRIT.orb);
+    const reach = size + 1.2 + random() * 2.2;
+    const g = new THREE.Group();
+    g.position.copy(on);
+    const orb = new THREE.Group();
+    orb.position.copy(aside).multiplyScalar(reach);
+    const fill = new THREE.Mesh(ball, paint(SPIRIT.fills[i % SPIRIT.fills.length]));
+    const edge = new THREE.Mesh(ball, rim);
+    edge.scale.setScalar(1.2);
+    orb.add(fill, edge);
+    orb.scale.setScalar(size);
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(SPIRIT.thick * 0.42, SPIRIT.thick * 0.42, reach, 8), paint(SPIRIT.colour));
+    stem.position.copy(aside).multiplyScalar(reach / 2);
+    stem.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), aside);
+    g.add(stem, orb);
+    group.add(g);
+    orbs.push({ g, orb, u, at: on.clone(), out: new THREE.Vector3(on.x, 0, on.z).normalize(), size, phase: random() * span });
+  }
+  function wave(t) {
+    trailWave(t);
+    spiritTime.value = t;
+    for (const o of orbs) {
+      // The same two waves as the line's shader, so each orb stays joined to it.
+      o.g.position
+        .copy(o.at)
+        .addScaledVector(o.out, SPIRIT.sway * Math.sin(span * (o.u * SPIRIT.sways + t * SPIRIT.slide)));
+      o.g.position.y += SPIRIT.wave * Math.sin(span * (o.u * SPIRIT.waves - t * SPIRIT.drift));
+      o.orb.scale.setScalar(o.size * (1 + 0.07 * Math.sin(span * (o.u * SPIRIT.beats - t * SPIRIT.beat) + o.phase * 0.3)));
+    }
+  }
+  wave(0);
 
   // The tour: the camera rides `under` above the line and always looks at a work. Between
   // two viewpoints its gaze swings steadily from the one work to the next: it holds on a
