@@ -53,6 +53,8 @@ const ZONES = { out: 34, step: 52, gap: 2.5, pad: 4 };
 // far the camera draws in flight.
 const HAZE = { page: [17, 46], flight: [60, 260], far: 500 };
 
+const SPIN = 0.35; // radians a second, for parts a model lists under `spin`
+
 const INTERACTIVE = 'a, button, input, select, textarea, iframe, label, summary, [role="button"], .fly-stick';
 
 // Small seeded random so the composition is the same on every visit.
@@ -109,6 +111,8 @@ function recolor(root, colour) {
 function sculptureFrom(gltf, spec, maxParts) {
   const exclude = (spec.exclude || []).map((s) => s.toLowerCase());
   const skip = (name = '') => exclude.some((s) => name.toLowerCase().includes(s));
+  const spins = (spec.spin || []).map((s) => s.toLowerCase());
+  const isSpin = (name = '') => spins.some((s) => name.toLowerCase().includes(s));
   const front = (spec.foreground || []).map((s) => s.toLowerCase());
   const isFront = (name = '') => front.some((s) => name.toLowerCase().includes(s));
   let parts = [];
@@ -151,6 +155,11 @@ function sculptureFrom(gltf, spec, maxParts) {
           turn: THREE.MathUtils.degToRad(spec.turn || 0),
         });
       } else {
+        if (isSpin(mesh.name) || isSpin(mesh.parent?.name)) {
+          // A flat part that turns in its own plane, like a wheel: its thinnest side is the axle.
+          const box = new THREE.Box3().setFromObject(part.pivot).getSize(new THREE.Vector3());
+          part.axle = box.x <= box.y && box.x <= box.z ? 'x' : box.y <= box.z ? 'y' : 'z';
+        }
         parts.push(part);
       }
     }
@@ -491,6 +500,7 @@ export function createField(container, { models, reducedMotion }) {
           rest,
           radius: (part.longest * size * s.unit) / 2, // world units
           phase: random() * Math.PI * 2,
+          axle: part.axle,
           bob: whole ? extent * (0.008 + random() * 0.014) : 0,
           speed: 0.25 + random() * 0.35,
           turnBy: new THREE.Vector3(),
@@ -534,6 +544,7 @@ export function createField(container, { models, reducedMotion }) {
       const bob = reducedMotion ? 0 : Math.sin(t * f.speed + f.phase) * f.bob;
       f.piece.position.set(f.home.x + f.push.x, f.home.y + f.push.y + bob, f.home.z + f.push.z);
       f.piece.rotation.set(f.rest.x + f.turnBy.x, f.rest.y + f.turnBy.y, f.rest.z + f.turnBy.z);
+      if (f.axle && !reducedMotion) f.piece.rotation[f.axle] += t * SPIN;
     }
   }
 
@@ -554,15 +565,18 @@ export function createField(container, { models, reducedMotion }) {
       z.width = z.members.reduce((sum, c) => sum + c.w * c.flightScale, 0) + ZONES.gap * (z.members.length - 1);
       z.height = Math.max(...z.members.map((c) => c.h * c.flightScale));
       z.radius = Math.max(9, z.width / 2 + ZONES.pad);
-      z.lift = Math.max(...z.members.map((c) => c.flightLift));
-      z.floor = z.lift - z.height / 2 - 0.8; // just under the sculptures, where the title goes
+      // The zone hangs as high, or sinks as low, as its member that goes furthest.
+      z.lift = z.members.map((c) => c.flightLift).reduce((a, b) => (Math.abs(b) > Math.abs(a) ? b : a), 0);
+      // Where the title goes: just under the sculptures, or just over them when the zone is
+      // sunk below the camera, so it is read on the way down.
+      z.floor = z.lift < 0 ? z.lift + z.height / 2 + 2 : z.lift - z.height / 2 - 0.8;
     }
     // The widest zone sits straight ahead, the next ones to its right and left in turn.
-    // A zone that hangs high goes after those at eye level, so the first thing the camera
-    // faces is a work, not the empty air under one.
+    // A zone that hangs high or sits low goes after those at eye level, so the first thing
+    // the camera faces is a work, not the empty air under or over one.
     const zones = [];
     found
-      .sort((a, b) => (a.lift > 0) - (b.lift > 0) || b.width - a.width)
+      .sort((a, b) => (a.lift !== 0) - (b.lift !== 0) || b.width - a.width)
       .forEach((z, i) => (i % 2 ? zones.push(z) : zones.unshift(z)));
     // Far enough out that neighbouring zones never touch.
     const step = Math.min(THREE.MathUtils.degToRad(ZONES.step), (Math.PI * 2) / zones.length);
