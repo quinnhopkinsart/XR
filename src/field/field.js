@@ -16,6 +16,10 @@
 //   - tapping a part (on open page, not on text or links) sets it spinning; it settles back
 //   - scrolling moves near sculptures faster than far ones
 //   - on phones, tilting leans the camera and slides near sculptures further than far ones
+//
+// Free camera (the landing page only, `fly` in motion.js): the page steps aside and the
+// visitor flies among the sculptures. Drag to look, scroll or W A S D to move. Leaving
+// eases the camera back to where the page keeps it.
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -25,6 +29,15 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { motion } from './motion.js';
+
+// Where the page keeps the camera. The layout is worked out from this distance, never from
+// the camera itself, so flying does not move the sculptures.
+const CAM_Z = 14;
+const LOOK_AT = new THREE.Vector3(0, 0, -3);
+// Free camera: `speed` in units a second (a screen is about 9 high), `boost` with Shift,
+// `turn` in radians a second for the arrow keys, `look` in radians per pixel dragged,
+// `wheel` in units per pixel scrolled, `reach` how far from the centre the camera may go.
+const FLY = { speed: 6, boost: 2.5, turn: 1.3, look: 0.0042, wheel: 0.012, reach: 34, pitch: 1.45 };
 
 const INTERACTIVE = 'a, button, input, select, textarea, iframe, label, summary, [role="button"]';
 
@@ -177,7 +190,7 @@ export function createField(container, { models, reducedMotion }) {
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
-  camera.position.set(0, 0, 14);
+  camera.position.set(0, 0, CAM_Z);
 
   // Haze: sculptures further back sink into the ground colour.
   scene.fog = new THREE.Fog(ground, 17, 46);
@@ -192,7 +205,7 @@ export function createField(container, { models, reducedMotion }) {
     );
     composer.setPixelRatio(renderer.getPixelRatio());
     composer.addPass(new RenderPass(scene, camera));
-    bokeh = new BokehPass(scene, camera, { focus: camera.position.z, aperture: 0.0011, maxblur: 0.009 });
+    bokeh = new BokehPass(scene, camera, { focus: CAM_Z, aperture: 0.0011, maxblur: 0.009 });
     // With the lens on, the canvas paints the ground itself: the blur needs an opaque
     // frame. The depth pass must not see that colour, so it is lifted while it runs.
     scene.background = ground;
@@ -239,6 +252,22 @@ export function createField(container, { models, reducedMotion }) {
   const isPaused = () => motion.get().userPaused || motion.get().embedPaused;
   let frame = 0;
   let last = performance.now();
+
+  // Free camera.
+  let flying = false;
+  let returning = false; // easing back to the page's camera after a flight
+  let yaw = 0;
+  let pitch = 0;
+  let glide = 0; // distance still to travel from the scroll wheel
+  let drag = null;
+  let flyHome = motion.get().flyHome;
+  let heldT = performance.now() / 1000; // the sculptures' clock, held while paused in flight
+  const keys = new Set();
+  const velocity = new THREE.Vector3();
+  const wish = new THREE.Vector3();
+  const lookM = new THREE.Matrix4();
+  const lookQ = new THREE.Quaternion();
+  const euler = new THREE.Euler(0, 0, 0, 'YXZ');
   let view = { w: 10, h: 10 };
 
   const raycaster = new THREE.Raycaster();
@@ -253,7 +282,7 @@ export function createField(container, { models, reducedMotion }) {
       composer.setSize(w, h);
       bokeh.uniforms.aspect.value = camera.aspect;
     }
-    const height = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;
+    const height = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * CAM_Z;
     view = { w: height * camera.aspect, h: height };
     if (!running) render();
   }
@@ -300,7 +329,7 @@ export function createField(container, { models, reducedMotion }) {
         // the whole view and leave by its edges. Each takes a side, spaced down the page.
         const n = Math.max(1, fronts.length);
         const z = 7.2 + (frontIndex % 3) * 0.9;
-        const across = ((camera.position.z - z) / camera.position.z) * 14; // rough view width at that depth
+        const across = ((CAM_Z - z) / CAM_Z) * 14; // rough view width at that depth
         // Wire is thin, so it comes in far larger than a broad loop or a flat drawing does.
         const flat = s.parts[0].flat;
         size = across * (flat ? (mobile ? 1.5 : 1.2) : mobile ? 2.2 : 2.7 + random() * 0.4);
@@ -443,7 +472,7 @@ export function createField(container, { models, reducedMotion }) {
   function layout(t) {
     const scroll = window.scrollY / window.innerHeight; // in screen heights
     for (const c of clusters) {
-      const depthScale = (camera.position.z - c.base.z) / camera.position.z;
+      const depthScale = (CAM_Z - c.base.z) / CAM_Z;
       let y = c.base.y - scroll * c.parallax * 0.55; // rise with the page, slower when far
       y = ((((y - BAND_TOP) % BAND) + BAND) % BAND) + BAND_TOP; // wrap inside the band
       const x = c.base.x * view.w * depthScale;
@@ -470,19 +499,38 @@ export function createField(container, { models, reducedMotion }) {
     frame = requestAnimationFrame(tick);
     const dt = Math.min((now - last) / 1000, 0.05);
     last = now;
-    const t = now / 1000;
+    // In flight the loop runs even when motion is paused or reduced, because the visitor
+    // is moving the camera. The sculptures themselves hold still then.
+    const held = flying && (isPaused() || reducedMotion);
+    if (!held) heldT = now / 1000;
+    const t = heldT;
 
     tilt.lerp(tiltTarget, 0.08);
 
-    // Camera leans toward the pointer, or with the phone.
-    const leanX = (pointerActive ? pointer.x : 0) * 0.8 + tilt.x * 1.4;
-    const leanY = (pointerActive ? pointer.y : 0) * 0.5 + tilt.y * 1.0;
-    camera.position.x += (leanX - camera.position.x) * 0.04;
-    camera.position.y += (leanY - camera.position.y) * 0.04;
-    camera.lookAt(0, 0, -3);
+    if (flying) {
+      flyStep(dt);
+    } else {
+      // Camera leans toward the pointer, or with the phone.
+      const leanX = (pointerActive ? pointer.x : 0) * 0.8 + tilt.x * 1.4;
+      const leanY = (pointerActive ? pointer.y : 0) * 0.5 + tilt.y * 1.0;
+      const ease = returning ? 0.07 : 0.04;
+      camera.position.x += (leanX - camera.position.x) * ease;
+      camera.position.y += (leanY - camera.position.y) * ease;
+      if (returning) {
+        camera.position.z += (CAM_Z - camera.position.z) * ease;
+        lookQ.setFromRotationMatrix(lookM.lookAt(camera.position, LOOK_AT, camera.up));
+        camera.quaternion.slerp(lookQ, 0.08);
+        if (camera.quaternion.angleTo(lookQ) < 0.002 && Math.abs(camera.position.z - CAM_Z) < 0.01) {
+          returning = false;
+          camera.position.z = CAM_Z;
+        }
+      } else {
+        camera.lookAt(LOOK_AT);
+      }
+    }
 
     for (const c of clusters) {
-      c.rot.addScaledVector(c.spin, dt);
+      if (!held) c.rot.addScaledVector(c.spin, dt);
       // Tilt slides sculptures downhill, near ones furthest, like things floating in water.
       const slide = 0.5 + c.nearness * 1.3;
       c.lean.x += (tilt.x * slide - c.lean.x) * 0.05;
@@ -506,14 +554,14 @@ export function createField(container, { models, reducedMotion }) {
 
       // Drift away from a nearby pointer, then ease home. Measured at the part's own depth.
       p.getWorldPosition(tmp);
-      const depthScale = (camera.position.z - tmp.z) / camera.position.z;
+      const depthScale = (CAM_Z - tmp.z) / CAM_Z;
       const scale = g.scale.x;
       const dx = tmp.x - pointer.x * view.w * 0.5 * depthScale;
       const dy = tmp.y - pointer.y * view.h * 0.5 * depthScale;
       const dist = Math.hypot(dx, dy);
       const reach = 1.4 + f.radius;
       tmp.set(0, 0, 0);
-      if (pointerActive && dist < reach) {
+      if (pointerActive && !flying && dist < reach) {
         const strength = (1 - dist / reach) * 0.8;
         // World push, turned into the sculpture's own space
         tmp.set((dx / (dist || 1)) * strength, (dy / (dist || 1)) * strength, 0)
@@ -530,8 +578,131 @@ export function createField(container, { models, reducedMotion }) {
     render(t);
   }
 
+  function flyStep(dt) {
+    const down = (...codes) => (codes.some((c) => keys.has(c)) ? 1 : 0);
+    const ahead = Math.max(down('KeyW', 'ArrowUp'), motion.get().flyForward ? 1 : 0) - down('KeyS', 'ArrowDown');
+    const across = down('KeyD') - down('KeyA');
+    const rise = down('KeyE') - down('KeyQ');
+    yaw += (down('ArrowLeft') - down('ArrowRight')) * FLY.turn * dt;
+    camera.rotation.set(pitch, yaw, 0, 'YXZ');
+
+    // Forward follows the view, up and down included. E and Q rise and sink straight.
+    wish.set(across, 0, -ahead).applyQuaternion(camera.quaternion);
+    wish.y += rise;
+    if (wish.lengthSq() > 1) wish.normalize();
+    wish.multiplyScalar(FLY.speed * (down('ShiftLeft', 'ShiftRight') ? FLY.boost : 1));
+    velocity.lerp(wish, 1 - Math.exp(-dt * 5));
+    camera.position.addScaledVector(velocity, dt);
+
+    // The wheel gives a push that glides out.
+    if (Math.abs(glide) > 0.001) {
+      const step = glide * (1 - Math.exp(-dt * 7));
+      glide -= step;
+      camera.position.addScaledVector(tmp.set(0, 0, -1).applyQuaternion(camera.quaternion), step);
+    }
+    camera.position.clampLength(0, FLY.reach);
+  }
+
+  /** Puts the camera back where the page keeps it, at once. */
+  function settle() {
+    returning = false;
+    camera.position.set(0, 0, CAM_Z);
+    camera.lookAt(LOOK_AT);
+  }
+
+  function flyHomeNow() {
+    velocity.set(0, 0, 0);
+    glide = 0;
+    settle();
+    euler.setFromQuaternion(camera.quaternion, 'YXZ');
+    yaw = euler.y;
+    pitch = euler.x;
+  }
+
+  const onFlyKeyDown = (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.code === 'Escape') {
+      motion.set({ fly: false });
+      return;
+    }
+    if (e.target.closest?.('input, select, textarea')) return;
+    if (/^(Key[WASDQE]|Arrow(Up|Down|Left|Right)|Shift(Left|Right))$/.test(e.code)) {
+      keys.add(e.code);
+      if (e.code.startsWith('Arrow')) e.preventDefault();
+    }
+  };
+  const onFlyKeyUp = (e) => keys.delete(e.code);
+  const onFlyBlur = () => {
+    keys.clear();
+    drag = null;
+  };
+  const onFlyWheel = (e) => {
+    if (e.ctrlKey) return; // a pinch on a trackpad: leave the browser's zoom alone
+    e.preventDefault();
+    const px = e.deltaMode === 1 ? e.deltaY * 32 : e.deltaMode === 2 ? e.deltaY * window.innerHeight : e.deltaY;
+    // Scrolling down carries on forward, the way it brought the visitor in.
+    glide = THREE.MathUtils.clamp(glide + px * FLY.wheel, -12, 12);
+  };
+  const onFlyDown = (e) => {
+    if (drag || e.target.closest?.(INTERACTIVE)) return;
+    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, moved: false };
+  };
+  const onFlyMove = (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const dx = e.clientX - drag.x;
+    const dy = e.clientY - drag.y;
+    drag.x = e.clientX;
+    drag.y = e.clientY;
+    if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 6) drag.moved = true;
+    if (!drag.moved) return;
+    // The view follows the hand, as in the Aabijijiwan viewer: drag right and the scene turns right.
+    yaw += dx * FLY.look;
+    pitch = THREE.MathUtils.clamp(pitch + dy * FLY.look, -FLY.pitch, FLY.pitch);
+  };
+  const onFlyUp = (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const tapped = !drag.moved && e.type === 'pointerup';
+    drag = null;
+    if (tapped) spin(e.clientX, e.clientY);
+  };
+
+  function setFly(on) {
+    if (on === flying) return;
+    flying = on;
+    const listen = on ? 'addEventListener' : 'removeEventListener';
+    window[listen]('keydown', onFlyKeyDown);
+    window[listen]('keyup', onFlyKeyUp);
+    window[listen]('blur', onFlyBlur);
+    window[listen]('wheel', onFlyWheel, { passive: false });
+    window[listen]('pointerdown', onFlyDown);
+    window[listen]('pointermove', onFlyMove);
+    window[listen]('pointerup', onFlyUp);
+    window[listen]('pointercancel', onFlyUp);
+    keys.clear();
+    drag = null;
+    glide = 0;
+    velocity.set(0, 0, 0);
+    // The lens is focused for the page's camera. In flight everything is sharp.
+    if (bokeh) bokeh.enabled = !on;
+    if (on) {
+      returning = false;
+      onLeave();
+      euler.setFromQuaternion(camera.quaternion, 'YXZ');
+      yaw = euler.y;
+      pitch = euler.x;
+      start();
+    } else if (reducedMotion || isPaused() || !running) {
+      settle();
+      stop();
+      render();
+    } else {
+      returning = true;
+    }
+  }
+
   function start() {
-    if (running || isPaused() || reducedMotion || document.hidden) return;
+    if (running || document.hidden) return;
+    if (!flying && (isPaused() || reducedMotion)) return;
     running = true;
     last = performance.now();
     frame = requestAnimationFrame(tick);
@@ -557,6 +728,7 @@ export function createField(container, { models, reducedMotion }) {
   }
 
   const onMove = (e) => {
+    if (flying) return;
     pointer.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
     pointerActive = true;
     const overContent = e.target.closest?.(INTERACTIVE);
@@ -572,13 +744,17 @@ export function createField(container, { models, reducedMotion }) {
     hovered = null;
     document.documentElement.classList.remove('field-hover');
   };
-  const onDown = (e) => {
-    if (e.target.closest?.(INTERACTIVE)) return;
-    const hit = pick(e.clientX, e.clientY);
+  function spin(clientX, clientY) {
+    const hit = pick(clientX, clientY);
     if (!hit) return;
     hit.kick.set((random() - 0.5) * 6, 5 + random() * 5, (random() - 0.5) * 3);
     hit.swell = 1.25;
     if (!running) render();
+  }
+  const onDown = (e) => {
+    // In flight a press may be the start of a drag, so a part spins on a tap instead.
+    if (flying || e.target.closest?.(INTERACTIVE)) return;
+    spin(e.clientX, e.clientY);
   };
   const onScroll = () => {
     if (!running) render();
@@ -616,10 +792,23 @@ export function createField(container, { models, reducedMotion }) {
 
   const unsubscribe = motion.subscribe((s) => {
     setTilt(s.tilt);
-    if (isPaused()) stop();
-    else start();
+    setFly(s.fly);
+    if (s.flyHome !== flyHome) {
+      flyHome = s.flyHome;
+      if (flying) flyHomeNow();
+    }
+    if (flying) return;
+    if (isPaused()) {
+      // Paused part way back from a flight: finish the return in one step.
+      if (returning) {
+        settle();
+        render();
+      }
+      stop();
+    } else start();
   });
   setTilt(motion.get().tilt);
+  setFly(motion.get().fly);
 
   window.addEventListener('resize', resize);
   window.addEventListener('pointermove', onMove, { passive: true });
@@ -661,6 +850,7 @@ export function createField(container, { models, reducedMotion }) {
     window.removeEventListener('scroll', onScroll);
     document.removeEventListener('visibilitychange', onVisibility);
     unsubscribe();
+    setFly(false);
     setTilt(false);
     document.documentElement.classList.remove('field-hover');
     scene.traverse((o) => {

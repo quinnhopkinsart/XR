@@ -15,11 +15,18 @@ function hasWebGL() {
   }
 }
 
+let supported;
+/** True when the field can draw: some work has models and the browser has WebGL. */
+export function fieldSupported() {
+  if (supported === undefined) supported = fieldHasModels && hasWebGL();
+  return supported;
+}
+
 export default function FloatingField() {
   const ref = useRef(null);
 
   useEffect(() => {
-    if (!fieldHasModels || !hasWebGL()) return undefined;
+    if (!fieldSupported()) return undefined;
     let dispose;
     let cancelled = false;
 

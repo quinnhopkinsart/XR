@@ -1,0 +1,200 @@
+import { useEffect, useRef, useSyncExternalStore } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, reducedMotion } from './motion.js';
+import { fieldSupported } from './FloatingField.jsx';
+
+// Free camera for the landing page. Two ways in:
+//   - the button at the foot of the page (the one way for keyboards, switches and
+//     reduced-motion visitors)
+//   - scrolling on past the end of the page, which fills the bar on that button
+// Inside, the page steps aside and field.js hands the camera to the visitor. "Back to the
+// page" or Esc leaves. Rendered by Home.jsx only, so no other page has it.
+//
+// How much scrolling past the end it takes:
+//   wheel  pixels of wheel or trackpad travel
+//   touch  pixels of finger travel
+//   rest   ms the wheel must have been quiet before a push counts, so the tail of a fast
+//          scroll to the bottom (trackpads keep sending it) does not open the view by accident
+//   hold   ms the bar waits before it starts to empty
+//   drain  how fast it empties, in bars a second
+const CHARGE = { wheel: 1200, touch: 520, rest: 160, hold: 320, drain: 1.6 };
+
+const atBottom = () =>
+  window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+
+export default function FlyMode() {
+  const { fly } = useSyncExternalStore(motion.subscribe, motion.get, motion.get);
+  const gate = useRef(null);
+  const enterBtn = useRef(null);
+  const exitBtn = useRef(null);
+  const wasFlying = useRef(false);
+  const supported = fieldSupported();
+
+  // Leaving the landing page leaves the free camera.
+  useEffect(() => () => motion.set({ fly: false, flyForward: false }), []);
+
+  // While flying the page is faded out, cannot be scrolled and is out of the tab order.
+  useEffect(() => {
+    if (!fly) {
+      if (wasFlying.current) enterBtn.current?.focus({ preventScroll: true });
+      wasFlying.current = false;
+      return undefined;
+    }
+    wasFlying.current = true;
+    const root = document.documentElement;
+    const page = [...document.querySelectorAll('.masthead, main, .footer, .motion')];
+    root.classList.add('is-flying');
+    page.forEach((el) => (el.inert = true));
+    exitBtn.current?.focus();
+    return () => {
+      root.classList.remove('is-flying');
+      page.forEach((el) => (el.inert = false));
+    };
+  }, [fly]);
+
+  // Scrolling on past the end of the page fills the bar; a full bar opens the view.
+  useEffect(() => {
+    if (fly || !supported || reducedMotion) return undefined;
+    let charge = 0;
+    let armed = false;
+    let lastWheel = 0;
+    let lastInput = 0;
+    let prev = 0;
+    let raf = 0;
+    let touchY = null;
+
+    const show = () => gate.current?.style.setProperty('--charge', Math.min(1, charge).toFixed(3));
+    const loop = (now) => {
+      const dt = (now - prev) / 1000;
+      prev = now;
+      if (now - lastInput > CHARGE.hold) charge = Math.max(0, charge - dt * CHARGE.drain);
+      show();
+      raf = charge > 0 ? requestAnimationFrame(loop) : 0;
+    };
+    const add = (amount) => {
+      charge += amount;
+      lastInput = performance.now();
+      if (charge >= 1) {
+        charge = 0;
+        show();
+        motion.set({ fly: true });
+        return;
+      }
+      show();
+      if (!raf) {
+        prev = lastInput;
+        raf = requestAnimationFrame(loop);
+      }
+    };
+
+    const onWheel = (e) => {
+      const now = performance.now();
+      const gap = now - lastWheel;
+      lastWheel = now;
+      if (e.ctrlKey || e.deltaY <= 0 || !atBottom()) {
+        armed = false;
+        return;
+      }
+      if (!armed) {
+        if (gap < CHARGE.rest) return;
+        armed = true;
+      }
+      const px = e.deltaMode === 1 ? e.deltaY * 32 : e.deltaMode === 2 ? e.deltaY * window.innerHeight : e.deltaY;
+      add(px / CHARGE.wheel);
+    };
+    const onTouchStart = (e) => {
+      touchY = e.touches.length === 1 ? e.touches[0].clientY : null;
+    };
+    const onTouchMove = (e) => {
+      if (touchY == null || e.touches.length !== 1) return;
+      const y = e.touches[0].clientY;
+      const dy = touchY - y;
+      touchY = y;
+      if (dy > 0 && atBottom()) add(dy / CHARGE.touch);
+    };
+    const onTouchEnd = () => {
+      touchY = null;
+    };
+
+    window.addEventListener('wheel', onWheel, { passive: true });
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
+    window.addEventListener('touchcancel', onTouchEnd, { passive: true });
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('wheel', onWheel);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('touchcancel', onTouchEnd);
+      gate.current?.style.setProperty('--charge', '0');
+    };
+  }, [fly, supported]);
+
+  if (!supported) return null;
+
+  const coarse = window.matchMedia('(pointer: coarse)').matches;
+  const forward = (on) => () => motion.set({ flyForward: on });
+  const holdKey = (on) => (e) => {
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      if (!e.repeat) motion.set({ flyForward: on });
+    }
+  };
+
+  return (
+    <section className="fly-gate" ref={gate} aria-label="Free camera">
+      <button type="button" className="fly-gate__btn" ref={enterBtn} onClick={() => motion.set({ fly: true })}>
+        Fly through the works
+        <span className="fly-gate__bar" aria-hidden="true" />
+      </button>
+      {!reducedMotion && (
+        <p className="fly-gate__hint">
+          <span className="plate">Or keep scrolling.</span>
+        </p>
+      )}
+
+      {fly &&
+        createPortal(
+          <div className="fly-hud" role="region" aria-label="Free camera">
+            <p className="fly-hud__hint" role="status">
+              {coarse
+                ? 'Drag to look. Hold Fly to move.'
+                : 'Drag to look. Scroll, W A S D or the arrow keys to move. Esc to leave.'}
+            </p>
+            <div className="fly-hud__bar">
+              <button type="button" className="motion__btn" ref={exitBtn} onClick={() => motion.set({ fly: false })}>
+                Back to the page
+              </button>
+              <button
+                type="button"
+                className="motion__btn"
+                onClick={() => motion.set({ flyHome: motion.get().flyHome + 1 })}
+              >
+                Reset view
+              </button>
+              <button
+                type="button"
+                className="motion__btn fly-hud__go"
+                onPointerDown={(e) => {
+                  e.currentTarget.setPointerCapture?.(e.pointerId);
+                  motion.set({ flyForward: true });
+                }}
+                onPointerUp={forward(false)}
+                onPointerCancel={forward(false)}
+                onLostPointerCapture={forward(false)}
+                onBlur={forward(false)}
+                onKeyDown={holdKey(true)}
+                onKeyUp={holdKey(false)}
+                onContextMenu={(e) => e.preventDefault()}
+              >
+                Fly<span className="visually-hidden"> forward, hold down</span>
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )}
+    </section>
+  );
+}

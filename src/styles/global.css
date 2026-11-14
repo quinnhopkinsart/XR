@@ -1055,3 +1055,128 @@ html.title-leads .field.is-ready {
     transition: none !important;
   }
 }
+
+/* Free camera (src/field/FlyMode.jsx): the way in at the foot of the landing page, and
+   the controls shown while flying. */
+
+.fly-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin: clamp(3rem, 8vw, 6rem) 0 clamp(2.5rem, 6vw, 4rem);
+  text-align: center;
+}
+
+.fly-gate__btn {
+  position: relative;
+  overflow: hidden;
+  min-height: 48px;
+  padding: 0 1.5rem;
+  border: 1px solid var(--panel);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--on-panel);
+  font: 500 var(--step--1) var(--font-display);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.6);
+}
+
+.fly-gate__btn:hover {
+  color: var(--on-panel-strong);
+}
+
+.fly-gate__btn:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* Fills as the visitor scrolls on past the end of the page */
+.fly-gate__bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 5px;
+  background: var(--accent);
+  transform: scaleX(var(--charge, 0));
+  transform-origin: left;
+}
+
+.fly-gate__hint {
+  margin: 0;
+  font-size: var(--step--1);
+}
+
+/* While flying the page steps aside and the field takes the whole screen */
+.masthead,
+main,
+.footer,
+.motion {
+  transition: opacity 0.5s var(--ease);
+}
+
+html.is-flying,
+html.is-flying body {
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+html.is-flying .masthead,
+html.is-flying main,
+html.is-flying .footer,
+html.is-flying .motion {
+  opacity: 0;
+  pointer-events: none;
+}
+
+html.is-flying .field.is-ready {
+  opacity: 1;
+}
+
+.fly-hud {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  pointer-events: none; /* drags pass through to the field, except on the buttons */
+  touch-action: none;
+}
+
+.fly-hud__hint {
+  margin: 0;
+  padding: 0.4rem 0.8rem;
+  background: var(--panel);
+  color: var(--on-panel);
+  font-size: var(--step--1);
+  text-align: center;
+}
+
+.fly-hud__bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.fly-hud__bar .motion__btn {
+  pointer-events: auto;
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+
+.fly-hud__go:active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
