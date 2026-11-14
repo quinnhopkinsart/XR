@@ -14,7 +14,9 @@ import { useEffect, useId, useRef, useState } from 'react';
 // the top of the screen to the bottom, and thin, with the section's title popping out on
 // hover so the line can stay thin. Then he asked for it to look like a Woodland spirit
 // line. Keep it one slim flowing black line, never blocks, and keep the type off it until
-// it is asked for.
+// it is asked for. Its black is the site's own line colour (`--line`, see-through black,
+// as on the masthead's rule), which Quinn asked for so it matches the site and stays
+// subtle: the line ahead is faint, and it darkens only where a leg has filled.
 //
 // Sizes are in pixels: the line is drawn to the height its CSS gives it. `wide` is the
 // black line's width, the same all the way down (Quinn asked for a steady even thickness
@@ -151,6 +153,9 @@ export default function Roadmap({ legs, slim = false, arrow = false, className =
                 {/* Unseen and much wider than the line: what the pointer presses. */}
                 <path className="fly-map__reach" d={leg.d} strokeWidth={width} />
                 {/* The colour inside the black line, kept inside its shape. */}
+                {/* Where a leg has filled, the line itself darkens from the site's faint line
+                    colour toward black, so the colour has an edge to sit in. */}
+                <path className="fly-map__fill fly-map__fill--edge" d={leg.d} pathLength="1" strokeWidth={s.wide + 2} clipPath={`url(#${id}-body)`} />
                 <path className="fly-map__fill" d={leg.d} pathLength="1" strokeWidth={s.core} clipPath={`url(#${id}-body)`} />
                 {/* A divided circle, as on a spirit line: two halves and the line between them. */}
                 <g className="fly-map__bead" transform={`translate(${cx.toFixed(2)} ${cy.toFixed(2)}) rotate(-32)`}>
