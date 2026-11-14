@@ -20,6 +20,12 @@
 // Free camera (the landing page only, `fly` in motion.js): the page steps aside and the
 // visitor flies among the sculptures. Drag to look, scroll or W A S D to move. Leaving
 // eases the camera back to where the page keeps it.
+//
+// In flight the field opens out: each work's sculptures leave the page's column and gather
+// in that work's own zone, a place in the air with the title under it, set on an arc ahead
+// of the camera (`ZONES`, `planZones`). Colour fields, stars, pines and marks stand far off
+// (scenery.js) and come out of the haze as it draws back (`HAZE`). `flyMix` runs 0 to 1 as
+// all of that happens, and back to 0 on the way out.
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -29,6 +35,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { motion } from './motion.js';
+import { buildScenery } from './scenery.js';
 
 // Where the page keeps the camera. The layout is worked out from this distance, never from
 // the camera itself, so flying does not move the sculptures.
@@ -37,7 +44,14 @@ const LOOK_AT = new THREE.Vector3(0, 0, -3);
 // Free camera: `speed` in units a second (a screen is about 9 high), `boost` with Shift,
 // `turn` in radians a second for the arrow keys, `look` in radians per pixel dragged,
 // `wheel` in units per pixel scrolled, `reach` how far from the centre the camera may go.
-const FLY = { speed: 6, boost: 2.5, turn: 1.3, look: 0.0042, wheel: 0.012, reach: 34, pitch: 1.45 };
+const FLY = { speed: 9, boost: 2.5, turn: 1.3, look: 0.0042, wheel: 0.016, reach: 75, pitch: 1.45 };
+// Zones: `out` is the least distance from the centre to a zone, `step` the angle between
+// neighbours in degrees, `gap` the space between sculptures in one zone and between two
+// zones, `pad` the clear space round a zone's sculptures.
+const ZONES = { out: 34, step: 52, gap: 2.5, pad: 4 };
+// Haze: where it starts and where it is complete, on the page and in flight. `far` is how
+// far the camera draws in flight.
+const HAZE = { page: [17, 46], flight: [45, 170], far: 400 };
 
 const INTERACTIVE = 'a, button, input, select, textarea, iframe, label, summary, [role="button"]';
 
@@ -193,7 +207,7 @@ export function createField(container, { models, reducedMotion }) {
   camera.position.set(0, 0, CAM_Z);
 
   // Haze: sculptures further back sink into the ground colour.
-  scene.fog = new THREE.Fog(ground, 17, 46);
+  scene.fog = new THREE.Fog(ground, HAZE.page[0], HAZE.page[1]);
 
   // Lens: sharp at the focal plane (z = 0), softer in front of it and behind.
   let composer = null;
@@ -261,6 +275,11 @@ export function createField(container, { models, reducedMotion }) {
   let glide = 0; // distance still to travel from the scroll wheel
   let drag = null;
   let flyHome = motion.get().flyHome;
+  let flyMix = 0; // 0 on the page, 1 in flight: sculptures in their zones, haze drawn back
+  let shownMix = -1;
+  let scenery = null;
+  let placed = false;
+  const pagePlace = new THREE.Vector3();
   let heldT = performance.now() / 1000; // the sculptures' clock, held while paused in flight
   const keys = new Set();
   const velocity = new THREE.Vector3();
@@ -368,6 +387,8 @@ export function createField(container, { models, reducedMotion }) {
         whole,
         front: !!s.front,
         turn: s.turn,
+        work: s.work,
+        title: s.title,
         // Single pieces tumble slowly, so every side comes round. Sculptures only rock.
         spin: steady
           ? new THREE.Vector3()
@@ -445,6 +466,11 @@ export function createField(container, { models, reducedMotion }) {
         const maxW = view.w * (mobile ? 0.92 : 0.64) * fill;
         size = Math.min(maxH / (dims.y || 1), maxW / (dims.x || 1)) * (0.94 + random() * 0.06) * s.scale;
         cluster.size = size;
+        // Its width and height on screen, for laying out its zone. A piece that tumbles
+        // needs room for its longest side.
+        const longest = Math.max(dims.x, dims.y, dims.z);
+        cluster.w = (steady ? dims.x : longest) * size;
+        cluster.h = (steady ? dims.y : longest) * size;
       }
       group.scale.setScalar(size * s.unit);
 
@@ -471,6 +497,8 @@ export function createField(container, { models, reducedMotion }) {
 
   function layout(t) {
     const scroll = window.scrollY / window.innerHeight; // in screen heights
+    const mix = flyMix * flyMix * (3 - 2 * flyMix); // eased
+    applyMix(mix);
     for (const c of clusters) {
       const depthScale = (CAM_Z - c.base.z) / CAM_Z;
       let y = c.base.y - scroll * c.parallax * 0.55; // rise with the page, slower when far
@@ -481,11 +509,99 @@ export function createField(container, { models, reducedMotion }) {
       const bob = Math.sin(t * 0.22 + c.phase) * 0.18 * still;
       c.group.position.set(x + c.lean.x, yy + bob + c.lean.y, c.base.z);
       c.group.rotation.set(c.rot.x, c.rot.y + Math.sin(t * 0.13 + c.phase) * c.sway * still, c.rot.z);
+      if (mix > 0 && c.zone) {
+        // In flight it leaves the page's column for its place in its work's zone, turned
+        // to face the centre.
+        pagePlace.copy(c.zone.at);
+        pagePlace.y += bob;
+        c.group.position.lerp(pagePlace, mix);
+        c.group.rotation.y += c.zone.yaw * mix;
+      }
     }
     for (const f of floaters) {
       const bob = reducedMotion ? 0 : Math.sin(t * f.speed + f.phase) * f.bob;
       f.piece.position.set(f.home.x + f.push.x, f.home.y + f.push.y + bob, f.home.z + f.push.z);
       f.piece.rotation.set(f.rest.x + f.turnBy.x, f.rest.y + f.turnBy.y, f.rest.z + f.turnBy.z);
+    }
+  }
+
+  /**
+   * Gives each work a zone on an arc ahead of the camera, and each of its sculptures a
+   * place there: side by side in a row across the zone, facing the centre. The work's
+   * foreground parts (wire, spirit lines) hang over the row.
+   */
+  function planZones() {
+    const works = [];
+    for (const c of clusters) {
+      let zone = works.find((z) => z.work === c.work);
+      if (!zone) works.push((zone = { work: c.work, title: c.title, members: [], fronts: [] }));
+      (c.front ? zone.fronts : zone.members).push(c);
+    }
+    const found = works.filter((z) => z.members.length);
+    for (const z of found) {
+      z.width = z.members.reduce((sum, c) => sum + c.w, 0) + ZONES.gap * (z.members.length - 1);
+      z.height = Math.max(...z.members.map((c) => c.h));
+      z.radius = Math.max(9, z.width / 2 + ZONES.pad);
+      z.floor = -z.height / 2 - 0.8;
+    }
+    // The widest zone sits straight ahead, the next ones to its right and left in turn.
+    const zones = [];
+    found
+      .sort((a, b) => b.width - a.width)
+      .forEach((z, i) => (i % 2 ? zones.push(z) : zones.unshift(z)));
+    // Far enough out that neighbouring zones never touch.
+    const step = Math.min(THREE.MathUtils.degToRad(ZONES.step), (Math.PI * 2) / zones.length);
+    let reach = ZONES.out;
+    for (let i = 1; i < zones.length; i += 1) {
+      reach = Math.max(reach, (zones[i - 1].radius + zones[i].radius + ZONES.gap) / (2 * Math.sin(step / 2)));
+    }
+    zones.forEach((z, i) => {
+      const a = (i - (zones.length - 1) / 2) * step; // 0 is straight ahead
+      z.centre = new THREE.Vector3(Math.sin(a) * reach, 0, -Math.cos(a) * reach);
+      const across = new THREE.Vector3(Math.cos(a), 0, Math.sin(a));
+      let x = -z.width / 2;
+      for (const c of z.members) {
+        c.zone = { at: z.centre.clone().addScaledVector(across, x + c.w / 2), yaw: -a };
+        x += c.w + ZONES.gap;
+      }
+      z.fronts.forEach((c, j) => {
+        const at = z.centre.clone().addScaledVector(across, ((j % 3) - 1) * z.radius * 0.45);
+        at.y = z.height * (-0.25 + ((j * 0.37) % 1) * 0.7);
+        c.zone = { at, yaw: -a };
+      });
+    });
+    return zones;
+  }
+
+  /** Builds the zones' titles and the far scenery, once, the first time someone flies. */
+  function ensureScenery() {
+    if (scenery || !placed || !clusters.length) return;
+    scenery = buildScenery({ zones: planZones(), token, random: rng(23) });
+    scenery.group.visible = false;
+    scene.add(scenery.group);
+    shownMix = -1;
+  }
+
+  /** Sets the haze, the draw distance and the zones' titles for how far into flight it is. */
+  function applyMix(mix) {
+    if (scenery) {
+      for (const o of scenery.facing) o.quaternion.copy(camera.quaternion);
+      for (const o of scenery.upright) {
+        o.rotation.y = Math.atan2(camera.position.x - o.position.x, camera.position.z - o.position.z);
+      }
+    }
+    if (mix === shownMix) return;
+    shownMix = mix;
+    scene.fog.near = THREE.MathUtils.lerp(HAZE.page[0], HAZE.flight[0], mix);
+    scene.fog.far = THREE.MathUtils.lerp(HAZE.page[1], HAZE.flight[1], mix);
+    const far = mix > 0 ? HAZE.far : 100;
+    if (camera.far !== far) {
+      camera.far = far;
+      camera.updateProjectionMatrix();
+    }
+    if (scenery) {
+      scenery.group.visible = mix > 0;
+      for (const g of scenery.zones) g.scale.setScalar(Math.max(mix, 0.0001));
     }
   }
 
@@ -506,6 +622,13 @@ export function createField(container, { models, reducedMotion }) {
     const t = heldT;
 
     tilt.lerp(tiltTarget, 0.08);
+
+    // Opening out into the zones, or closing back to the page.
+    const mixTo = flying ? 1 : 0;
+    if (flyMix !== mixTo) {
+      flyMix += (mixTo - flyMix) * (1 - Math.exp(-dt * 2.4));
+      if (Math.abs(mixTo - flyMix) < 0.002) flyMix = mixTo;
+    }
 
     if (flying) {
       flyStep(dt);
@@ -606,6 +729,7 @@ export function createField(container, { models, reducedMotion }) {
   /** Puts the camera back where the page keeps it, at once. */
   function settle() {
     returning = false;
+    flyMix = 0;
     camera.position.set(0, 0, CAM_Z);
     camera.lookAt(LOOK_AT);
   }
@@ -613,7 +737,9 @@ export function createField(container, { models, reducedMotion }) {
   function flyHomeNow() {
     velocity.set(0, 0, 0);
     glide = 0;
+    const mix = flyMix;
     settle();
+    flyMix = mix;
     euler.setFromQuaternion(camera.quaternion, 'YXZ');
     yaw = euler.y;
     pitch = euler.x;
@@ -690,6 +816,9 @@ export function createField(container, { models, reducedMotion }) {
       euler.setFromQuaternion(camera.quaternion, 'YXZ');
       yaw = euler.y;
       pitch = euler.x;
+      ensureScenery();
+      // With motion paused or reduced, the zones are simply there, with no move into them.
+      if (isPaused() || reducedMotion) flyMix = 1;
       start();
     } else if (reducedMotion || isPaused() || !running) {
       settle();
@@ -824,7 +953,7 @@ export function createField(container, { models, reducedMotion }) {
   Promise.all(
     models.map((spec) =>
       loader.loadAsync(spec.src).then(
-        (gltf) => sculptureFrom(gltf, spec, maxParts) || [],
+        (gltf) => (sculptureFrom(gltf, spec, maxParts) || []).map((s) => ({ ...s, work: spec.work, title: spec.title })),
         (err) => {
           console.warn(`Floating field: could not load ${spec.src}`, err);
           return [];
@@ -834,6 +963,8 @@ export function createField(container, { models, reducedMotion }) {
   ).then((sculptures) => {
     if (disposed) return;
     place(sculptures.flat().filter(Boolean));
+    placed = true;
+    if (flying) ensureScenery();
     render();
     container.classList.add('is-ready');
     start();
@@ -854,7 +985,7 @@ export function createField(container, { models, reducedMotion }) {
     setTilt(false);
     document.documentElement.classList.remove('field-hover');
     scene.traverse((o) => {
-      if (o.isMesh) {
+      if (o.isMesh || o.isSprite) {
         o.geometry?.dispose();
         const mats = Array.isArray(o.material) ? o.material : [o.material];
         mats.forEach((m) => {
