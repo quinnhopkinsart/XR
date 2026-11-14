@@ -76,7 +76,7 @@ const FIELD_WOBBLE = 0.2;
 // out to the edge of the line's colour round them; `rim` is how wide that ring of the
 // line's colour is and `edge` how wide the orb's own outline inside it, both as shares of
 // the radius, and what is left in the middle is the orb's fill. Every `smile`th orb is a
-// smiley face, which Quinn asked for: its fill is the first colour of `face` (yellow) and
+// smiley face, which Quinn asked for (it was every third; he wanted fewer): its fill is the first colour of `face` (yellow) and
 // its eyes and smile the second. `taper` is how long the line takes to swell to a bead and narrow again (a share of the
 // bead's size: smaller is rounder, larger is more of a spindle).
 // Quinn first asked for a subtle pulse and wave, then for more sine wave motion and more
@@ -108,7 +108,7 @@ const SPIRIT = {
   rim: 0.27,
   edge: 0.23,
   taper: 0.62,
-  smile: 3,
+  smile: 7,
   face: ['--saffron', '--black'],
   colour: '--spirit-line',
   fills: ['--saffron', '--tag-purple', '--field-pink', '--black', '--white', '--tag-teal', '--oxblood', '--tag-green'],
@@ -638,6 +638,24 @@ export function buildScenery({ zones, token, random, view }) {
   const tour = {
     length: long,
     start: marks[ahead0].at,
+    // The works in the order the tour passes them, from the one it starts at. The flight's
+    // roadmap (FlyMode.jsx) has a leg for each.
+    works: marks.map((_, k) => zones[(ahead0 + k) % marks.length].title),
+    /** The place on the line of the `k`th work in that order, the nearest way round from `s`. */
+    stop(k, s) {
+      const at = marks[(ahead0 + k) % marks.length].at;
+      return at + Math.round((s - at) / long) * long;
+    },
+    /** How far round the tour `s` is, in works passed: 1.5 is half way from the second to the third. */
+    where(s) {
+      const here = wrap(s) * long;
+      let i = marks.length - 1;
+      for (let k = 0; k < marks.length; k += 1) if (marks[k].at <= here) i = k;
+      const a = marks[i];
+      const b = marks[(i + 1) % marks.length];
+      const gap = (b.at - a.at + long) % long || long;
+      return ((i - ahead0 + marks.length) % marks.length) + ((here - a.at + long) % long) / gap;
+    },
     poseAt(s, eye, look) {
       path.getPointAt(wrap(s), eye);
       eye.y += TRAIL.under;

@@ -43,11 +43,28 @@ import { fieldSupported } from './FloatingField.jsx';
 // asked for it: on the right, like a roadmap, a colour for each section, filling as you
 // scroll (his first idea, a yellow bar that turns blue at the 3D part, ran across the top).
 // Where scrolling on does nothing (reduced motion) the last leg fills at the foot.
+// The flight has a roadmap of its own in the same style (`fly-map--flight`), which Quinn
+// asked for: a leg for each artwork, in the order the tour passes them, each as long as
+// its title needs. A leg fills as the tour travels on from its work to the next, and the
+// work the camera is at stands wider. field.js sends the place on the tour in `field:tour`
+// events. It shows on the tour only: free roam has no line to be part way along. A press
+// on a leg sends the tour to that work (`field:goto`).
+const WORK_COLOURS = ['--saffron', '--field-pink', '--spirit-line', '--white'];
+// Each leg is a link to the top of its part of the page (`to` is that part's id), which
+// Quinn asked for.
 const LEGS = [
-  { name: 'intro', label: 'Intro' },
-  { name: 'works', label: 'Works' },
-  { name: 'fly', label: '3D' },
+  { name: 'intro', label: 'Intro', to: 'intro' },
+  { name: 'works', label: 'Works', to: 'works' },
+  { name: 'fly', label: '3D', to: 'fly' },
 ];
+
+/** Scrolls to the top of a part of the page, without leaving a # in the address. */
+const jump = (id) => (e) => {
+  const part = document.getElementById(id);
+  if (!part) return;
+  e.preventDefault();
+  part.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+};
 const CHARGE = { wheel: 1200, touch: 520, rest: 160, hold: 320, drain: 1.6 };
 
 const atBottom = () => window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
@@ -122,6 +139,9 @@ export default function FlyMode() {
   const { fly, flyTour, flyLens, flyHints, tilt } = useSyncExternalStore(motion.subscribe, motion.get, motion.get);
   const gate = useRef(null);
   const meter = useRef(null);
+  const flightMap = useRef(null);
+  const tourAt = useRef(0);
+  const [tourWorks, setTourWorks] = useState([]);
   const enterBtn = useRef(null);
   const [tiltDenied, setTiltDenied] = useState(false);
   const exitBtn = useRef(null);
@@ -137,6 +157,28 @@ export default function FlyMode() {
     return () => window.removeEventListener('field:open', open);
   }, [navigate]);
 
+  // The flight's roadmap: which legs are full, and which work the camera is at.
+  const showTour = () => {
+    const legs = flightMap.current?.querySelectorAll('.fly-map__leg');
+    if (!legs?.length) return;
+    const at = tourAt.current;
+    const here = Math.round(at) % legs.length;
+    legs.forEach((leg, i) => {
+      leg.style.setProperty('--fill', Math.min(1, Math.max(0, at - i)).toFixed(3));
+      leg.classList.toggle('is-here', i === here);
+    });
+  };
+  useEffect(() => {
+    const onTour = (e) => {
+      tourAt.current = e.detail.at;
+      setTourWorks(e.detail.works); // the same list every time, so this only draws once
+      showTour();
+    };
+    window.addEventListener('field:tour', onTour);
+    return () => window.removeEventListener('field:tour', onTour);
+  }, []);
+  useEffect(showTour, [tourWorks, fly, flyTour]);
+
   // Leaving the landing page leaves the free camera.
   useEffect(() => () => motion.set({ fly: false, flyForward: false, flyTour: false }), []);
 
@@ -150,7 +192,7 @@ export default function FlyMode() {
     }
     wasFlying.current = true;
     const root = document.documentElement;
-    const page = [...document.querySelectorAll('.masthead, main, .footer, .motion')];
+    const page = [...document.querySelectorAll('.masthead, main, .footer, .motion, .fly-map:not(.fly-map--flight)')];
     root.classList.add('is-flying');
     page.forEach((el) => (el.inert = true));
     exitBtn.current?.focus();
@@ -301,7 +343,7 @@ export default function FlyMode() {
   };
 
   return (
-    <section className="fly-gate" ref={gate} aria-label="Free camera">
+    <section className="fly-gate" id="fly" ref={gate} aria-label="Free camera">
       <button type="button" className="fly-gate__btn" ref={enterBtn} onClick={enter}>
         Fly through the works
         <span className="fly-gate__bar" aria-hidden="true" />
@@ -313,25 +355,48 @@ export default function FlyMode() {
       )}
 
       {createPortal(
-        <div className="fly-map" ref={meter} aria-hidden="true">
+        <nav className="fly-map" ref={meter} aria-label="Parts of this page">
           {LEGS.map((leg) => (
-            <span key={leg.name} className={`fly-map__leg fly-map__leg--${leg.name}`}>
+            <a key={leg.name} className={`fly-map__leg fly-map__leg--${leg.name}`} href={`#${leg.to}`} onClick={jump(leg.to)}>
               <span className="fly-map__name">{leg.label}</span>
               {/* The filled part: the same name again in black on the leg's colour, cut off
                   at how far the leg has filled, so the letters change as the colour passes. */}
-              <span className="fly-map__fill">
+              <span className="fly-map__fill" aria-hidden="true">
                 <span className="fly-map__name">{leg.label}</span>
               </span>
-            </span>
+            </a>
           ))}
           {/* Black under blue, so it shows on the red ground and over the black footer. */}
-          <svg className="fly-map__on" viewBox="0 0 20 14" focusable="false">
+          <svg className="fly-map__on" viewBox="0 0 20 14" focusable="false" aria-hidden="true">
             <path className="fly-map__on-rim" d="M4 4l6 6 6-6" />
             <path className="fly-map__on-line" d="M4 4l6 6 6-6" />
           </svg>
-        </div>,
+        </nav>,
         document.body,
       )}
+
+      {fly &&
+        flyTour &&
+        tourWorks.length > 0 &&
+        createPortal(
+          <nav className="fly-map fly-map--flight" ref={flightMap} aria-label="Works on the tour">
+            {tourWorks.map((title, i) => (
+              <button
+                key={title}
+                type="button"
+                className="fly-map__leg"
+                style={{ '--leg': `var(${WORK_COLOURS[i % WORK_COLOURS.length]})`, flexGrow: title.length }}
+                onClick={() => window.dispatchEvent(new CustomEvent('field:goto', { detail: i }))}
+              >
+                <span className="fly-map__name">{title}</span>
+                <span className="fly-map__fill" aria-hidden="true">
+                  <span className="fly-map__name">{title}</span>
+                </span>
+              </button>
+            ))}
+          </nav>,
+          document.body,
+        )}
 
       {fly &&
         createPortal(

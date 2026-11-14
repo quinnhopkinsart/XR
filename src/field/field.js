@@ -306,6 +306,7 @@ export function createField(container, { models, reducedMotion }) {
   let touring = false; // riding the dashed line by scrolling
   let tourS = 0; // how far along the line the camera is
   let tourTo = 0; // how far along the visitor has scrolled it
+  let tourShown = -1; // the place on the tour last sent to the flight's roadmap
   let glance = { yaw: 0, pitch: 0 }; // looking aside from the tour's own view, by dragging
   const tourEye = new THREE.Vector3();
   const tourLook = new THREE.Vector3();
@@ -800,6 +801,7 @@ export function createField(container, { models, reducedMotion }) {
     on = on && flying && !!scenery;
     if (on === touring) return;
     touring = on;
+    tourShown = -1;
     glide = 0;
     velocity.set(0, 0, 0);
     glance = { yaw: 0, pitch: 0 };
@@ -833,6 +835,12 @@ export function createField(container, { models, reducedMotion }) {
     tourTo += push * TOUR.keys * (down('ShiftLeft', 'ShiftRight') ? FLY.boost : 1) * dt;
     tourS += (tourTo - tourS) * (1 - Math.exp(-dt * TOUR.ease));
     scenery.tour.poseAt(tourS, tourEye, tourLook);
+    // The flight's roadmap follows: FlyMode.jsx draws a leg for each work.
+    const where = scenery.tour.where(tourS);
+    if (Math.abs(where - tourShown) > 0.002) {
+      tourShown = where;
+      window.dispatchEvent(new CustomEvent('field:tour', { detail: { works: scenery.tour.works, at: where } }));
+    }
     camera.position.lerp(tourEye, 1 - Math.exp(-dt * 3.5));
     lookQ.setFromRotationMatrix(lookM.lookAt(camera.position, tourLook, camera.up));
     if (!drag) {
@@ -976,6 +984,11 @@ export function createField(container, { models, reducedMotion }) {
     else spin(e.clientX, e.clientY);
   };
 
+  // A leg of the flight's roadmap was pressed: the tour travels to that work.
+  const onTourGoto = (e) => {
+    if (touring && scenery) tourTo = scenery.tour.stop(e.detail, tourS);
+  };
+
   function setFly(on) {
     if (on === flying) return;
     flying = on;
@@ -988,6 +1001,7 @@ export function createField(container, { models, reducedMotion }) {
     window[listen]('pointermove', onFlyMove);
     window[listen]('pointerup', onFlyUp);
     window[listen]('pointercancel', onFlyUp);
+    window[listen]('field:goto', onTourGoto);
     if (!on) touring = false;
     if (!on) document.documentElement.classList.remove('field-hover');
     keys.clear();

@@ -19,7 +19,7 @@ export default function Home() {
 
   return (
     <>
-      <section className="hero">
+      <section className="hero" id="intro">
         <WideTitle label="Noodin XR" badge="XR">
           Noodin
         </WideTitle>
@@ -28,7 +28,7 @@ export default function Home() {
         </p>
       </section>
 
-      <section className="works" aria-labelledby="works-heading">
+      <section className="works" id="works" aria-labelledby="works-heading">
         <div className="works__bar">
           <h2 id="works-heading" className="label plate">
             Works <span className="count">{matching.length}</span>
