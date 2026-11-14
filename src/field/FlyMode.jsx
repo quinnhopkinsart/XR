@@ -114,7 +114,7 @@ export function FlyButton({ children = 'Fly through the works' }) {
 }
 
 export default function FlyMode() {
-  const { fly, flyTour, flyLens, tilt } = useSyncExternalStore(motion.subscribe, motion.get, motion.get);
+  const { fly, flyTour, flyLens, flyHints, tilt } = useSyncExternalStore(motion.subscribe, motion.get, motion.get);
   const gate = useRef(null);
   const enterBtn = useRef(null);
   const [tiltDenied, setTiltDenied] = useState(false);
@@ -270,7 +270,8 @@ export default function FlyMode() {
       {fly &&
         createPortal(
           <div className="fly-hud" role="region" aria-label="Free camera">
-            <p className="fly-hud__hint" role="status">
+            {/* The Instructions button hides this line. A declined tilt still shows its message. */}
+            <p className="fly-hud__hint" role="status" hidden={!flyHints && !tiltDenied}>
               {tiltDenied
                 ? 'Motion access was declined. Allow it in your browser settings to use tilt.'
                 : flyTour
@@ -309,6 +310,14 @@ export default function FlyMode() {
                   Depth of field
                 </button>
               )}
+              <button
+                type="button"
+                className="motion__btn"
+                aria-pressed={flyHints}
+                onClick={() => motion.set({ flyHints: !flyHints })}
+              >
+                Instructions
+              </button>
               <button
                 type="button"
                 className="motion__btn"

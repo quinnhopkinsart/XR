@@ -11,6 +11,8 @@
 //                from work to work, in place of flying freely
 //   flyLens      depth of field in the free camera (remembered between visits). Only
 //                screens that have the lens show its button: see `hasLens`
+//   flyHints     the line of instructions in the free camera is shown (remembered
+//                between visits)
 
 const read = (key) => {
   try {
@@ -52,6 +54,7 @@ let state = {
   flyHome: 0,
   flyTour: false,
   flyLens: read('noodin-lens') !== 'off',
+  flyHints: read('noodin-hints') !== 'off',
 };
 
 // The touch joystick in the free camera: x is right (1) and left (-1), y is forward (1)
@@ -72,6 +75,7 @@ export const motion = {
     if ('userPaused' in patch) write('noodin-motion', state.userPaused ? 'paused' : 'playing');
     if ('tilt' in patch) write('noodin-tilt', state.tilt ? 'on' : 'off');
     if ('flyLens' in patch) write('noodin-lens', state.flyLens ? 'on' : 'off');
+    if ('flyHints' in patch) write('noodin-hints', state.flyHints ? 'on' : 'off');
     listeners.forEach((fn) => fn(state));
   },
 };
