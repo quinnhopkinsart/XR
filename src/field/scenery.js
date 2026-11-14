@@ -213,7 +213,7 @@ function label(title, token) {
 }
 
 /**
- * zones: [{ title, centre: Vector3, radius, width, height, lift, floor, backdrop }] from field.js
+ * zones: [{ work, title, centre: Vector3, radius, width, height, lift, floor, backdrop }] from field.js
  * (`lift` is how high the zone hangs, `floor` the level just under its sculptures).
  * `backdrop` is [fill, outline], two colour tokens, for a zone that has its own colour
  * field standing behind its sculptures.
@@ -250,12 +250,16 @@ export function buildScenery({ zones, token, random, view }) {
   // Zones: the title hangs just under the sculptures, a little toward the centre. A zone
   // sunk below the camera is seen from above, so its title stands behind the work, on the
   // far side, where it does not cover it.
+  const links = [];
   const zoneGroups = zones.map((z) => {
     const g = new THREE.Group();
     const inward = new THREE.Vector3(-z.centre.x, 0, -z.centre.z).normalize();
     if (z.lift < 0) g.position.copy(z.centre).addScaledVector(inward, -z.radius * 0.7).setY(z.lift + z.height * 0.3);
     else g.position.copy(z.centre).addScaledVector(inward, z.radius * 0.5).setY(z.floor - 0.6);
-    g.add(label(z.title, token));
+    const plate = label(z.title, token);
+    plate.userData.work = z.work; // the title is a link to the work's page (field.js)
+    g.add(plate);
+    links.push(plate);
     group.add(g);
     return g;
   });
@@ -648,5 +652,5 @@ export function buildScenery({ zones, token, random, view }) {
     zoneGroups.push(g);
   }
 
-  return { group, zones: zoneGroups, facing, upright, wave, tour };
+  return { group, zones: zoneGroups, links, facing, upright, wave, tour };
 }
