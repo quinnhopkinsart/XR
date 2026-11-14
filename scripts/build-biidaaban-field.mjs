@@ -25,9 +25,10 @@ const repo = process.argv[2];
 const TIME = Number(process.argv[3] || 58);
 const src = path.join(repo, 'public/builds/biidaaban/assets/PANEL-2-v1.glb');
 const out = path.join(repo, 'src/projects/biidaaban/models/mine.glb');
-// The panel's picture planes and its light card, and the two spheres that have not yet
-// grown at that moment (size 0).
-const DROP = /Target|^Plane|^Sphere/;
+// The panel's picture planes and its light card, the two spheres that have not yet grown
+// at that moment (size 0), and "skylodge": the dark half cylinder that backs the scene
+// inside the panel. In the open it only covers the rest, so Quinn had it taken out.
+const DROP = /Target|^Plane|^Sphere|skylodge/;
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({
   'draco3d.decoder': await draco3d.createDecoderModule(),
