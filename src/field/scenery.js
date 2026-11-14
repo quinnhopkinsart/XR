@@ -17,8 +17,9 @@
 //
 // Behind all the works runs one large spirit line: a thick light-blue line that loops round
 // the outside of the ring of works, meandering, with orbs joined to it by short stems, as
-// spirit lines carry them in Woodland painting. A slow wave moves along it and its
-// thickness swells and eases in a gentle pulse; the orbs ride the wave and breathe with it.
+// spirit lines carry them in Woodland painting. Two sine waves move along it, one up and
+// down and one in and out, so it snakes, and its thickness swells and eases in a gentle
+// pulse; the orbs ride the waves and breathe with it.
 //
 // Stars and marks always face the camera. Trees turn to it too but stay upright, so they
 // are only ever seen flat on. Fields stay where they are put, so flying round one shows
@@ -60,20 +61,27 @@ const TRAIL = { dash: 0.9, gap: 0.8, thick: 0.16, height: 1.1, length: 13, speed
 const FIELD_WOBBLE = 0.2;
 // The spirit line. `behind` is how far outside a zone it passes, `thick` its radius,
 // `meander` how far it strays side to side and up and down from the straight way round,
-// `bends` roughly how many such bends there are in the loop. `wave` is the height of the
-// slow wave that moves along it, `waves` how many there are round the loop, `drift` how
-// fast they move (turns of the wave a second). `pulse` is how much the thickness swells
-// (a share of `thick`), `beats` how many swells are on the line at once, `beat` how fast
-// they travel. `orbs` is how many orbs hang on it, `orb` their radius, least and most.
-// Keep `wave`, `pulse` and the speeds small: Quinn asked for a subtle pulse and wave.
+// `bends` roughly how many such bends there are in the loop. Two sine waves move along
+// it: `wave` is the height of the one that lifts and drops it, `waves` how many of them
+// there are round the loop, `drift` how fast they move (turns of the wave a second);
+// `sway`, `sways` and `slide` are the same for the one that swings it in toward the centre
+// and out again, which travels the other way, so the line snakes. `pulse` is how much the
+// thickness swells (a share of `thick`), `beats` how many swells are on the line at once,
+// `beat` how fast they travel. `orbs` is how many orbs hang on it, `orb` their radius.
+// Quinn first asked for a subtle pulse and wave, then for more sine wave motion and more
+// meander than the first version had (wave 1.6, no sway, meander 5): the pulse stays
+// gentle, the waves are plain to see.
 const SPIRIT = {
   behind: 11,
   thick: 0.85,
-  meander: 5,
-  bends: 11,
-  wave: 1.6,
-  waves: 7,
-  drift: 0.05,
+  meander: 9,
+  bends: 15,
+  wave: 4.2,
+  waves: 11,
+  drift: 0.09,
+  sway: 3.4,
+  sways: 8,
+  slide: 0.07,
   pulse: 0.22,
   beats: 9,
   beat: 0.12,
@@ -404,7 +412,8 @@ export function buildScenery({ zones, token, random, view }) {
         '#include <begin_vertex>',
         `#include <begin_vertex>
         transformed += normal * ${(SPIRIT.thick * SPIRIT.pulse).toFixed(4)} * sin(6.2832 * (uv.x * ${SPIRIT.beats.toFixed(1)} - uTime * ${SPIRIT.beat.toFixed(4)}));
-        transformed.y += ${SPIRIT.wave.toFixed(4)} * sin(6.2832 * (uv.x * ${SPIRIT.waves.toFixed(1)} - uTime * ${SPIRIT.drift.toFixed(4)}));`,
+        transformed.y += ${SPIRIT.wave.toFixed(4)} * sin(6.2832 * (uv.x * ${SPIRIT.waves.toFixed(1)} - uTime * ${SPIRIT.drift.toFixed(4)}));
+        transformed.xz += normalize(position.xz) * ${SPIRIT.sway.toFixed(4)} * sin(6.2832 * (uv.x * ${SPIRIT.sways.toFixed(1)} + uTime * ${SPIRIT.slide.toFixed(4)}));`,
       );
   };
   const spirit = new THREE.Mesh(new THREE.TubeGeometry(spiritPath, 640, SPIRIT.thick, 10, true), spiritPaint);
@@ -438,13 +447,17 @@ export function buildScenery({ zones, token, random, view }) {
     stem.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), aside);
     g.add(stem, orb);
     group.add(g);
-    orbs.push({ g, orb, u, y: on.y, size, phase: random() * span });
+    orbs.push({ g, orb, u, at: on.clone(), out: new THREE.Vector3(on.x, 0, on.z).normalize(), size, phase: random() * span });
   }
   function wave(t) {
     trailWave(t);
     spiritTime.value = t;
     for (const o of orbs) {
-      o.g.position.y = o.y + SPIRIT.wave * Math.sin(span * (o.u * SPIRIT.waves - t * SPIRIT.drift));
+      // The same two waves as the line's shader, so each orb stays joined to it.
+      o.g.position
+        .copy(o.at)
+        .addScaledVector(o.out, SPIRIT.sway * Math.sin(span * (o.u * SPIRIT.sways + t * SPIRIT.slide)));
+      o.g.position.y += SPIRIT.wave * Math.sin(span * (o.u * SPIRIT.waves - t * SPIRIT.drift));
       o.orb.scale.setScalar(o.size * (1 + 0.07 * Math.sin(span * (o.u * SPIRIT.beats - t * SPIRIT.beat) + o.phase * 0.3)));
     }
   }
