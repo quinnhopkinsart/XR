@@ -16,8 +16,9 @@
 // waves run slowly along it.
 //
 // Behind all the works runs one large spirit line: a thick light-blue line that loops round
-// the outside of the ring of works, meandering, with orbs joined to it by short stems, as
-// spirit lines carry them in Woodland painting. Two sine waves move along it, one up and
+// the outside of the ring of works, meandering, with orbs strung on it like beads on a
+// string: the line swells round each one and narrows again in one smooth curve, so the
+// bead's rim is the line itself. Two sine waves move along it, one up and
 // down and one in and out, so it snakes, and its thickness swells and eases in a gentle
 // pulse; the orbs ride the waves and breathe with it.
 //
@@ -67,7 +68,10 @@ const FIELD_WOBBLE = 0.2;
 // `sway`, `sways` and `slide` are the same for the one that swings it in toward the centre
 // and out again, which travels the other way, so the line snakes. `pulse` is how much the
 // thickness swells (a share of `thick`), `beats` how many swells are on the line at once,
-// `beat` how fast they travel. `orbs` is how many orbs hang on it, `orb` their radius.
+// `beat` how fast they travel. `orbs` is how many orbs are strung on it, `orb` their radius
+// out to the rim, `core` the share of that which is the ball of colour (the rest is rim),
+// `taper` how long the line takes to swell to a bead and narrow again (a share of the
+// bead's size: smaller is rounder, larger is more of a spindle).
 // Quinn first asked for a subtle pulse and wave, then for more sine wave motion and more
 // meander than the first version had (wave 1.6, no sway, meander 5): the pulse stays
 // gentle, the waves are plain to see.
@@ -86,7 +90,9 @@ const SPIRIT = {
   beats: 9,
   beat: 0.12,
   orbs: 20,
-  orb: [1.3, 2.6],
+  orb: [1.8, 3.2],
+  core: 0.76,
+  taper: 0.85,
   colour: '--spirit-line',
   fills: ['--saffron', '--field-pink', '--tag-teal', '--white', '--oxblood'],
 };
@@ -401,64 +407,126 @@ export function buildScenery({ zones, token, random, view }) {
   }
   const spiritPath = new THREE.CatmullRomCurve3(knots, true, 'catmullrom', 0.5);
   const spiritTime = { value: 0 };
-  const spiritPaint = new THREE.MeshBasicMaterial({ color: new THREE.Color(token(SPIRIT.colour, '#7cc7d9')) });
-  // The wave and the pulse are done where the line is drawn, from how far along it each
-  // point is (uv.x): the wave lifts and drops it, the pulse pushes its skin out and in.
-  spiritPaint.onBeforeCompile = (shader) => {
-    shader.uniforms.uTime = spiritTime;
-    shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nuniform float uTime;')
-      .replace(
-        '#include <begin_vertex>',
-        `#include <begin_vertex>
-        transformed += normal * ${(SPIRIT.thick * SPIRIT.pulse).toFixed(4)} * sin(6.2832 * (uv.x * ${SPIRIT.beats.toFixed(1)} - uTime * ${SPIRIT.beat.toFixed(4)}));
-        transformed.y += ${SPIRIT.wave.toFixed(4)} * sin(6.2832 * (uv.x * ${SPIRIT.waves.toFixed(1)} - uTime * ${SPIRIT.drift.toFixed(4)}));
-        transformed.xz += normalize(position.xz) * ${SPIRIT.sway.toFixed(4)} * sin(6.2832 * (uv.x * ${SPIRIT.sways.toFixed(1)} + uTime * ${SPIRIT.slide.toFixed(4)}));`,
-      );
-  };
-  const spirit = new THREE.Mesh(new THREE.TubeGeometry(spiritPath, 640, SPIRIT.thick, 10, true), spiritPaint);
-  spirit.frustumCulled = false; // it runs all round the camera, and moves
-  group.add(spirit);
+  const long2 = spiritPath.getLength();
 
-  // The orbs: each a ball in one colour with a rim in the line's own, on a short stem that
-  // leaves the line to one side. They rise and fall with the wave where they are joined.
-  const ball = new THREE.SphereGeometry(1, 24, 16);
-  const rim = new THREE.MeshBasicMaterial({ color: spiritPaint.color, side: THREE.BackSide });
-  const orbs = [];
+  // The orbs are beads on that string: each sits on the line itself, and the line swells
+  // round it and narrows again in one smooth curve, so the bead's rim is the line and there
+  // is no corner where they meet. Where each bead is, how big, and its colour:
+  const beads = [];
   for (let i = 0; i < SPIRIT.orbs; i += 1) {
-    const u = (i + 0.2 + random() * 0.6) / SPIRIT.orbs;
-    const on = spiritPath.getPointAt(u);
-    const along = spiritPath.getTangentAt(u);
-    // To one side of the line, turned a different way round it each time.
-    const aside = new THREE.Vector3(0, 1, 0).cross(along).normalize().applyAxisAngle(along, random() * span);
-    const size = between(SPIRIT.orb);
-    const reach = size + 1.2 + random() * 2.2;
-    const g = new THREE.Group();
-    g.position.copy(on);
-    const orb = new THREE.Group();
-    orb.position.copy(aside).multiplyScalar(reach);
-    const fill = new THREE.Mesh(ball, paint(SPIRIT.fills[i % SPIRIT.fills.length]));
-    const edge = new THREE.Mesh(ball, rim);
-    edge.scale.setScalar(1.2);
-    orb.add(fill, edge);
-    orb.scale.setScalar(size);
-    const stem = new THREE.Mesh(new THREE.CylinderGeometry(SPIRIT.thick * 0.42, SPIRIT.thick * 0.42, reach, 8), paint(SPIRIT.colour));
-    stem.position.copy(aside).multiplyScalar(reach / 2);
-    stem.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), aside);
-    g.add(stem, orb);
-    group.add(g);
-    orbs.push({ g, orb, u, at: on.clone(), out: new THREE.Vector3(on.x, 0, on.z).normalize(), size, phase: random() * span });
+    beads.push({
+      u: (i + 0.2 + random() * 0.6) / SPIRIT.orbs,
+      size: between(SPIRIT.orb),
+      fill: SPIRIT.fills[i % SPIRIT.fills.length],
+    });
   }
+  /** How thick the line is at a point `u` (0 to 1) of the way round: its own thickness,
+      rising in a smooth hump to each bead's size and falling away again. */
+  const swell = (u) => {
+    let r = SPIRIT.thick;
+    for (const b of beads) {
+      let d = Math.abs(u - b.u);
+      d = Math.min(d, 1 - d) * long2;
+      const reach = b.size * SPIRIT.taper;
+      if (d < reach * 3.2) r = Math.max(r, SPIRIT.thick + (b.size - SPIRIT.thick) * Math.exp(-((d / reach) ** 2)));
+    }
+    return r;
+  };
+
+  /** A tube along the spirit line whose radius is `radiusAt(u)`. Like three's TubeGeometry,
+      with uv.x the share of the way round, which the waves below are worked out from. */
+  function stringTube(segments, sides, radiusAt) {
+    const frames = spiritPath.computeFrenetFrames(segments, true);
+    const positions = [];
+    const normals = [];
+    const uvs = [];
+    const index = [];
+    const centre = new THREE.Vector3();
+    const n = new THREE.Vector3();
+    for (let i = 0; i <= segments; i += 1) {
+      const u = i / segments;
+      spiritPath.getPointAt(u % 1, centre);
+      const N = frames.normals[i === segments ? 0 : i];
+      const B = frames.binormals[i === segments ? 0 : i];
+      const r = radiusAt(u % 1);
+      for (let k = 0; k <= sides; k += 1) {
+        const v = (k / sides) * Math.PI * 2;
+        n.set(0, 0, 0).addScaledVector(N, Math.cos(v)).addScaledVector(B, Math.sin(v)).normalize();
+        positions.push(centre.x + n.x * r, centre.y + n.y * r, centre.z + n.z * r);
+        normals.push(n.x, n.y, n.z);
+        uvs.push(u, k / sides);
+      }
+    }
+    for (let i = 0; i < segments; i += 1) {
+      for (let k = 0; k < sides; k += 1) {
+        const a = i * (sides + 1) + k;
+        const b = a + sides + 1;
+        index.push(a, a + 1, b, b, a + 1, b + 1); // wound so the outside faces out
+      }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    g.setIndex(index);
+    return g;
+  }
+
+  // The waves and the pulse are done where the line is drawn, from how far along it each
+  // point is (uv.x): the waves lift, drop and swing it, the pulse pushes its skin out and in.
+  const moving = (material) => {
+    material.onBeforeCompile = (shader) => {
+      shader.uniforms.uTime = spiritTime;
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nuniform float uTime;')
+        .replace(
+          '#include <begin_vertex>',
+          `#include <begin_vertex>
+          transformed += normal * ${(SPIRIT.thick * SPIRIT.pulse).toFixed(4)} * sin(6.2832 * (uv.x * ${SPIRIT.beats.toFixed(1)} - uTime * ${SPIRIT.beat.toFixed(4)}));
+          transformed.y += ${SPIRIT.wave.toFixed(4)} * sin(6.2832 * (uv.x * ${SPIRIT.waves.toFixed(1)} - uTime * ${SPIRIT.drift.toFixed(4)}));
+          transformed.xz += normalize(position.xz) * ${SPIRIT.sway.toFixed(4)} * sin(6.2832 * (uv.x * ${SPIRIT.sways.toFixed(1)} + uTime * ${SPIRIT.slide.toFixed(4)}));`,
+        );
+    };
+    return material;
+  };
+  const spiritColour = new THREE.Color(token(SPIRIT.colour, '#7cc7d9'));
+  // The line is two skins. The string: a plain tube, which runs on through each bead. The
+  // swell: the same tube humped out round each bead and drawn inside out (its far wall
+  // only), so it shows as a rim round whatever is in front of it, the way an outline is
+  // drawn round a figure. A bead's ball of colour sits in front of that wall, and the rim
+  // round it runs on into the string without a join.
+  const string = new THREE.Mesh(
+    new THREE.TubeGeometry(spiritPath, 720, SPIRIT.thick, 10, true),
+    moving(new THREE.MeshBasicMaterial({ color: spiritColour })),
+  );
+  const swollen = new THREE.Mesh(
+    stringTube(2400, 14, swell),
+    moving(new THREE.MeshBasicMaterial({ color: spiritColour, side: THREE.BackSide })),
+  );
+  for (const m of [string, swollen]) {
+    m.frustumCulled = false; // it runs all round the camera, and moves
+    group.add(m);
+  }
+
+  const ball = new THREE.SphereGeometry(1, 28, 18);
+  const orbs = beads.map((b) => {
+    const on = spiritPath.getPointAt(b.u);
+    const orb = new THREE.Mesh(ball, paint(b.fill));
+    orb.position.copy(on);
+    group.add(orb);
+    return { orb, u: b.u, at: on.clone(), out: new THREE.Vector3(on.x, 0, on.z).normalize(), size: b.size * SPIRIT.core };
+  });
   function wave(t) {
     trailWave(t);
     spiritTime.value = t;
     for (const o of orbs) {
       // The same two waves as the line's shader, so each orb stays joined to it.
-      o.g.position
+      o.orb.position
         .copy(o.at)
         .addScaledVector(o.out, SPIRIT.sway * Math.sin(span * (o.u * SPIRIT.sways + t * SPIRIT.slide)));
-      o.g.position.y += SPIRIT.wave * Math.sin(span * (o.u * SPIRIT.waves - t * SPIRIT.drift));
-      o.orb.scale.setScalar(o.size * (1 + 0.07 * Math.sin(span * (o.u * SPIRIT.beats - t * SPIRIT.beat) + o.phase * 0.3)));
+      o.orb.position.y += SPIRIT.wave * Math.sin(span * (o.u * SPIRIT.waves - t * SPIRIT.drift));
+      // It breathes with the line's pulse where it sits, and stays inside its rim.
+      o.orb.scale.setScalar(o.size * (1 + 0.04 * Math.sin(span * (o.u * SPIRIT.beats - t * SPIRIT.beat))));
     }
   }
   wave(0);
