@@ -3,6 +3,10 @@
 //   userPaused   the visitor pressed Pause (remembered between visits)
 //   embedPaused  a build is on screen, so the field steps aside
 //   tilt         phone tilt drives the field (gyroscope)
+//   fly          free camera: the page steps aside and the visitor flies through the field
+//                (landing page only, see FlyMode.jsx)
+//   flyForward   the Fly button is held down
+//   flyHome      a count; each change puts the flying camera back at its start
 
 const read = (key) => {
   try {
@@ -35,6 +39,9 @@ let state = {
   userPaused: read('noodin-motion') === 'paused',
   embedPaused: false,
   tilt: tiltSupported && !tiltNeedsPermission && !reducedMotion && read('noodin-tilt') !== 'off',
+  fly: false,
+  flyForward: false,
+  flyHome: 0,
 };
 
 const listeners = new Set();

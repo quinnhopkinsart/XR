@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import ProjectCard from '../components/ProjectCard.jsx';
 import WideTitle from '../components/WideTitle.jsx';
+import FlyMode from '../field/FlyMode.jsx';
 import { allCategories, projects } from '../projects/registry.js';
 import { CATEGORIES } from '../projects/schema.js';
 import copy from '../brand/copy.json';
@@ -56,6 +57,8 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      <FlyMode />
     </>
   );
 }
