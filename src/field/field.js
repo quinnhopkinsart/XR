@@ -936,7 +936,15 @@ export function createField(container, { models, reducedMotion }) {
     drag = { id: e.pointerId, x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, moved: false, touch: e.pointerType === 'touch' };
   };
   const onFlyMove = (e) => {
-    if (!drag || e.pointerId !== drag.id) return;
+    if (!drag) {
+      // Over a title the cursor says it is a link.
+      if (e.pointerType !== 'touch') {
+        const over = !e.target.closest?.(INTERACTIVE) && !!pickTitle(e.clientX, e.clientY);
+        document.documentElement.classList.toggle('field-hover', over);
+      }
+      return;
+    }
+    if (e.pointerId !== drag.id) return;
     const dx = e.clientX - drag.x;
     const dy = e.clientY - drag.y;
     drag.x = e.clientX;
@@ -961,7 +969,11 @@ export function createField(container, { models, reducedMotion }) {
     if (!drag || e.pointerId !== drag.id) return;
     const tapped = !drag.moved && e.type === 'pointerup';
     drag = null;
-    if (tapped) spin(e.clientX, e.clientY);
+    if (!tapped) return;
+    // A tap on a work's title opens its page; FlyMode.jsx does the navigating.
+    const work = pickTitle(e.clientX, e.clientY);
+    if (work) window.dispatchEvent(new CustomEvent('field:open', { detail: work }));
+    else spin(e.clientX, e.clientY);
   };
 
   function setFly(on) {
@@ -977,6 +989,7 @@ export function createField(container, { models, reducedMotion }) {
     window[listen]('pointerup', onFlyUp);
     window[listen]('pointercancel', onFlyUp);
     if (!on) touring = false;
+    if (!on) document.documentElement.classList.remove('field-hover');
     keys.clear();
     drag = null;
     glide = 0;
@@ -1025,6 +1038,17 @@ export function createField(container, { models, reducedMotion }) {
     let o = hits[0].object;
     while (o && !floaters.some((f) => f.piece === o)) o = o.parent;
     return floaters.find((f) => f.piece === o) || null;
+  }
+
+  /** The work whose title plate is under the pointer in flight, or null. Titles are links. */
+  function pickTitle(clientX, clientY) {
+    if (!scenery || flyMix < 0.5) return null;
+    const rect = renderer.domElement.getBoundingClientRect();
+    raycaster.setFromCamera(
+      new THREE.Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1),
+      camera,
+    );
+    return raycaster.intersectObjects(scenery.links, false)[0]?.object.userData.work || null;
   }
 
   const onMove = (e) => {

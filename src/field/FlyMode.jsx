@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
+import { site } from '../brand/site.js';
 import { flyStick, hasLens, motion, reducedMotion, requestTilt, tiltSupported } from './motion.js';
 import { fieldSupported } from './FloatingField.jsx';
 
@@ -119,6 +121,15 @@ export default function FlyMode() {
   const exitBtn = useRef(null);
   const wasFlying = useRef(false);
   const supported = fieldSupported();
+
+  // A work's title in the flight is a link to its page: field.js sends the work's slug
+  // when the title is clicked or tapped.
+  const navigate = useNavigate();
+  useEffect(() => {
+    const open = (e) => navigate(`${site.workPath}/${e.detail}`);
+    window.addEventListener('field:open', open);
+    return () => window.removeEventListener('field:open', open);
+  }, [navigate]);
 
   // Leaving the landing page leaves the free camera.
   useEffect(() => () => motion.set({ fly: false, flyForward: false, flyTour: false }), []);
@@ -264,8 +275,8 @@ export default function FlyMode() {
                 ? 'Motion access was declined. Allow it in your browser settings to use tilt.'
                 : flyTour
                 ? coarse
-                  ? `Swipe up to follow the line from work to work.${tilt ? ' Tilt to look around.' : ''}`
-                  : 'Scroll to follow the line from work to work. Drag to look aside. Esc to leave.'
+                  ? `Swipe up to follow the line from work to work. Tap a title to open the work.${tilt ? ' Tilt to look around.' : ''}`
+                  : 'Scroll to follow the line from work to work. Click a title to open the work. Esc to leave.'
                 : coarse
                   ? `${tilt ? 'Tilt or drag' : 'Drag'} to look. Push the stick to move.`
                   : 'Drag to look. Scroll, W A S D or the arrow keys to move. Esc to leave.'}
