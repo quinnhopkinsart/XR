@@ -47,7 +47,9 @@ const LOOK_AT = new THREE.Vector3(0, 0, -3);
 const FLY = { speed: 13, boost: 2.5, turn: 1.3, look: 0.0042, wheel: 0.022, reach: 135, pitch: 1.45 };
 // On phones with Tilt on, tilting looks around in flight: `yaw` and `pitch` are the angles
 // in radians at full tilt (about 20 degrees of the phone), to each side and up or down.
-const TILT_LOOK = { yaw: 0.7, pitch: 0.45 };
+// They are negative because the first version, with them positive, looked the wrong way on
+// Quinn's phone: both directions are turned round here, in the one place.
+const TILT_LOOK = { yaw: -0.7, pitch: -0.45 };
 // The tour: scrolling carries the camera along the dashed line (scenery.js). `wheel` and
 // `swipe` are units along the line per pixel scrolled or swiped, `keys` units a second for
 // the keys and the joystick, `ease` how quickly the camera catches up (higher is tighter).
