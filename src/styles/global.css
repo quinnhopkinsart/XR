@@ -1116,7 +1116,7 @@ html.title-leads .field.is-ready {
   position: fixed;
   top: 4.75rem;
   bottom: 4.5rem;
-  right: max(calc(var(--gutter) / 2 - 24px), 0px, env(safe-area-inset-right));
+  right: max(calc(var(--gutter) / 2 - 29px), 0px, env(safe-area-inset-right));
   z-index: 9;
   pointer-events: none;
   transition: opacity 0.5s var(--ease);
@@ -1139,7 +1139,7 @@ html.title-leads .field.is-ready {
 
 .fly-map__hair {
   stroke: var(--line);
-  stroke-width: 1.6;
+  stroke-width: 2.2;
   stroke-linecap: round;
 }
 
