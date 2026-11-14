@@ -1,51 +1,55 @@
 import { useEffect, useId, useRef, useState } from 'react';
 
-// The roadmap: a Woodland spirit line down the right edge of the screen, from top to bottom.
-// It is drawn the way the spirit lines in Quinn's Woodland work are: one black line that
-// winds in an S at one steady, even thickness and comes to a point at each end,
-// with a divided circle where each leg begins and a few short hairs off its side. A leg
-// fills as a core of colour inside the black line, and its circle's two halves take
-// colour when the visitor reaches it. A leg's name pops out beside its circle under the
-// pointer or the keyboard.
+// The roadmap: a glow of colour coming from the right edge of the screen, straight up and
+// down from top to bottom, in a few lengths with a small gap between them, a length for
+// each leg. A leg lights along the edge in its own colour as it fills: a thin bright line
+// right at the edge and a soft glow of the same colour spreading in from it. What has not
+// filled yet is only a faint dark line. A leg's name pops out beside it under the pointer
+// or the keyboard.
 //
-// Quinn asked for this look. The first roadmap was a straight capsule of blocks with the
-// names written in it, which he found clunky. He wanted it integrated, by which he means
-// it feels like a part of the page, subtle but clear: organic, an S curve, stretching from
-// the top of the screen to the bottom, and thin, with the section's title popping out on
-// hover so the line can stay thin. Then he asked for it to look like a Woodland spirit
-// line. Keep it one slim flowing black line, never blocks, and keep the type off it until
-// it is asked for. Its black is the site's own line colour (`--line`, see-through black,
-// as on the masthead's rule), which Quinn asked for so it matches the site and stays
-// subtle: the line ahead is faint, and it darkens only where a leg has filled.
+// It comes and goes like smoke. It drifts in when there is something to show (the page is
+// scrolled, the tour moves on, the pointer or the keyboard comes to it) and, left alone,
+// it thins out, blurs, rises a little and is gone. A turbulence filter pulls the line into
+// wisps as it goes. With reduced motion it stays where it is and never fades.
 //
-// Sizes are in pixels: the line is drawn to the height its CSS gives it. `wide` is the
-// black line's width, the same all the way down (Quinn asked for a steady even thickness
-// with only the ends tapered; the first drawing swelled and thinned; he then had it made
-// a bit fatter and smoother), `core` the width of the colour inside
-// it, `sway` how far the S swings to each side, `bead` a circle's radius, `hair` the
-// length of the short hairs, `type` the size of the names, `pad` the room at the two
-// ends, `point` the length of the taper at the foot. `slim` is for phones, where the
-// margin is narrow.
-const FULL = { wide: 8.5, core: 3.8, sway: 11, bead: 8, hair: 6, type: 11, pad: 12, point: 76 };
-const SLIM = { wide: 6, core: 2.8, sway: 4, bead: 6, hair: 4, type: 10, pad: 9, point: 52 };
-// About one whole S for every `PERIOD` pixels of length, always a whole number of them.
-const PERIOD = 380;
-// How far apart the points of the drawn curve are: close, so it reads as one smooth line.
-const STEP = 2;
+// How it got here: Quinn's first roadmap was a straight capsule of blocks with the names in
+// it, which he found clunky. He wanted it integrated, meaning it feels like a part of the
+// page, subtle but clear: organic, an S curve, top to bottom, thin, titles popping out on
+// hover. A Woodland spirit line with divided circles and hairs followed, which he did not
+// like in the end: he asked for something more modern that appears and disappears like
+// smoke, and no orbs. He then had the S taken out (straight up and down, at the side) and
+// asked for it to be a coloured glow coming from the edge of the screen. So: no circles,
+// no hairs, no taper, no outline, no curve. Keep it a plain glow at the edge.
+//
+// Sizes are in pixels: it is drawn to the height its CSS gives it. `wide` is the width of
+// the bright line at the edge, `glow` how far the colour spreads in from it, `soft` how
+// blurred that spread is, `gap` the space between two legs, `type` the size of the names,
+// `pad` the room at the two ends. `slim` is for phones.
+const FULL = { wide: 4, glow: 30, soft: 9, gap: 8, type: 11, pad: 10 };
+const SLIM = { wide: 3, glow: 20, soft: 6, gap: 6, type: 10, pad: 8 };
+// The smoke. `linger` is how long the line stays once nothing is happening (ms), `first`
+// how long it stays when it is first drawn, `wisp` how far the turbulence pulls the line
+// about when it is gone (0 while it is here), `blur` how soft it gets for each unit of that
+// pull, `ease` how fast the pull follows, per second.
+const SMOKE = { linger: 1900, first: 3200, wisp: 40, blur: 0.07, ease: 2 };
+const still = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
- * legs: [{ key, label, weight, colour, second, className, href, onPress }]
- *   `weight` is the leg's share of the line's length, `colour` a token name (`--saffron`),
- *   `second` the token for the other half of its circle (white if left out).
+ * legs: [{ key, label, weight, colour, className, href, onPress }]
+ *   `weight` is the leg's share of the line's length, `colour` a token name (`--saffron`).
  *   A leg with `href` is a link; any other is a button that calls `onPress`.
- * Each leg's fill is its `--fill` custom property (0 to 1), set from outside, and the
- * classes `is-on` (reached) and `is-here` (where the visitor is) colour its circle and
- * thicken its ring. `onDraw` is called each time the line is drawn afresh.
+ * Each leg's fill is its `--fill` custom property (0 to 1), set from outside. Whoever sets
+ * it sends the roadmap's element a `stir` event when something has moved, which brings the
+ * line back; the class `is-held` on the element keeps it from fading. `onDraw` is called
+ * each time the line is drawn afresh.
  */
 export default function Roadmap({ legs, slim = false, arrow = false, className = '', label, innerRef, onDraw }) {
   const id = useId().replace(/[^a-zA-Z0-9]/g, '');
   const own = useRef(null);
+  const warp = useRef(null);
+  const haze = useRef(null);
   const [tall, setTall] = useState(0);
+  const [here, setHere] = useState(true);
   useEffect(() => {
     const el = own.current;
     if (!el) return undefined;
@@ -60,128 +64,131 @@ export default function Roadmap({ legs, slim = false, arrow = false, className =
   useEffect(() => {
     if (tall) onDraw?.();
   }, [tall, legs.length]);
+
+  // Coming and going. A stir brings the line back and starts the wait again; when the wait
+  // runs out it goes, unless something is holding it (the pointer, the keyboard, `is-held`).
+  useEffect(() => {
+    const el = own.current;
+    if (!el || still) return undefined;
+    let timer = 0;
+    const held = () => el.classList.contains('is-held') || el.matches(':hover, :focus-within');
+    const rest = (after) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => (held() ? rest(SMOKE.linger) : setHere(false)), after);
+    };
+    const stir = () => {
+      setHere(true);
+      rest(SMOKE.linger);
+    };
+    rest(SMOKE.first);
+    el.addEventListener('stir', stir);
+    el.addEventListener('pointerenter', stir);
+    el.addEventListener('focusin', stir);
+    return () => {
+      clearTimeout(timer);
+      el.removeEventListener('stir', stir);
+      el.removeEventListener('pointerenter', stir);
+      el.removeEventListener('focusin', stir);
+    };
+  }, []);
+  // The wisps: the turbulence's pull follows whether the line is here, and the filter is
+  // taken off altogether once the line is whole again, so it is crisp and costs nothing.
+  useEffect(() => {
+    if (still) return undefined;
+    let raf = 0;
+    let last = performance.now();
+    const step = (now) => {
+      const map = warp.current;
+      const drawing = map?.closest('svg')?.querySelector('.fly-map__smoke');
+      if (!map || !drawing) return;
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      const to = here ? 0 : SMOKE.wisp;
+      const at = Number(map.getAttribute('scale')) || 0;
+      const next = Math.abs(to - at) < 0.3 ? to : at + (to - at) * Math.min(1, dt * SMOKE.ease);
+      map.setAttribute('scale', next.toFixed(2));
+      haze.current?.setAttribute('stdDeviation', (next * SMOKE.blur).toFixed(2));
+      drawing.style.filter = next === 0 ? '' : `url(#${id}-smoke)`;
+      if (next !== to) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [here, tall]);
   const hold = (el) => {
     own.current = el;
     if (innerRef) innerRef.current = el;
   };
 
   const s = slim ? SLIM : FULL;
-  const width = 2 * (s.sway + s.bead * 1.4 + s.hair + 2);
+  // The drawing is as wide as the glow reaches; the line itself stands on its right edge,
+  // which is the edge of the screen.
+  const width = s.glow + s.wide;
   const total = Math.max(0, tall - 2 * s.pad - (arrow ? 20 : 0));
-  const turns = Math.max(1, Math.round(total / PERIOD));
-  const x = (y) => width / 2 + s.sway * Math.sin((2 * Math.PI * turns * y) / (total || 1));
-  const point = (y) => `${x(y).toFixed(2)} ${(y + s.pad).toFixed(2)}`;
-  const curve = (from, to) => {
-    const points = [];
-    for (let y = from; y < to; y += STEP) points.push(point(y));
-    points.push(point(to));
-    return `M${points.join('L')}`;
-  };
+  const edge = width - s.wide / 2;
+  const curve = (from, to) => `M${edge} ${(from + s.pad).toFixed(2)}V${(to + s.pad).toFixed(2)}`;
   const weights = legs.reduce((sum, leg) => sum + (leg.weight || 1), 0);
-  // The first circle sits where the taper at the top ends, so the line runs on to a point
-  // above it.
-  const lead = Math.min(s.point, total / 6);
-  let at = lead;
-  const drawn = legs.map((leg) => {
+  let at = 0;
+  const drawn = legs.map((leg, i) => {
     const from = at;
-    at += ((total - lead) * (leg.weight || 1)) / weights;
-    return { ...leg, from, d: curve(from, at) };
+    at += (total * (leg.weight || 1)) / weights;
+    // Each leg stops a little short of its neighbours, which leaves the gaps.
+    const a = from + (i ? s.gap / 2 : 0);
+    const b = at - (i < legs.length - 1 ? s.gap / 2 : 0);
+    return { ...leg, from: a, d: curve(a, b), reach: curve(from, at) };
   });
   const press = (leg) => (e) => {
     if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();
     leg.onPress(e);
   };
-  const foot = point(total);
-
-  // The black line itself, as a shape: one even width, tapered to a point at each end over a
-  // point over its last stretch.
-  const half = (y) => {
-    const taper = Math.min(1, y / lead, (total - y) / s.point);
-    // A long, rounded taper that eases into the full width with no shoulder.
-    return (s.wide / 2) * Math.sin((Math.PI / 2) * Math.max(0, taper)) ** 0.8;
-  };
-  const side = (y, sign) => {
-    const slope = (x(y + 1) - x(y - 1)) / 2;
-    const n = Math.hypot(1, slope);
-    return `${(x(y) + (sign * half(y)) / n).toFixed(2)} ${(y + s.pad - (sign * half(y) * slope) / n).toFixed(2)}`;
-  };
-  const ys = [];
-  for (let y = 0; y < total; y += STEP) ys.push(y);
-  ys.push(total);
-  const body = `M${ys.map((y) => side(y, 1)).join('L')}L${ys.reverse().map((y) => side(y, -1)).join('L')}Z`;
-  // Three short hairs off one side of the line, part way down each leg.
-  const hairs = (leg, i) => {
-    const sign = i % 2 ? -1 : 1;
-    const mid = leg.from + (((total - lead) * (leg.weight || 1)) / weights) * 0.55;
-    return [-7, 0, 7]
-      .map((dy) => {
-        const y = mid + dy;
-        const slope = (x(y + 1) - x(y - 1)) / 2;
-        const n = Math.hypot(1, slope);
-        const out = (d) => `${(x(y) + (sign * d) / n).toFixed(2)} ${(y + s.pad - (sign * d * slope) / n).toFixed(2)}`;
-        return `M${out(half(y) - 0.5)}L${out(half(y) + s.hair * (dy ? 0.75 : 1))}`;
-      })
-      .join('');
-  };
+  const foot = `${edge - 7} ${(total + s.pad).toFixed(2)}`;
 
   return (
-    <nav className={`fly-map ${className}`} ref={hold} aria-label={label} style={{ width }}>
+    <nav className={`fly-map ${here ? '' : 'is-gone'} ${className}`} ref={hold} aria-label={label} style={{ width, '--wide': `${s.wide}px`, '--glow': `${s.glow}px` }}>
       {total > 40 && (
         <svg width={width} height={tall} viewBox={`0 0 ${width} ${tall}`} focusable="false">
           <defs>
-            <clipPath id={`${id}-body`}>
-              <path d={body} />
-            </clipPath>
+            {/* Both filters are sized in pixels: a straight line has no width of its own for
+                a filter to measure itself by. */}
+            <filter id={`${id}-glow`} filterUnits="userSpaceOnUse" x={-s.glow * 2} y="0" width={width + s.glow * 4} height={tall}>
+              <feGaussianBlur stdDeviation={`${s.soft} ${s.soft / 2}`} />
+            </filter>
+            <filter id={`${id}-smoke`} filterUnits="userSpaceOnUse" x={-120} y={-60} width={width + 240} height={tall + 120}>
+              <feTurbulence type="fractalNoise" baseFrequency="0.05 0.03" numOctaves="3" seed="7" result="noise" />
+              <feDisplacementMap ref={warp} in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G" result="wisps" />
+              <feGaussianBlur ref={haze} in="wisps" stdDeviation="0" />
+            </filter>
           </defs>
-          <path className="fly-map__line" d={body} />
-          {drawn.map((leg, i) => (
-            <path key={leg.key} className="fly-map__hair" d={hairs(leg, i)} />
-          ))}
-          {drawn.map((leg, i) => {
-            const Leg = leg.href ? 'a' : 'g';
-            const how = leg.href
-              ? { href: leg.href, onClick: leg.onPress }
-              : { role: 'button', tabIndex: 0, onClick: press(leg), onKeyDown: press(leg) };
-            const cx = x(leg.from);
-            const cy = leg.from + s.pad;
-            const r = s.bead;
-            return (
-              <Leg
-                key={leg.key}
-                className={`fly-map__leg ${leg.className || ''}`}
-                style={{ '--leg': `var(${leg.colour})`, '--leg-2': `var(${leg.second || '--white'})` }}
-                {...how}
-              >
-                {/* Unseen and much wider than the line: what the pointer presses. */}
-                <path className="fly-map__reach" d={leg.d} strokeWidth={width} />
-                {/* The colour inside the black line, kept inside its shape. */}
-                {/* Where a leg has filled, the line itself darkens from the site's faint line
-                    colour toward black, so the colour has an edge to sit in. */}
-                <path className="fly-map__fill fly-map__fill--edge" d={leg.d} pathLength="1" strokeWidth={s.wide + 2} clipPath={`url(#${id}-body)`} />
-                <path className="fly-map__fill" d={leg.d} pathLength="1" strokeWidth={s.core} clipPath={`url(#${id}-body)`} />
-                {/* A divided circle, as on a spirit line: two halves and the line between them. */}
-                <g className="fly-map__bead" transform={`translate(${cx.toFixed(2)} ${cy.toFixed(2)}) rotate(-32)`}>
-                  <circle className="fly-map__half" r={r} />
-                  <path className="fly-map__half fly-map__half--2" d={`M${-r} 0A${r} ${r} 0 0 0 ${r} 0Z`} />
-                  <circle className="fly-map__ring" r={r} />
-                  <path className="fly-map__ring" d={`M${-r} 0H${r}`} />
-                </g>
-                {/* The name pops out beside the circle, on a plate that is the letters' own
-                    thick black outline. */}
-                <text className="fly-map__tag" x={(cx - r - 13).toFixed(2)} y={cy.toFixed(2)} fontSize={s.type} dy="0.35em" textAnchor="end">
-                  {leg.label}
-                </text>
-              </Leg>
-            );
-          })}
-          {arrow && (
-            <g className="fly-map__on" aria-hidden="true">
-              {/* Black under blue, so it shows on the red ground and over the black footer. */}
-              <path className="fly-map__on-rim" d={`M${foot}m-5 8l5 5 5-5`} />
-              <path className="fly-map__on-line" d={`M${foot}m-5 8l5 5 5-5`} />
-            </g>
-          )}
+          <g className="fly-map__smoke">
+            {drawn.map((leg) => {
+              const Leg = leg.href ? 'a' : 'g';
+              const how = leg.href
+                ? { href: leg.href, onClick: leg.onPress }
+                : { role: 'button', tabIndex: 0, onClick: press(leg), onKeyDown: press(leg) };
+              return (
+                <Leg key={leg.key} className={`fly-map__leg ${leg.className || ''}`} style={{ '--leg': `var(${leg.colour})` }} {...how}>
+                  {/* Unseen and much wider than the line: what the pointer presses. */}
+                  <path className="fly-map__reach" d={leg.reach} strokeWidth={width * 2} />
+                  <path className="fly-map__track" d={leg.d} />
+                  {/* The glow, then the bright line at the edge over it. */}
+                  <path className="fly-map__fill fly-map__fill--glow" d={leg.d} pathLength="1" filter={`url(#${id}-glow)`} />
+                  <path className="fly-map__fill" d={leg.d} pathLength="1" />
+                  {/* The name pops out beside the top of the leg, on a plate that is the
+                      letters' own thick black outline. */}
+                  <text className="fly-map__tag" x={(edge - s.wide - 16).toFixed(2)} y={(leg.from + s.pad + 8).toFixed(2)} fontSize={s.type} dy="0.35em" textAnchor="end">
+                    {leg.label}
+                  </text>
+                </Leg>
+              );
+            })}
+            {arrow && (
+              <g className="fly-map__on" aria-hidden="true">
+                {/* Black under blue, so it shows on the red ground and over the black footer. */}
+                <path className="fly-map__on-rim" d={`M${foot}m-5 6l5 5 5-5`} />
+                <path className="fly-map__on-line" d={`M${foot}m-5 6l5 5 5-5`} />
+              </g>
+            )}
+          </g>
         </svg>
       )}
     </nav>
