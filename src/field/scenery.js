@@ -157,8 +157,10 @@ function label(title, token) {
 }
 
 /**
- * zones: [{ title, centre: Vector3, radius, width, height, lift, floor }] from field.js
+ * zones: [{ title, centre: Vector3, radius, width, height, lift, floor, backdrop }] from field.js
  * (`lift` is how high the zone hangs, `floor` the level just under its sculptures).
+ * `backdrop` is [fill, outline], two colour tokens, for a zone that has its own colour
+ * field standing behind its sculptures.
  * view: { fov, aspect } of the camera, for fitting each work to the screen.
  * Returns { group, zones: [Group], facing: [Object3D], upright: [Object3D], wave(t) }: the
  * titles grow in as the flight begins, everything in `facing` is turned to the camera each
@@ -369,6 +371,25 @@ export function buildScenery({ zones, token, random, view }) {
       look.copy(from).lerp(to, k).normalize().multiplyScalar(30).add(eye);
     },
   };
+
+  // A zone's own colour field: the same hand-cut shape as the far ones, standing close
+  // behind the zone's sculptures and facing the centre, a little larger than the row of
+  // them. It grows in with the zone's title. Made last, so the far scenery keeps its places.
+  for (const z of zones) {
+    if (!z.backdrop) continue;
+    const [fill, line] = z.backdrop;
+    const shape = blob(random);
+    const g = new THREE.Group();
+    const m = new THREE.Group();
+    m.add(new THREE.Mesh(shape.fill, paint(fill)), new THREE.Mesh(shape.line, paint(line)));
+    m.scale.setScalar(Math.max(z.width * 0.52, z.height * 0.85));
+    const outward = new THREE.Vector3(z.centre.x, 0, z.centre.z).normalize();
+    g.position.copy(z.centre).addScaledVector(outward, z.radius * 0.45 + 5).setY(z.lift);
+    g.lookAt(0, z.lift, 0);
+    g.add(m);
+    group.add(g);
+    zoneGroups.push(g);
+  }
 
   return { group, zones: zoneGroups, facing, upright, wave, tour };
 }
