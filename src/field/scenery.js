@@ -24,7 +24,7 @@ export const SCENERY = {
   fields: { count: 9, near: 80, far: 125, size: [9, 22] },
   stars: { count: 46, near: 55, far: 120, size: [0.8, 3.2] },
   marks: { count: 48, near: 24, far: 80, size: [0.5, 1.6] },
-  groves: { count: 8, near: 100, far: 150, trees: [3, 7], height: [9, 20] },
+  groves: { count: 8, near: 130, far: 190, trees: [3, 7], height: [12, 26] }, // field.js stops the camera 75 out
 };
 
 // Colour fields: [fill, outline]. `FIELD_LINE` is the outline's width against the field's

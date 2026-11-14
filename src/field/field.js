@@ -34,7 +34,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
-import { motion } from './motion.js';
+import { flyStick, motion } from './motion.js';
 import { buildScenery } from './scenery.js';
 
 // Where the page keeps the camera. The layout is worked out from this distance, never from
@@ -51,9 +51,9 @@ const FLY = { speed: 9, boost: 2.5, turn: 1.3, look: 0.0042, wheel: 0.016, reach
 const ZONES = { out: 34, step: 52, gap: 2.5, pad: 4 };
 // Haze: where it starts and where it is complete, on the page and in flight. `far` is how
 // far the camera draws in flight.
-const HAZE = { page: [17, 46], flight: [45, 170], far: 400 };
+const HAZE = { page: [17, 46], flight: [60, 260], far: 500 };
 
-const INTERACTIVE = 'a, button, input, select, textarea, iframe, label, summary, [role="button"]';
+const INTERACTIVE = 'a, button, input, select, textarea, iframe, label, summary, [role="button"], .fly-stick';
 
 // Small seeded random so the composition is the same on every visit.
 function rng(seed = 7) {
@@ -558,9 +558,11 @@ export function createField(container, { models, reducedMotion }) {
       z.floor = z.lift - z.height / 2 - 0.8; // just under the sculptures, where the title goes
     }
     // The widest zone sits straight ahead, the next ones to its right and left in turn.
+    // A zone that hangs high goes after those at eye level, so the first thing the camera
+    // faces is a work, not the empty air under one.
     const zones = [];
     found
-      .sort((a, b) => b.width - a.width)
+      .sort((a, b) => (a.lift > 0) - (b.lift > 0) || b.width - a.width)
       .forEach((z, i) => (i % 2 ? zones.push(z) : zones.unshift(z)));
     // Far enough out that neighbouring zones never touch.
     const step = Math.min(THREE.MathUtils.degToRad(ZONES.step), (Math.PI * 2) / zones.length);
@@ -568,8 +570,9 @@ export function createField(container, { models, reducedMotion }) {
     for (let i = 1; i < zones.length; i += 1) {
       reach = Math.max(reach, (zones[i - 1].radius + zones[i].radius + ZONES.gap) / (2 * Math.sin(step / 2)));
     }
+    const ahead = zones.indexOf(found[0]); // the first in that order faces the camera
     zones.forEach((z, i) => {
-      const a = (i - (zones.length - 1) / 2) * step; // 0 is straight ahead
+      const a = (i - ahead) * step; // 0 is straight ahead
       z.centre = new THREE.Vector3(Math.sin(a) * reach, 0, -Math.cos(a) * reach);
       const across = new THREE.Vector3(Math.cos(a), 0, Math.sin(a));
       let x = -z.width / 2;
@@ -717,8 +720,8 @@ export function createField(container, { models, reducedMotion }) {
 
   function flyStep(dt) {
     const down = (...codes) => (codes.some((c) => keys.has(c)) ? 1 : 0);
-    const ahead = Math.max(down('KeyW', 'ArrowUp'), motion.get().flyForward ? 1 : 0) - down('KeyS', 'ArrowDown');
-    const across = down('KeyD') - down('KeyA');
+    const ahead = Math.max(down('KeyW', 'ArrowUp'), motion.get().flyForward ? 1 : 0) - down('KeyS', 'ArrowDown') + flyStick.y;
+    const across = down('KeyD') - down('KeyA') + flyStick.x;
     const rise = down('KeyE') - down('KeyQ');
     yaw += (down('ArrowLeft') - down('ArrowRight')) * FLY.turn * dt;
     camera.rotation.set(pitch, yaw, 0, 'YXZ');
