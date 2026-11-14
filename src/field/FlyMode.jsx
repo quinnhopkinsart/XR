@@ -33,6 +33,21 @@ import { fieldSupported } from './FloatingField.jsx';
 //          scroll to the bottom (trackpads keep sending it) does not open the view by accident
 //   hold   ms the bar waits before it starts to empty
 //   drain  how fast it empties, in bars a second
+//
+// The roadmap down the right edge of the screen (`fly-map`) shows the way there. It has a
+// leg for each part of the page, each in its own colour with its name written down it:
+// the intro, the works, and the 3D part. An empty leg is black with its name in its colour;
+// the filled part is the colour with the name in black. At the foot of the page an arrow
+// under the last leg points on down. A leg fills as its part of the page is scrolled,
+// and the last one, in the spirit line's blue, fills by scrolling on past the end. Quinn
+// asked for it: on the right, like a roadmap, a colour for each section, filling as you
+// scroll (his first idea, a yellow bar that turns blue at the 3D part, ran across the top).
+// Where scrolling on does nothing (reduced motion) the last leg fills at the foot.
+const LEGS = [
+  { name: 'intro', label: 'Intro' },
+  { name: 'works', label: 'Works' },
+  { name: 'fly', label: '3D' },
+];
 const CHARGE = { wheel: 1200, touch: 520, rest: 160, hold: 320, drain: 1.6 };
 
 const atBottom = () => window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
@@ -106,6 +121,7 @@ const enter = (e) => {
 export default function FlyMode() {
   const { fly, flyTour, flyLens, flyHints, tilt } = useSyncExternalStore(motion.subscribe, motion.get, motion.get);
   const gate = useRef(null);
+  const meter = useRef(null);
   const enterBtn = useRef(null);
   const [tiltDenied, setTiltDenied] = useState(false);
   const exitBtn = useRef(null);
@@ -155,7 +171,11 @@ export default function FlyMode() {
     let raf = 0;
     let touchY = null;
 
-    const show = () => gate.current?.style.setProperty('--charge', Math.min(1, charge).toFixed(3));
+    const show = () => {
+      const value = Math.min(1, charge).toFixed(3);
+      gate.current?.style.setProperty('--charge', value);
+      meter.current?.style.setProperty('--charge', value);
+    };
     const loop = (now) => {
       const dt = (now - prev) / 1000;
       prev = now;
@@ -221,8 +241,43 @@ export default function FlyMode() {
       window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('touchcancel', onTouchEnd);
       gate.current?.style.setProperty('--charge', '0');
+      meter.current?.style.setProperty('--charge', '0');
     };
   }, [fly, supported]);
+
+  // The roadmap follows the page: the intro's leg fills until the works reach the middle
+  // of the screen, the works' leg from there to the foot.
+  useEffect(() => {
+    if (!supported) return undefined;
+    const onward = !reducedMotion; // scrolling on past the end opens the flight
+    const measure = () => {
+      const el = meter.current;
+      if (!el) return;
+      const room = document.documentElement.scrollHeight - window.innerHeight;
+      const works = document.querySelector('.works');
+      const turn = works ? works.getBoundingClientRect().top + window.scrollY - window.innerHeight / 2 : 0;
+      const y = window.scrollY;
+      const share = (from, to) => (to > from ? Math.min(1, Math.max(0, (y - from) / (to - from))) : y >= to ? 1 : 0);
+      const split = Math.min(Math.max(turn, 0), Math.max(room, 0));
+      const end = atBottom();
+      el.style.setProperty('--intro', share(0, split).toFixed(4));
+      el.style.setProperty('--works', end ? '1' : share(split, room).toFixed(4));
+      if (!onward) el.style.setProperty('--charge', end ? '1' : '0');
+      el.classList.toggle('at-works', y >= split);
+      el.classList.toggle('at-fly', end);
+    };
+    measure();
+    window.addEventListener('scroll', measure, { passive: true });
+    window.addEventListener('resize', measure);
+    // The page grows and shrinks ("See more", pictures loading), which moves its foot.
+    const watch = new ResizeObserver(measure);
+    watch.observe(document.body);
+    return () => {
+      window.removeEventListener('scroll', measure);
+      window.removeEventListener('resize', measure);
+      watch.disconnect();
+    };
+  }, [supported]);
 
   if (!supported) return null;
 
@@ -255,6 +310,27 @@ export default function FlyMode() {
         <p className="fly-gate__hint">
           <span className="plate">Or keep scrolling.</span>
         </p>
+      )}
+
+      {createPortal(
+        <div className="fly-map" ref={meter} aria-hidden="true">
+          {LEGS.map((leg) => (
+            <span key={leg.name} className={`fly-map__leg fly-map__leg--${leg.name}`}>
+              <span className="fly-map__name">{leg.label}</span>
+              {/* The filled part: the same name again in black on the leg's colour, cut off
+                  at how far the leg has filled, so the letters change as the colour passes. */}
+              <span className="fly-map__fill">
+                <span className="fly-map__name">{leg.label}</span>
+              </span>
+            </span>
+          ))}
+          {/* Black under blue, so it shows on the red ground and over the black footer. */}
+          <svg className="fly-map__on" viewBox="0 0 20 14" focusable="false">
+            <path className="fly-map__on-rim" d="M4 4l6 6 6-6" />
+            <path className="fly-map__on-line" d="M4 4l6 6 6-6" />
+          </svg>
+        </div>,
+        document.body,
       )}
 
       {fly &&
