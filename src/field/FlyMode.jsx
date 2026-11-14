@@ -34,12 +34,18 @@ import { fieldSupported } from './FloatingField.jsx';
 //   hold   ms the bar waits before it starts to empty
 //   drain  how fast it empties, in bars a second
 //
-// The bar across the top of the screen (`fly-meter`) shows both: it fills in saffron as the
-// page is scrolled, up to `METER` of its width at the foot of the page, and there it turns
-// the spirit line's blue, with the rest of it left to fill by scrolling on. Quinn asked for
-// it: yellow down the page, blue at the 3D part, to tell people to keep scrolling. Where
-// scrolling on does nothing (reduced motion) it stays saffron and the page fills all of it.
-const METER = 0.8;
+// The roadmap down the right edge of the screen (`fly-map`) shows the way there. It has a
+// leg for each part of the page, each in its own colour, with a stop where the leg begins:
+// the intro, the works, and the 3D part. A leg fills as its part of the page is scrolled,
+// and the last one, in the spirit line's blue, fills by scrolling on past the end. Quinn
+// asked for it: on the right, like a roadmap, a colour for each section, filling as you
+// scroll (his first idea, a yellow bar that turns blue at the 3D part, ran across the top).
+// Where scrolling on does nothing (reduced motion) the last leg fills at the foot.
+const LEGS = [
+  { name: 'intro', label: 'Intro' },
+  { name: 'works', label: 'Works' },
+  { name: 'fly', label: '3D' },
+];
 const CHARGE = { wheel: 1200, touch: 520, rest: 160, hold: 320, drain: 1.6 };
 
 const atBottom = () => window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
@@ -237,7 +243,8 @@ export default function FlyMode() {
     };
   }, [fly, supported]);
 
-  // The bar across the top follows the page, and turns blue at its foot.
+  // The roadmap follows the page: the intro's leg fills until the works reach the middle
+  // of the screen, the works' leg from there to the foot.
   useEffect(() => {
     if (!supported) return undefined;
     const onward = !reducedMotion; // scrolling on past the end opens the flight
@@ -245,10 +252,17 @@ export default function FlyMode() {
       const el = meter.current;
       if (!el) return;
       const room = document.documentElement.scrollHeight - window.innerHeight;
-      const page = room > 0 ? Math.min(1, Math.max(0, window.scrollY / room)) : 1;
-      el.style.setProperty('--page', page.toFixed(4));
-      el.style.setProperty('--share', onward ? METER : 1);
-      el.classList.toggle('is-end', onward && atBottom());
+      const works = document.querySelector('.works');
+      const turn = works ? works.getBoundingClientRect().top + window.scrollY - window.innerHeight / 2 : 0;
+      const y = window.scrollY;
+      const share = (from, to) => (to > from ? Math.min(1, Math.max(0, (y - from) / (to - from))) : y >= to ? 1 : 0);
+      const split = Math.min(Math.max(turn, 0), Math.max(room, 0));
+      const end = atBottom();
+      el.style.setProperty('--intro', share(0, split).toFixed(4));
+      el.style.setProperty('--works', end ? '1' : share(split, room).toFixed(4));
+      if (!onward) el.style.setProperty('--charge', end ? '1' : '0');
+      el.classList.toggle('at-works', y >= split);
+      el.classList.toggle('at-fly', end);
     };
     measure();
     window.addEventListener('scroll', measure, { passive: true });
@@ -296,7 +310,19 @@ export default function FlyMode() {
         </p>
       )}
 
-      {createPortal(<div className="fly-meter" ref={meter} aria-hidden="true" />, document.body)}
+      {createPortal(
+        <div className="fly-map" ref={meter} aria-hidden="true">
+          {LEGS.map((leg) => (
+            <span key={leg.name} className={`fly-map__leg fly-map__leg--${leg.name}`}>
+              <span className="fly-map__stop" />
+              <span className="fly-map__label">{leg.label}</span>
+              <span className="fly-map__road" />
+            </span>
+          ))}
+          <span className="fly-map__stop fly-map__stop--end" />
+        </div>,
+        document.body,
+      )}
 
       {fly &&
         createPortal(

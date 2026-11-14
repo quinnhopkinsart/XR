@@ -1105,36 +1105,122 @@ html.title-leads .field.is-ready {
   transform-origin: left;
 }
 
-/* The landing page's progress bar, across the top of the screen: saffron as the page is
-   scrolled, the spirit line's blue at the foot, where scrolling on fills the rest of it
-   and opens the flight */
-.fly-meter {
+/* The landing page's roadmap, down the right edge of the screen: a leg for each part of
+   the page in its own colour, with a stop where it begins. A leg fills as its part is
+   scrolled; the last, in the spirit line's blue, fills by scrolling on into the flight */
+.fly-map {
+  --stop: 14px;
+  --road: 6px;
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 11;
-  height: 6px;
-  background: var(--panel);
+  top: 50%;
+  right: max(calc((var(--gutter) - var(--stop)) / 2), env(safe-area-inset-right));
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: var(--stop);
+  height: min(56vh, 420px);
+  transform: translateY(-50%);
   pointer-events: none;
   transition: opacity 0.5s var(--ease);
 }
 
-.fly-meter::after {
+.fly-map__leg {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.fly-map__leg--intro {
+  --leg: var(--saffron);
+  --fill: var(--intro, 0);
+}
+
+.fly-map__leg--works {
+  --leg: var(--field-pink);
+  --fill: var(--works, 0);
+  flex: 2;
+}
+
+.fly-map__leg--fly {
+  --leg: var(--spirit-line);
+  --fill: var(--charge, 0);
+}
+
+.fly-map__road {
+  position: relative;
+  flex: 1;
+  width: var(--road);
+  background: var(--panel);
+  /* A hairline of the ground colour, so the road still shows over the black footer */
+  box-shadow: 0 0 0 1px var(--ground);
+}
+
+.fly-map__road::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: var(--accent);
-  transform: scaleX(calc(var(--page, 0) * var(--share, 1) + var(--charge, 0) * (1 - var(--share, 1))));
-  transform-origin: left;
-  transition: background-color 0.3s var(--ease);
+  background: var(--leg);
+  transform: scaleY(var(--fill));
+  transform-origin: top;
 }
 
-.fly-meter.is-end::after {
+/* A stop is a black ring; its middle takes its leg's colour once the page has reached it */
+.fly-map__stop {
+  flex: none;
+  box-sizing: border-box;
+  width: var(--stop);
+  height: var(--stop);
+  border: 3px solid var(--panel);
+  border-radius: 50%;
+  background: var(--panel);
+  box-shadow: 0 0 0 1px var(--ground);
+  position: relative;
+  z-index: 1;
+  transition: background-color 0.3s var(--ease), transform 0.3s var(--ease);
+}
+
+.fly-map__leg--intro .fly-map__stop,
+.fly-map.at-works .fly-map__leg--works .fly-map__stop,
+.fly-map.at-fly .fly-map__leg--fly .fly-map__stop {
+  background: var(--leg);
+}
+
+/* At the foot of the page the 3D part's stop grows, to say there is more below */
+.fly-map.at-fly .fly-map__leg--fly .fly-map__stop {
+  transform: scale(1.5);
+}
+
+.fly-map__stop--end {
   background: var(--spirit-line);
 }
 
-html.is-flying .fly-meter {
+/* Names for the stops, where the margin beside the page has room for them */
+.fly-map__label {
+  display: none;
+  position: absolute;
+  top: calc(var(--stop) / 2);
+  right: calc(100% + 10px);
+  padding: 0.15rem 0.5rem;
+  background: var(--panel);
+  color: var(--on-panel);
+  font: 500 var(--step--2, 0.7rem) var(--font-display);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: translateY(-50%);
+}
+
+@media (min-width: 1480px) {
+  .fly-map__label {
+    display: block;
+  }
+}
+
+html.is-flying .fly-map {
   opacity: 0;
 }
 
