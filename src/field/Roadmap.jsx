@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 
 // The roadmap: a Woodland spirit line down the right edge of the screen, from top to bottom.
 // It is drawn the way the spirit lines in Quinn's Woodland work are: one black line that
-// winds in an S, swelling and thinning along its length and coming to a point at its foot,
+// winds in an S at one steady, even thickness and comes to a point at each end,
 // with a divided circle where each leg begins and a few short hairs off its side. A leg
 // fills as a core of colour inside the black line, and its circle's two halves take
 // colour when the visitor reaches it. A leg's name pops out beside its circle under the
@@ -17,13 +17,14 @@ import { useEffect, useId, useRef, useState } from 'react';
 // it is asked for.
 //
 // Sizes are in pixels: the line is drawn to the height its CSS gives it. `wide` is the
-// black line's width at its thinnest and thickest, `core` the width of the colour inside
+// black line's width, the same all the way down (Quinn asked for a steady even thickness
+// with only the ends tapered; the first drawing swelled and thinned), `core` the width of the colour inside
 // it, `sway` how far the S swings to each side, `bead` a circle's radius, `hair` the
 // length of the short hairs, `type` the size of the names, `pad` the room at the two
 // ends, `point` the length of the taper at the foot. `slim` is for phones, where the
 // margin is narrow.
-const FULL = { wide: [4.5, 7.5], core: 2.6, sway: 11, bead: 6.5, hair: 6, type: 11, pad: 12, point: 46 };
-const SLIM = { wide: [3.5, 5.5], core: 2, sway: 4, bead: 5, hair: 4, type: 10, pad: 9, point: 34 };
+const FULL = { wide: 5.5, core: 2.4, sway: 11, bead: 6.5, hair: 6, type: 11, pad: 12, point: 46 };
+const SLIM = { wide: 4.5, core: 2, sway: 4, bead: 5, hair: 4, type: 10, pad: 9, point: 34 };
 // About one whole S for every `PERIOD` pixels of length, always a whole number of them.
 const PERIOD = 380;
 const STEP = 4;
@@ -73,10 +74,13 @@ export default function Roadmap({ legs, slim = false, arrow = false, className =
     return `M${points.join('L')}`;
   };
   const weights = legs.reduce((sum, leg) => sum + (leg.weight || 1), 0);
-  let at = 0;
+  // The first circle sits where the taper at the top ends, so the line runs on to a point
+  // above it.
+  const lead = Math.min(s.point, total / 6);
+  let at = lead;
   const drawn = legs.map((leg) => {
     const from = at;
-    at += (total * (leg.weight || 1)) / weights;
+    at += ((total - lead) * (leg.weight || 1)) / weights;
     return { ...leg, from, d: curve(from, at) };
   });
   const press = (leg) => (e) => {
@@ -86,12 +90,11 @@ export default function Roadmap({ legs, slim = false, arrow = false, className =
   };
   const foot = point(total);
 
-  // The black line itself, as a shape: it swells and thins along the way and tapers to a
+  // The black line itself, as a shape: one even width, tapered to a point at each end over a
   // point over its last stretch.
   const half = (y) => {
-    const swell = 0.5 + 0.5 * Math.sin((2 * Math.PI * (turns * 2 + 1) * y) / (total || 1) + 1);
-    const taper = Math.min(1, (total - y) / s.point);
-    return ((s.wide[0] + (s.wide[1] - s.wide[0]) * swell) / 2) * Math.max(0, taper) ** 0.7;
+    const taper = Math.min(1, y / lead, (total - y) / s.point);
+    return (s.wide / 2) * Math.max(0, taper) ** 0.7;
   };
   const side = (y, sign) => {
     const slope = (x(y + 1) - x(y - 1)) / 2;
@@ -105,7 +108,7 @@ export default function Roadmap({ legs, slim = false, arrow = false, className =
   // Three short hairs off one side of the line, part way down each leg.
   const hairs = (leg, i) => {
     const sign = i % 2 ? -1 : 1;
-    const mid = leg.from + ((total * (leg.weight || 1)) / weights) * 0.55;
+    const mid = leg.from + (((total - lead) * (leg.weight || 1)) / weights) * 0.55;
     return [-7, 0, 7]
       .map((dy) => {
         const y = mid + dy;

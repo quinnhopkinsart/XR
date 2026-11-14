@@ -120,9 +120,10 @@ function recolor(root, colour) {
  * Makes a model a neon tube: its own surface in a pale, unlit core colour, with two shells
  * of the glow colour pushed out round it, a solid rim and a wide soft halo. The field has
  * no bloom pass, so the glow is drawn. `NEON` is how far each shell stands off, in the
- * model's own units, and how solid the halo is.
+ * model's own units, and how solid the halo is. Quinn wanted the glow thin and subtle
+ * (the first shells were about three times as wide), so keep these small.
  */
-const NEON = { rim: 0.03, halo: 0.1, soft: 0.38 };
+const NEON = { rim: 0.011, halo: 0.035, soft: 0.2 };
 function neon(root, core, glow) {
   const tube = new THREE.MeshBasicMaterial({ color: new THREE.Color(core), toneMapped: false });
   const shell = (push, opacity) => {
