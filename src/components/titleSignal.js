@@ -3,6 +3,13 @@
 // light through the letters and knocks the rows under the scan line sideways, with
 // colour fringes, like a camera finding an image target. Left alone, it holds still.
 //
+//
+// Under the letters sits the ooze, the same goo as the portfolio's wordmark (its
+// js/title.js): black beads orbit each letter and bud out of its edge, and others
+// travel between neighbours and pull necks as they pass. The ooze canvas holds the
+// letters plus the beads in ink; an SVG filter on it (blur, then a hard alpha
+// threshold, in WideTitle.jsx) fuses whatever comes close. It keeps moving on its own.
+//
 // Colours are read from the --title-* tokens in src/brand/tokens.css.
 
 import { motion } from '../field/motion.js';
@@ -14,7 +21,16 @@ const BANDS = 56; // rows the scan can displace
 // The glitch, kept light: how far a row can jump (of the title's width), how fast
 // pointer travel builds it, how fast it settles, and how strong the colour fringes are.
 const GLITCH = { shift: 0.016, gain: 2, decay: 8, fringe: 0.5 };
+// The ooze, in parts of the font size: the filter's blur, the size of the orbiting and
+// travelling beads, how far out an orbit sits, and how high a travelling bead can arc.
+const OOZE = { blur: 0.026, perLetter: 2, bead: [0.045, 0.08], traveller: 0.065, out: 0.05, reach: [0.36, 0.44], lift: 0.25 };
+const TAU = Math.PI * 2;
 const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+// The beads start from the same places on every visit and every rebuild.
+const seeded = (seed) => () => {
+  seed = (seed * 1664525 + 1013904223) % 4294967296;
+  return seed / 4294967296;
+};
 
 function tokenColours(el) {
   const css = getComputedStyle(el);
@@ -33,9 +49,10 @@ function tokenColours(el) {
   };
 }
 
-export function createTitleSignal({ box, text, canvas, still }) {
+export function createTitleSignal({ box, text, canvas, ooze, blur, still }) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return null;
+  const oozeCtx = ooze ? ooze.getContext('2d') : null;
 
   const layer = () => document.createElement('canvas');
   const ink = layer(); // black letters, full weight
@@ -64,6 +81,9 @@ export function createTitleSignal({ box, text, canvas, still }) {
   let frame = 0;
   let last = 0;
   let dirty = true;
+  let beads = [];
+  let oozeT = 0;
+  let visible = true;
 
   const tilt = { x: 0, y: 0, on: false, base: null };
 
@@ -80,7 +100,14 @@ export function createTitleSignal({ box, text, canvas, still }) {
     canvas.style.top = `${-padY}px`;
     canvas.style.width = `${cw}px`;
     canvas.style.height = `${ch}px`;
-    for (const c of [canvas, ink, core, lit, fringeA, fringeB]) {
+    const screens = oozeCtx ? [canvas, ooze] : [canvas];
+    for (const c of screens.slice(1)) {
+      c.style.left = canvas.style.left;
+      c.style.top = canvas.style.top;
+      c.style.width = canvas.style.width;
+      c.style.height = canvas.style.height;
+    }
+    for (const c of [...screens, ink, core, lit, fringeA, fringeB]) {
       c.width = Math.round(cw * dpr);
       c.height = Math.round(ch * dpr);
     }
@@ -91,6 +118,7 @@ export function createTitleSignal({ box, text, canvas, still }) {
     const chars = [...text.textContent.trim().toUpperCase()];
     const spacing = -0.01 * size;
 
+    const letters = []; // each letter's centre and width, in css px inside the title box
     const draw = (target, strokeWidth) => {
       const c = target.getContext('2d');
       c.setTransform(1, 0, 0, 1, 0, 0);
@@ -113,6 +141,7 @@ export function createTitleSignal({ box, text, canvas, still }) {
       chars.forEach((ch2, i) => {
         if (strokeWidth) c.strokeText(ch2, x, baseline);
         c.fillText(ch2, x, baseline);
+        if (target === ink && ch2.trim()) letters.push({ cx: (x + widths[i] / 2) * sx, w: widths[i] * sx });
         x += widths[i] + spacing;
       });
     };
@@ -132,6 +161,37 @@ export function createTitleSignal({ box, text, canvas, still }) {
     tint(fringeA, colours.lights[0]);
     tint(fringeB, colours.lights[1]);
 
+    if (oozeCtx) {
+      blur?.setAttribute('stdDeviation', (size * OOZE.blur).toFixed(2));
+      const rnd = seeded(7);
+      const between = (a, b) => a + rnd() * (b - a);
+      beads = [];
+      // Beads orbit each letter and bud out of its edge
+      letters.forEach((L) => {
+        for (let n = 0; n < OOZE.perLetter; n += 1) beads.push({
+          L,
+          r: size * between(...OOZE.bead),
+          a: rnd() * TAU,
+          sp: (rnd() < 0.5 ? -1 : 1) * between(0.25, 0.6),
+          rx: L.w * between(0.46, 0.58) + size * OOZE.out,
+          ry: size * between(...OOZE.reach),
+          wob: rnd() * TAU,
+        });
+      });
+      // and one travels between each pair of neighbours, pulling a neck as it passes
+      for (let i = 0; i < letters.length - 1; i += 1) {
+        beads.push({
+          A: letters[i],
+          B: letters[i + 1],
+          r: size * OOZE.traveller,
+          a: rnd() * TAU,
+          sp: between(0.35, 0.65),
+          lift: (rnd() - 0.5) * 2 * size * OOZE.lift,
+          sway: size * 0.03,
+        });
+      }
+    }
+
     if (!ready) {
       // The light starts over the right of the title, under XR.
       light.x = light.tx = W * 0.68;
@@ -139,7 +199,40 @@ export function createTitleSignal({ box, text, canvas, still }) {
     }
     ready = true;
     dirty = true;
+    drawOoze();
     if (still) render();
+  }
+
+  // The ooze: the letters in ink with the beads where they are now. The filter on the
+  // canvas does the fusing.
+  function drawOoze() {
+    if (!oozeCtx || !ready) return;
+    const c = oozeCtx;
+    const t = oozeT;
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.clearRect(0, 0, ooze.width, ooze.height);
+    c.drawImage(ink, 0, 0);
+    c.setTransform(dpr, 0, 0, dpr, dpr * padX, dpr * padY);
+    c.fillStyle = colours.ink.solid;
+    c.beginPath();
+    const cy = H / 2;
+    beads.forEach((b) => {
+      let x;
+      let y;
+      if (b.L) {
+        const a = b.a + t * b.sp;
+        const breathe = 0.86 + 0.14 * Math.sin(t * 0.7 + b.wob);
+        x = b.L.cx + Math.cos(a) * b.rx * breathe;
+        y = cy + Math.sin(a) * b.ry * breathe;
+      } else {
+        const k = 0.5 + 0.5 * Math.sin(t * b.sp + b.a);
+        x = b.A.cx + (b.B.cx - b.A.cx) * k;
+        y = cy + Math.sin(k * Math.PI) * b.lift + Math.sin(t * 0.9 + b.a) * b.sway;
+      }
+      c.moveTo(x + b.r, y);
+      c.arc(x, y, b.r, 0, TAU);
+    });
+    c.fill();
   }
 
   function paintLight() {
@@ -324,6 +417,11 @@ export function createTitleSignal({ box, text, canvas, still }) {
     const dt = Math.min((t - last) / 1000, 0.1);
     last = t;
     if (!ready) return;
+    // The ooze moves on its own while the title is on screen and Pause is off
+    if (oozeCtx && visible && !motion.get().userPaused) {
+      oozeT += dt;
+      drawOoze();
+    }
     const follow = 1 - Math.exp(-dt * 9);
     const mx = (light.tx - light.x) * follow;
     const my = (light.ty - light.y) * follow;
@@ -347,6 +445,11 @@ export function createTitleSignal({ box, text, canvas, still }) {
   ro.observe(box);
   document.fonts?.ready.then(build);
 
+  const io = new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting;
+  });
+  io.observe(box);
+
   let unsubscribe = () => {};
   if (!still) {
     window.addEventListener('pointermove', onPointer, { passive: true });
@@ -365,6 +468,7 @@ export function createTitleSignal({ box, text, canvas, still }) {
     destroy() {
       cancelAnimationFrame(frame);
       ro.disconnect();
+      io.disconnect();
       window.removeEventListener('pointermove', onPointer);
       document.removeEventListener('pointerleave', onLeave);
       window.removeEventListener('deviceorientation', onOrientation);
