@@ -1018,8 +1018,10 @@ html.title-leads .field.is-ready {
 }
 
 .motion__icon {
-  font-size: 0.8em;
-  line-height: 1;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
 }
 
 .motion__note {
