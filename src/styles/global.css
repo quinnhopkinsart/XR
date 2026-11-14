@@ -1105,18 +1105,18 @@ html.title-leads .field.is-ready {
   transform-origin: left;
 }
 
-/* The roadmap, down the right edge of the screen (Roadmap.jsx): a Woodland spirit line, one
-   thin black line that winds in an S from under the masthead to just over the motion
-   button, with a divided circle where each leg begins. A leg fills as a core of colour
-   inside the line (`--fill`, 0 to 1). It is meant to feel like part of the page, subtle but clear, so a leg's name
-   only pops out beside its bead under the pointer or the keyboard. On the landing page
-   the legs are the parts of the page; the last, in the spirit line's blue, fills by
-   scrolling on into the flight */
+/* The roadmap, down the right edge of the screen (Roadmap.jsx): one slim line that winds
+   in a gentle S from under the masthead to just over the motion button, in a length for
+   each leg with a small gap between. A leg fills along the line in its own colour
+   (`--fill`, 0 to 1), and its name pops out beside it under the pointer or the keyboard.
+   It comes and goes like smoke: `is-gone` is the line dispersed, blurred and risen away.
+   On the landing page the legs are the parts of the page; the last, in the spirit line's
+   blue, fills by scrolling on into the flight */
 .fly-map {
   position: fixed;
   top: 4.75rem;
   bottom: 4.5rem;
-  right: max(calc(var(--gutter) / 2 - 29px), 0px, env(safe-area-inset-right));
+  right: max(calc(var(--gutter) / 2 - 15px), 1px, env(safe-area-inset-right));
   z-index: 9;
   pointer-events: none;
   transition: opacity 0.5s var(--ease);
@@ -1131,19 +1131,23 @@ html.title-leads .field.is-ready {
   fill: none;
 }
 
-/* The line's black is the site's own see-through line colour, so it sits in the page the
-   way the masthead's rule does. It darkens only where a leg has filled */
-.fly-map path.fly-map__line {
-  fill: var(--line);
+/* The smoke: here, the line is sharp and still; gone, it has thinned out, blurred and
+   drifted up. Roadmap.jsx pulls it into wisps on the way */
+.fly-map__smoke {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.7s var(--ease), transform 1.1s var(--ease);
 }
 
-.fly-map__hair {
-  stroke: var(--line);
-  stroke-width: 2.2;
-  stroke-linecap: round;
+.fly-map.is-gone .fly-map__smoke {
+  opacity: 0;
+  transform: translateY(-22px) scaleX(1.6);
+  transform-origin: center;
+  transition: opacity 1.5s ease-in, transform 1.9s ease-out;
 }
 
-/* Only the legs take the pointer */
+/* Only the legs take the pointer, and a line that has gone takes it too: reaching for
+   where it was brings it back */
 .fly-map__leg {
   pointer-events: auto;
   outline: none;
@@ -1154,76 +1158,37 @@ html.title-leads .field.is-ready {
   pointer-events: stroke;
 }
 
-/* The colour that runs inside the black line as a leg fills */
+/* The line itself is the site's own see-through black, as on the masthead's rule */
+.fly-map__track {
+  stroke: var(--line);
+  stroke-width: var(--wide);
+  stroke-linecap: round;
+  transition: stroke-width 0.2s var(--ease);
+}
+
 .fly-map__fill {
   stroke: var(--leg);
+  stroke-width: var(--wide);
   stroke-dasharray: 1;
   stroke-dashoffset: calc((1 - var(--fill, 0)) * 1px);
   pointer-events: none;
+  transition: stroke-width 0.2s var(--ease);
 }
 
-.fly-map__fill--edge {
+/* A leg under the pointer or the keyboard stands a little wider */
+.fly-map__leg:hover .fly-map__track,
+.fly-map__leg:hover .fly-map__fill,
+.fly-map__leg:focus-visible .fly-map__track,
+.fly-map__leg:focus-visible .fly-map__fill {
+  stroke-width: calc(var(--wide) + 3px);
+}
+
+.fly-map__leg:focus-visible .fly-map__track {
   stroke: var(--ink);
-  stroke-opacity: 0.6;
-}
-
-/* A divided circle is the ground's colour, a black ring, until the page reaches its leg;
-   then its two halves take the leg's two colours */
-.fly-map path.fly-map__half,
-.fly-map__half {
-  fill: var(--ground);
-  transition: fill 0.3s var(--ease);
-}
-
-.fly-map__ring {
-  fill: none;
-  stroke: var(--line);
-  stroke-width: 2;
-  transition: stroke 0.3s var(--ease);
-}
-
-/* A circle the page has reached, or one under the pointer, has a full black ring */
-.fly-map__leg--intro .fly-map__ring,
-.fly-map.at-works .fly-map__leg--works .fly-map__ring,
-.fly-map.at-fly .fly-map__leg--fly .fly-map__ring,
-.fly-map__leg.is-on .fly-map__ring,
-.fly-map__leg:hover .fly-map__ring,
-.fly-map__leg:focus-visible .fly-map__ring {
-  stroke: var(--ink);
-}
-
-.fly-map__bead > * {
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-.fly-map__leg--intro .fly-map__half,
-.fly-map.at-works .fly-map__leg--works .fly-map__half,
-.fly-map.at-fly .fly-map__leg--fly .fly-map__half,
-.fly-map__leg.is-on .fly-map__half {
-  fill: var(--leg);
-}
-
-.fly-map__leg--intro .fly-map__half--2,
-.fly-map.at-works .fly-map__leg--works .fly-map__half--2,
-.fly-map.at-fly .fly-map__leg--fly .fly-map__half--2,
-.fly-map__leg.is-on .fly-map__half--2 {
-  fill: var(--leg-2);
-}
-
-/* The circle of the leg the visitor is in has a heavier ring, and so does one under the
-   pointer or the keyboard */
-.fly-map:not(.at-works) .fly-map__leg--intro .fly-map__ring,
-.fly-map.at-works:not(.at-fly) .fly-map__leg--works .fly-map__ring,
-.fly-map.at-fly .fly-map__leg--fly .fly-map__ring,
-.fly-map__leg.is-here .fly-map__ring,
-.fly-map__leg:hover .fly-map__ring,
-.fly-map__leg:focus-visible .fly-map__ring {
-  stroke-width: 3.2;
 }
 
 /* A leg's name: the letters in the leg's colour on a soft black plate, which is their own
-   thick outline. It pops out beside the bead under the pointer or the keyboard */
+   thick outline. It pops out beside the leg under the pointer or the keyboard */
 .fly-map__tag {
   fill: var(--leg);
   stroke: var(--panel);
@@ -1313,7 +1278,7 @@ html.is-flying .fly-map:not(.fly-map--flight) .fly-map__leg {
 html.is-flying .fly-map.fly-map--flight {
   top: 1rem;
   bottom: 5.75rem;
-  right: max(10px, env(safe-area-inset-right));
+  right: max(12px, env(safe-area-inset-right));
   z-index: 31;
   opacity: 1;
 }
@@ -1321,7 +1286,7 @@ html.is-flying .fly-map.fly-map--flight {
 /* Phones keep the taller controls along the bottom clear */
 @media (max-width: 760px) {
   html.is-flying .fly-map.fly-map--flight {
-    right: max(2px, env(safe-area-inset-right));
+    right: max(3px, env(safe-area-inset-right));
     bottom: 9.5rem;
   }
 }

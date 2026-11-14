@@ -36,18 +36,20 @@ import Roadmap from './Roadmap.jsx';
 //   drain  how fast it empties, in bars a second
 //
 // The roadmap down the right edge of the screen (`fly-map`, drawn by Roadmap.jsx) shows the
-// way there: a Woodland spirit line, one thin black line that winds from the top of the
-// screen to the bottom in an S, with a leg for each part of the page (the intro, the works,
-// the 3D part) and a divided circle where each begins. A leg fills as a core of its own
-// colour inside the line as its part of the page is scrolled, and the last one, in the spirit line's blue, fills by scrolling on past the
-// end. At the foot of the page an arrow under it points on down. A leg's name pops out
-// beside its bead under the pointer. Quinn asked for it: on the right, like a roadmap, a
-// colour for each section, filling as you scroll (Roadmap.jsx has how its look was
-// arrived at). Where scrolling on does nothing (reduced motion) the last leg fills at the
-// foot.
+// way there: one slim line from the top of the screen to the bottom, in three lengths, one
+// for each part of the page (the intro, the works, the 3D part). A length fills in its own
+// colour as its part of the page is scrolled, and the last one, in the spirit line's blue,
+// fills by scrolling on past the end. At the foot of the page an arrow under it points on
+// down. A length's name pops out beside it under the pointer. The line comes and goes like
+// smoke: it drifts in when the page is scrolled and fades when left alone, except at the
+// foot of the page, where it stays to say there is more. Quinn asked for it: on the right,
+// like a roadmap, a colour for each section, filling as you scroll (Roadmap.jsx has how its
+// look was arrived at). Where scrolling on does nothing (reduced motion) the last length
+// fills at the foot.
 // The flight has a roadmap of its own in the same style (`fly-map--flight`), which Quinn
 // asked for: a leg for each artwork, in the order the tour passes them, on the same winding
-// line. A work's title pops out beside its bead under the pointer. A leg fills as the camera turns to its work, so a full leg is a work
+// line. A work's title pops out beside its length under the pointer, and the line drifts in
+// like smoke when the tour moves and fades when it rests. A leg fills as the camera turns to its work, so a full leg is a work
 // seen and the last full one is the work in view; that one also stands wider. (The first
 // version filled a leg on the way on from its work, and Quinn found it still said Trading
 // Post Humanism while he was looking at 13 Moon Calendar.) field.js sends the place on the tour in `field:tour`
@@ -57,9 +59,9 @@ const WORK_COLOURS = ['--saffron', '--field-pink', '--spirit-line', '--white'];
 // Each leg is a link to the top of its part of the page (`to` is that part's id), which
 // Quinn asked for.
 const LEGS = [
-  { name: 'intro', label: 'Intro', to: 'intro', weight: 1, colour: '--saffron', second: '--white' },
-  { name: 'works', label: 'Works', to: 'works', weight: 2, colour: '--field-pink', second: '--saffron' },
-  { name: 'fly', label: '3D', to: 'fly', weight: 1, colour: '--spirit-line', second: '--white' },
+  { name: 'intro', label: 'Intro', to: 'intro', weight: 1, colour: '--saffron' },
+  { name: 'works', label: 'Works', to: 'works', weight: 2, colour: '--field-pink' },
+  { name: 'fly', label: '3D', to: 'fly', weight: 1, colour: '--spirit-line' },
 ];
 
 /** Scrolls to the top of a part of the page, without leaving a # in the address. */
@@ -145,6 +147,7 @@ export default function FlyMode() {
   const meter = useRef(null);
   const flightMap = useRef(null);
   const tourAt = useRef(0);
+  const tourSeen = useRef(0);
   const [tourWorks, setTourWorks] = useState([]);
   const enterBtn = useRef(null);
   const [tiltDenied, setTiltDenied] = useState(false);
@@ -166,6 +169,9 @@ export default function FlyMode() {
     const legs = flightMap.current?.querySelectorAll('.fly-map__leg');
     if (!legs?.length) return;
     const at = tourAt.current;
+    // The tour moving on brings the line back.
+    if (Math.abs(at - tourSeen.current) > 0.004) flightMap.current?.dispatchEvent(new Event('stir'));
+    tourSeen.current = at;
     const here = Math.round(at) % legs.length;
     legs.forEach((leg, i) => {
       // A work's leg fills as the camera turns to it, so the first is full from the start.
@@ -298,6 +304,7 @@ export default function FlyMode() {
   useEffect(() => {
     if (!supported) return undefined;
     const onward = !reducedMotion; // scrolling on past the end opens the flight
+    let seen = window.scrollY;
     const measure = () => {
       const el = meter.current;
       if (!el) return;
@@ -313,6 +320,10 @@ export default function FlyMode() {
       if (!onward) el.style.setProperty('--charge', end ? '1' : '0');
       el.classList.toggle('at-works', y >= split);
       el.classList.toggle('at-fly', end);
+      // At the foot the line stays, to say there is more below; a scroll brings it back.
+      el.classList.toggle('is-held', end && onward);
+      if (y !== seen) el.dispatchEvent(new Event('stir'));
+      seen = y;
     };
     measure();
     window.addEventListener('scroll', measure, { passive: true });
@@ -372,7 +383,6 @@ export default function FlyMode() {
             label: leg.label,
             weight: leg.weight,
             colour: leg.colour,
-            second: leg.second,
             className: `fly-map__leg--${leg.name}`,
             href: `#${leg.to}`,
             onPress: jump(leg.to),
@@ -395,7 +405,6 @@ export default function FlyMode() {
               key: title,
               label: title,
               colour: WORK_COLOURS[i % WORK_COLOURS.length],
-              second: WORK_COLOURS[(i + 1) % WORK_COLOURS.length],
               onPress: () => window.dispatchEvent(new CustomEvent('field:goto', { detail: i })),
             }))}
           />,
