@@ -20,8 +20,14 @@ export const site = {
 
   mainSite: 'https://www.noodinstudio.com',
   instagram: 'https://www.instagram.com/noodinstudio',
-  contact: 'https://www.noodinstudio.com/contact',
+  // The address people write to. The footer link and the "For events" block open an email.
+  email: 'quinn@noodinstudio.com',
+  contact: 'mailto:quinn@noodinstudio.com',
 };
+
+// An email about bringing one work to an event, with the work named in the subject line.
+export const inquiryUrl = (title) =>
+  `mailto:${site.email}?subject=${encodeURIComponent(`Event inquiry: ${title}`)}`;
 
 // A work's page on the portfolio (the Wix headless site). `slug` is the Work item's slug in
 // the portfolio's CMS, which is not always the slug used here.

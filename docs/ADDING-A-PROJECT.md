@@ -38,7 +38,7 @@ The File column says where each field lives. The list of `content.json` fields i
 | `cover` | project.js | no | Imported image. Without one, the card shows the title set in type. |
 | `coverAlt` | content.json | no | Alt text for the cover on the work page. |
 | `award` | project.js | no | `{ label, short, logo, logoOnDark }`. Puts the award's logo on a black tab at the top right of the home card and adds an Award line to the page header. `label` is the full name and the logo's alt text, for example `'Winner, 2024 Emerging Digital Artists Award, XR'`. `short` is the small line under the logo. `logoOnDark` is the logo with a clear background, drawn for a black ground. |
-| `bookable` | content.json | no | One or two sentences saying the work is available for events. Shown under the description as "For events", followed by a "Get in touch" link to the contact page in `src/brand/site.js`. |
+| `bookable` | content.json | no | One or two sentences about bringing this work to an event. Shown under the description as "For events", followed by a "Get in touch" link that opens an email with the work named in the subject (`inquiryUrl` in `src/brand/site.js`). A work without it shows the site-wide events note, `eventsNote` in `src/brand/copy.json`. |
 | `targets` | project.js | no | `[{ src: importedImage, label: 'Panel 1', alt: '...' }]`. Listed so people can try the work away from the site. |
 | `models` | project.js | no | 3D pieces this work adds to the floating background on every page. See "Floating models" below. |
 | `embedNote` | content.json | no | Caption under an embedded build. Default: "Enter to explore. On a phone, tap AR to open the camera." |

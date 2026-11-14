@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getProject } from '../projects/registry.js';
 import { breakable, legacyExpired } from '../projects/launch.js';
-import { portfolioUrl, site } from '../brand/site.js';
+import { inquiryUrl, portfolioUrl, site } from '../brand/site.js';
+import copy from '../brand/copy.json';
 import LaunchButton from '../components/LaunchButton.jsx';
 import QRBlock from '../components/QRBlock.jsx';
 import StatusPill from '../components/StatusPill.jsx';
@@ -36,6 +37,7 @@ export default function ProjectPage() {
   const canLaunch = p.launch && !expired;
   const embedded = canLaunch && p.launch.type === 'build' && p.launch.embed;
   const launchLabel = embedded ? 'Open full screen' : 'Open the work';
+  const eventsNote = p.bookable || copy.eventsNote;
 
   return (
     <article className="work">
@@ -99,11 +101,13 @@ export default function ProjectPage() {
             <p key={i}>{para}</p>
           ))}
 
-          {p.bookable && (
+          {/* Every work page carries the events block. A work's own `bookable` sentence
+              replaces the site-wide one from copy.json. */}
+          {eventsNote && (
             <section className="section">
               <h2 className="label">For events</h2>
               <p>
-                {p.bookable} <a href={site.contact}>Get in touch</a>.
+                {eventsNote} <a href={inquiryUrl(p.title)}>Get in touch</a>.
               </p>
             </section>
           )}
