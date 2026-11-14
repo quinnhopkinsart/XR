@@ -15,6 +15,8 @@ export default function WideTitle({ children, badge, label, className = '' }) {
   const text = useRef(null);
   const tag = useRef(null);
   const screen = useRef(null);
+  const ooze = useRef(null);
+  const blur = useRef(null);
 
   // The signal: the letters redrawn on a canvas that answers the pointer and tilt
   // (titleSignal.js). The DOM text stays underneath for layout and as the fallback.
@@ -25,6 +27,8 @@ export default function WideTitle({ children, badge, label, className = '' }) {
       box: h1,
       text: text.current,
       canvas: screen.current,
+      ooze: ooze.current,
+      blur: blur.current,
       still: reducedMotion,
     });
     if (!signal) return undefined;
@@ -160,6 +164,15 @@ export default function WideTitle({ children, badge, label, className = '' }) {
       <span className="wide-title__text" ref={text} aria-hidden={label ? true : undefined}>
         {children}
       </span>
+      {/* The ooze under the letters (titleSignal.js). The filter fuses what comes close:
+          a blur, then a hard alpha threshold. titleSignal sets the blur from the font size. */}
+      <svg className="wide-title__goo" width="0" height="0" aria-hidden="true" focusable="false">
+        <filter id="title-ooze" colorInterpolationFilters="sRGB">
+          <feGaussianBlur ref={blur} in="SourceGraphic" stdDeviation="4" />
+          <feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -10" />
+        </filter>
+      </svg>
+      <canvas className="wide-title__ooze" ref={ooze} aria-hidden="true" />
       <canvas className="wide-title__screen" ref={screen} aria-hidden="true" />
       {badge && (
         <span className="wide-title__badge" ref={tag} aria-hidden={label ? true : undefined}>

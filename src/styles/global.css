@@ -389,9 +389,20 @@ main {
 
 /* The title drawn as a signal (titleSignal.js). The canvas overhangs the title box
    so displaced rows and the corner marks have room; it never takes a click. */
-.wide-title__screen {
+.wide-title__screen,
+.wide-title__ooze {
   position: absolute;
   pointer-events: none;
+}
+
+/* The ooze under the letters: black beads bud from the letters and pull necks between
+   them. The filter (in WideTitle.jsx) fuses the beads with the letters. */
+.wide-title__ooze {
+  filter: url(#title-ooze);
+}
+
+.wide-title__goo {
+  position: absolute;
 }
 
 .wide-title.is-live .wide-title__text {
