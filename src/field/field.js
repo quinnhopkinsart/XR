@@ -45,6 +45,9 @@ const LOOK_AT = new THREE.Vector3(0, 0, -3);
 // `turn` in radians a second for the arrow keys, `look` in radians per pixel dragged,
 // `wheel` in units per pixel scrolled, `reach` how far from the centre the camera may go.
 const FLY = { speed: 13, boost: 2.5, turn: 1.3, look: 0.0042, wheel: 0.022, reach: 135, pitch: 1.45 };
+// On phones with Tilt on, tilting looks around in flight: `yaw` and `pitch` are the angles
+// in radians at full tilt (about 20 degrees of the phone), to each side and up or down.
+const TILT_LOOK = { yaw: 0.7, pitch: 0.45 };
 // The tour: scrolling carries the camera along the dashed line (scenery.js). `wheel` and
 // `swipe` are units along the line per pixel scrolled or swiped, `keys` units a second for
 // the keys and the joystick, `ease` how quickly the camera catches up (higher is tighter).
@@ -813,10 +816,11 @@ export function createField(container, { models, reducedMotion }) {
       }
       tourTo = tourS;
     } else {
-      // Free flight carries on from where the tour was looking.
+      // Free flight carries on from where the tour was looking (less the tilt, which is
+      // added back each frame).
       euler.setFromQuaternion(camera.quaternion, 'YXZ');
-      yaw = euler.y;
-      pitch = euler.x;
+      yaw = euler.y + tilt.x * TILT_LOOK.yaw;
+      pitch = euler.x - tilt.y * TILT_LOOK.pitch;
     }
   }
 
@@ -836,8 +840,8 @@ export function createField(container, { models, reducedMotion }) {
       glance.pitch *= back;
     }
     euler.setFromQuaternion(lookQ, 'YXZ');
-    euler.y += glance.yaw;
-    euler.x = THREE.MathUtils.clamp(euler.x + glance.pitch, -FLY.pitch, FLY.pitch);
+    euler.y += glance.yaw - tilt.x * TILT_LOOK.yaw;
+    euler.x = THREE.MathUtils.clamp(euler.x + glance.pitch + tilt.y * TILT_LOOK.pitch, -FLY.pitch, FLY.pitch);
     euler.z = 0;
     lookQ.setFromEuler(euler);
     camera.quaternion.slerp(lookQ, 1 - Math.exp(-dt * 3)); // unhurried, so the view never snaps
@@ -853,7 +857,13 @@ export function createField(container, { models, reducedMotion }) {
     const across = down('KeyD') - down('KeyA') + flyStick.x;
     const rise = down('KeyE') - down('KeyQ');
     yaw += (down('ArrowLeft') - down('ArrowRight')) * FLY.turn * dt;
-    camera.rotation.set(pitch, yaw, 0, 'YXZ');
+    // Tilting the phone looks aside from where the drag left the view, and comes back level.
+    camera.rotation.set(
+      THREE.MathUtils.clamp(pitch + tilt.y * TILT_LOOK.pitch, -FLY.pitch, FLY.pitch),
+      yaw - tilt.x * TILT_LOOK.yaw,
+      0,
+      'YXZ',
+    );
 
     // Forward follows the view, up and down included. E and Q rise and sink straight.
     wish.set(across, 0, -ahead).applyQuaternion(camera.quaternion);

@@ -267,7 +267,8 @@ main {
   pointer-events: none; /* lets taps reach the floating pieces behind */
 }
 
-.hero a {
+.hero a,
+.hero button {
   pointer-events: auto;
 }
 
@@ -1205,4 +1206,21 @@ html.is-flying .field.is-ready {
   border-radius: 50%;
   background: var(--accent);
   pointer-events: none;
+}
+
+/* A second way into the free camera, under the intro on the landing page */
+.hero__fly {
+  margin: 1.5rem 0 0;
+}
+
+/* "See more" under the first works on the landing page */
+.works__more {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0 0;
+}
+
+.works__more .filter {
+  min-height: 44px;
+  padding: 0 1.2rem;
 }
