@@ -9,6 +9,8 @@
 //   flyHome      a count; each change puts the flying camera back at its start
 //   flyTour      in the free camera, scrolling carries the camera along the dashed line
 //                from work to work, in place of flying freely
+//   flyLens      depth of field in the free camera (remembered between visits). Only
+//                screens that have the lens show its button: see `hasLens`
 
 const read = (key) => {
   try {
@@ -34,6 +36,10 @@ export const tiltSupported =
 export const tiltNeedsPermission =
   tiltSupported && typeof window.DeviceOrientationEvent.requestPermission === 'function';
 
+// The lens (depth of field) is left off on small and touch screens, for speed.
+export const hasLens =
+  typeof window !== 'undefined' && !window.matchMedia('(max-width: 760px), (pointer: coarse)').matches;
+
 export const reducedMotion =
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -45,6 +51,7 @@ let state = {
   flyForward: false,
   flyHome: 0,
   flyTour: false,
+  flyLens: read('noodin-lens') !== 'off',
 };
 
 // The touch joystick in the free camera: x is right (1) and left (-1), y is forward (1)
@@ -64,6 +71,7 @@ export const motion = {
     state = { ...state, ...patch };
     if ('userPaused' in patch) write('noodin-motion', state.userPaused ? 'paused' : 'playing');
     if ('tilt' in patch) write('noodin-tilt', state.tilt ? 'on' : 'off');
+    if ('flyLens' in patch) write('noodin-lens', state.flyLens ? 'on' : 'off');
     listeners.forEach((fn) => fn(state));
   },
 };

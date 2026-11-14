@@ -1,6 +1,6 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import { flyStick, motion, reducedMotion } from './motion.js';
+import { flyStick, hasLens, motion, reducedMotion } from './motion.js';
 import { fieldSupported } from './FloatingField.jsx';
 
 // Free camera for the landing page. Two ways in:
@@ -89,7 +89,7 @@ function Joystick() {
 }
 
 export default function FlyMode() {
-  const { fly, flyTour } = useSyncExternalStore(motion.subscribe, motion.get, motion.get);
+  const { fly, flyTour, flyLens } = useSyncExternalStore(motion.subscribe, motion.get, motion.get);
   const gate = useRef(null);
   const enterBtn = useRef(null);
   const exitBtn = useRef(null);
@@ -246,6 +246,16 @@ export default function FlyMode() {
               >
                 Free roam
               </button>
+              {hasLens && (
+                <button
+                  type="button"
+                  className="motion__btn"
+                  aria-pressed={flyLens}
+                  onClick={() => motion.set({ flyLens: !flyLens })}
+                >
+                  Depth of field
+                </button>
+              )}
               <button
                 type="button"
                 className="motion__btn"

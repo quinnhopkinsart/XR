@@ -34,7 +34,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
-import { flyStick, motion } from './motion.js';
+import { flyStick, hasLens, motion } from './motion.js';
 import { buildScenery } from './scenery.js';
 
 // Where the page keeps the camera. The layout is worked out from this distance, never from
@@ -212,7 +212,7 @@ export function createField(container, { models, reducedMotion }) {
   // Per split sculpture. High enough to keep every piece of the works shown now (Woodland
   // Be[AR] has 54, the Shaman 46): a lower number on phones dropped their small pieces.
   const maxParts = mobile ? 64 : 120;
-  const lens = !mobile; // depth of field; phones get the haze only
+  const lens = hasLens; // depth of field; phones get the haze only
   const random = rng(11);
   const ground = new THREE.Color(token('--ground', '#ff3314'));
 
@@ -779,6 +779,15 @@ export function createField(container, { models, reducedMotion }) {
     render(t);
   }
 
+  /** In flight the visitor can switch the depth of field off. The page always has it. */
+  function setLens() {
+    if (!bokeh) return;
+    const on = !flying || motion.get().flyLens;
+    if (bokeh.enabled === on) return;
+    bokeh.enabled = on;
+    if (!running) render();
+  }
+
   /** Starts or ends the tour. It starts from the nearest place on the line to the camera. */
   function setTour(on) {
     on = on && flying && !!scenery;
@@ -1071,6 +1080,7 @@ export function createField(container, { models, reducedMotion }) {
     setTilt(s.tilt);
     setFly(s.fly);
     setTour(s.flyTour);
+    setLens();
     if (s.flyHome !== flyHome) {
       flyHome = s.flyHome;
       if (flying && touring) tourTo = tourS = scenery.tour.start; // back to the first work
