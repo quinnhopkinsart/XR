@@ -140,6 +140,9 @@ export function validateProject(p, folder) {
       if (m?.spin != null && (!Array.isArray(m.spin) || !m.spin.every((n) => typeof n === 'string' && n.trim()) || !m.split)) {
         errors.push(`${where}: models[${i}].spin must be a list of mesh names, on a split model`);
       }
+      if (m?.neon != null && (!Array.isArray(m.neon) || m.neon.length !== 2 || !m.neon.every((t) => String(t).startsWith('--')))) {
+        errors.push(`${where}: models[${i}].neon must be two colour tokens, [core, glow]`);
+      }
       if (m?.recolor && !String(m.recolor).startsWith('--')) {
         errors.push(`${where}: models[${i}].recolor must name a token like '--black'`);
       if (m?.foreground != null && (!Array.isArray(m.foreground) || !m.foreground.every((n) => typeof n === 'string' && n.trim()) || !m.split)) {

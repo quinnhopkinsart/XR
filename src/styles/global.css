@@ -1105,43 +1105,139 @@ html.title-leads .field.is-ready {
   transform-origin: left;
 }
 
-/* The landing page's roadmap, down the right edge of the screen: one slim capsule in three
-   legs, a leg for each part of the page, with its name written down it. An empty leg is
-   black with the name in the leg's colour; it fills from the top in that colour, with the
-   name in black. The last leg, in the spirit line's blue, fills by scrolling on into the
-   flight, and an arrow under it points on down at the foot of the page */
+/* The roadmap, down the right edge of the screen (Roadmap.jsx): a Woodland spirit line, one
+   thin black line that winds in an S from under the masthead to just over the motion
+   button, with a divided circle where each leg begins. A leg fills as a core of colour
+   inside the line (`--fill`, 0 to 1). It is meant to feel like part of the page, subtle but clear, so a leg's name
+   only pops out beside its bead under the pointer or the keyboard. On the landing page
+   the legs are the parts of the page; the last, in the spirit line's blue, fills by
+   scrolling on into the flight */
 .fly-map {
-  --wide: 22px;
   position: fixed;
-  top: 50%;
-  right: max(calc((var(--gutter) - var(--wide)) / 2), env(safe-area-inset-right));
+  top: 4.75rem;
+  bottom: 4.5rem;
+  right: max(calc(var(--gutter) / 2 - 24px), 0px, env(safe-area-inset-right));
   z-index: 9;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  width: var(--wide);
-  height: min(62vh, 460px);
-  transform: translateY(-50%);
   pointer-events: none;
   transition: opacity 0.5s var(--ease);
 }
 
-/* The legs are links: only they take the pointer, never the gaps or the arrow */
+.fly-map svg {
+  display: block;
+  overflow: visible;
+}
+
+.fly-map path {
+  fill: none;
+}
+
+.fly-map path.fly-map__line {
+  fill: var(--ink);
+}
+
+.fly-map__hair {
+  stroke: var(--ink);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+/* Only the legs take the pointer */
 .fly-map__leg {
   pointer-events: auto;
-  padding: 0;
-  border: 0;
-  text-decoration: none;
+  outline: none;
 }
 
-.fly-map__leg:focus-visible {
-  outline: 3px solid var(--ink);
-  outline-offset: 2px;
+.fly-map__reach {
+  stroke: transparent;
+  pointer-events: stroke;
 }
 
-.fly-map__leg:hover {
-  transform: scaleX(1.18);
+/* The colour that runs inside the black line as a leg fills */
+.fly-map__fill {
+  stroke: var(--leg);
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc((1 - var(--fill, 0)) * 1px);
+  pointer-events: none;
+}
+
+/* A divided circle is the ground's colour, a black ring, until the page reaches its leg;
+   then its two halves take the leg's two colours */
+.fly-map path.fly-map__half,
+.fly-map__half {
+  fill: var(--ground);
+  transition: fill 0.3s var(--ease);
+}
+
+.fly-map__ring {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.fly-map__bead > * {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.fly-map__leg--intro .fly-map__half,
+.fly-map.at-works .fly-map__leg--works .fly-map__half,
+.fly-map.at-fly .fly-map__leg--fly .fly-map__half,
+.fly-map__leg.is-on .fly-map__half {
+  fill: var(--leg);
+}
+
+.fly-map__leg--intro .fly-map__half--2,
+.fly-map.at-works .fly-map__leg--works .fly-map__half--2,
+.fly-map.at-fly .fly-map__leg--fly .fly-map__half--2,
+.fly-map__leg.is-on .fly-map__half--2 {
+  fill: var(--leg-2);
+}
+
+/* The circle of the leg the visitor is in has a heavier ring, and so does one under the
+   pointer or the keyboard */
+.fly-map:not(.at-works) .fly-map__leg--intro .fly-map__ring,
+.fly-map.at-works:not(.at-fly) .fly-map__leg--works .fly-map__ring,
+.fly-map.at-fly .fly-map__leg--fly .fly-map__ring,
+.fly-map__leg.is-here .fly-map__ring,
+.fly-map__leg:hover .fly-map__ring,
+.fly-map__leg:focus-visible .fly-map__ring {
+  stroke-width: 3.2;
+}
+
+/* A leg's name: the letters in the leg's colour on a soft black plate, which is their own
+   thick outline. It pops out beside the bead under the pointer or the keyboard */
+.fly-map__tag {
+  fill: var(--leg);
+  stroke: var(--panel);
+  stroke-width: 11;
+  stroke-linejoin: round;
+  paint-order: stroke;
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateX(8px);
+  pointer-events: none;
+  transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
+}
+
+.fly-map__leg:hover .fly-map__tag,
+.fly-map__leg:focus-visible .fly-map__tag {
+  opacity: 1;
+  transform: none;
+}
+
+.fly-map__leg--intro {
+  --fill: var(--intro, 0);
+}
+
+.fly-map__leg--works {
+  --fill: var(--works, 0);
+}
+
+.fly-map__leg--fly {
+  --fill: var(--charge, 0);
 }
 
 /* The page's parts stop clear of the sticky masthead when a leg jumps to them */
@@ -1151,77 +1247,9 @@ html.title-leads .field.is-ready {
   scroll-margin-top: 5rem;
 }
 
-.fly-map__leg {
-  position: relative;
-  display: flex;
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  overflow: hidden;
-  border-radius: 3px;
-  background: var(--panel);
-  color: var(--leg);
-  /* A hairline of the ground colour, so the legs still show over the black footer */
-  box-shadow: 0 0 0 1px var(--ground);
-  transition: transform 0.3s var(--ease);
-}
-
-.fly-map__leg:first-child {
-  border-radius: 999px 999px 3px 3px;
-}
-
-.fly-map__leg--intro {
-  --leg: var(--saffron);
-  --fill: var(--intro, 0);
-}
-
-.fly-map__leg--works {
-  --leg: var(--field-pink);
-  --fill: var(--works, 0);
-  flex: 2;
-}
-
-.fly-map__leg--fly {
-  --leg: var(--spirit-line);
-  --fill: var(--charge, 0);
-  border-radius: 3px 3px 999px 999px;
-}
-
-.fly-map__name {
-  writing-mode: vertical-rl;
-  font: 600 10px/1 var(--font-display);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.fly-map__fill {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--leg);
-  color: var(--black);
-  clip-path: inset(0 0 calc((1 - var(--fill)) * 100%) 0);
-}
-
-/* The leg the page is in stands a little wider than the rest */
-.fly-map:not(.at-works) .fly-map__leg--intro,
-.fly-map.at-works:not(.at-fly) .fly-map__leg--works,
-.fly-map.at-fly .fly-map__leg--fly {
-  transform: scaleX(1.18);
-}
-
 /* The arrow under the last leg: shown at the foot of the page, where scrolling on fills
    the blue leg */
 .fly-map__on {
-  flex: none;
-  width: 20px;
-  height: 14px;
-  margin-top: 1px;
-  fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
   opacity: 0;
@@ -1230,7 +1258,7 @@ html.title-leads .field.is-ready {
 
 .fly-map__on-rim {
   stroke: var(--panel);
-  stroke-width: 6;
+  stroke-width: 5.5;
 }
 
 .fly-map__on-line {
@@ -1254,18 +1282,6 @@ html.title-leads .field.is-ready {
   }
 }
 
-/* Phones have a narrow margin: the capsule slims to fit it */
-@media (max-width: 760px) {
-  .fly-map {
-    --wide: 15px;
-    right: max(1px, env(safe-area-inset-right));
-  }
-  .fly-map__name {
-    font-size: 8px;
-    letter-spacing: 0.12em;
-  }
-}
-
 html.is-flying .fly-map {
   opacity: 0;
 }
@@ -1274,45 +1290,21 @@ html.is-flying .fly-map:not(.fly-map--flight) .fly-map__leg {
   pointer-events: none;
 }
 
-/* The flight's own roadmap: a leg for each artwork on the tour, each as long as its title
-   needs. It sits a little high, clear of the controls along the bottom */
+/* The flight's own roadmap: a leg for each artwork on the tour, from the top of the screen
+   to just over the controls along the bottom */
 html.is-flying .fly-map.fly-map--flight {
-  top: 43%;
+  top: 1rem;
+  bottom: 5.75rem;
+  right: max(10px, env(safe-area-inset-right));
   z-index: 31;
-  height: min(74vh, 640px);
   opacity: 1;
-}
-
-.fly-map--flight .fly-map__leg {
-  flex: 1 0 18px;
-  box-shadow: none;
-}
-
-.fly-map--flight .fly-map__leg:last-child {
-  border-radius: 3px 3px 999px 999px;
-}
-
-.fly-map--flight .fly-map__leg.is-here {
-  transform: scaleX(1.18);
-}
-
-.fly-map--flight .fly-map__name {
-  font-size: 9px;
-  letter-spacing: 0.1em;
-}
-
-@media (max-width: 760px), (max-height: 700px) {
-  .fly-map--flight .fly-map__name {
-    font-size: 8px;
-    letter-spacing: 0.05em;
-  }
 }
 
 /* Phones keep the taller controls along the bottom clear */
 @media (max-width: 760px) {
   html.is-flying .fly-map.fly-map--flight {
-    top: 40%;
-    height: min(64vh, 640px);
+    right: max(2px, env(safe-area-inset-right));
+    bottom: 9.5rem;
   }
 }
 

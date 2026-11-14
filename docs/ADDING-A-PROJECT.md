@@ -122,6 +122,7 @@ models: [
 | `exclude` | Mesh names to leave out when splitting (case-insensitive, partial match). Use it for backdrops, occluders, portal masks and ground planes much larger than the sculpture. |
 | `hero` | Always shown, larger, on the first screen beside the title. |
 | `recolor` | Replaces the materials with a glossy finish in a token colour, for example `'--black'` or `'--saffron'`. Use it when a material relies on a custom shader or reads poorly on the red ground. |
+| `neon` | Draws the piece as a neon tube: `['--neon-core', '--neon-red']`, the pale colour of the tube itself and the colour of the glow round it, both colour tokens. Use it in place of `recolor`. |
 | `scale` | Multiplies the piece's size. Default 1. |
 
 Keep each file under about 2 MB. Compress a heavy model before adding it:

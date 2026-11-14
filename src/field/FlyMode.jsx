@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { site } from '../brand/site.js';
 import { flyStick, hasLens, motion, reducedMotion, requestTilt, tiltSupported } from './motion.js';
 import { fieldSupported } from './FloatingField.jsx';
+import Roadmap from './Roadmap.jsx';
 
 // Free camera for the landing page. Two ways in:
 //   - the button at the foot of the page (the one way for keyboards, switches and
@@ -34,18 +35,19 @@ import { fieldSupported } from './FloatingField.jsx';
 //   hold   ms the bar waits before it starts to empty
 //   drain  how fast it empties, in bars a second
 //
-// The roadmap down the right edge of the screen (`fly-map`) shows the way there. It has a
-// leg for each part of the page, each in its own colour with its name written down it:
-// the intro, the works, and the 3D part. An empty leg is black with its name in its colour;
-// the filled part is the colour with the name in black. At the foot of the page an arrow
-// under the last leg points on down. A leg fills as its part of the page is scrolled,
-// and the last one, in the spirit line's blue, fills by scrolling on past the end. Quinn
-// asked for it: on the right, like a roadmap, a colour for each section, filling as you
-// scroll (his first idea, a yellow bar that turns blue at the 3D part, ran across the top).
-// Where scrolling on does nothing (reduced motion) the last leg fills at the foot.
+// The roadmap down the right edge of the screen (`fly-map`, drawn by Roadmap.jsx) shows the
+// way there: a Woodland spirit line, one thin black line that winds from the top of the
+// screen to the bottom in an S, with a leg for each part of the page (the intro, the works,
+// the 3D part) and a divided circle where each begins. A leg fills as a core of its own
+// colour inside the line as its part of the page is scrolled, and the last one, in the spirit line's blue, fills by scrolling on past the
+// end. At the foot of the page an arrow under it points on down. A leg's name pops out
+// beside its bead under the pointer. Quinn asked for it: on the right, like a roadmap, a
+// colour for each section, filling as you scroll (Roadmap.jsx has how its look was
+// arrived at). Where scrolling on does nothing (reduced motion) the last leg fills at the
+// foot.
 // The flight has a roadmap of its own in the same style (`fly-map--flight`), which Quinn
-// asked for: a leg for each artwork, in the order the tour passes them, each as long as
-// its title needs. A leg fills as the camera turns to its work, so a full leg is a work
+// asked for: a leg for each artwork, in the order the tour passes them, on the same winding
+// line. A work's title pops out beside its bead under the pointer. A leg fills as the camera turns to its work, so a full leg is a work
 // seen and the last full one is the work in view; that one also stands wider. (The first
 // version filled a leg on the way on from its work, and Quinn found it still said Trading
 // Post Humanism while he was looking at 13 Moon Calendar.) field.js sends the place on the tour in `field:tour`
@@ -55,9 +57,9 @@ const WORK_COLOURS = ['--saffron', '--field-pink', '--spirit-line', '--white'];
 // Each leg is a link to the top of its part of the page (`to` is that part's id), which
 // Quinn asked for.
 const LEGS = [
-  { name: 'intro', label: 'Intro', to: 'intro' },
-  { name: 'works', label: 'Works', to: 'works' },
-  { name: 'fly', label: '3D', to: 'fly' },
+  { name: 'intro', label: 'Intro', to: 'intro', weight: 1, colour: '--saffron', second: '--white' },
+  { name: 'works', label: 'Works', to: 'works', weight: 2, colour: '--field-pink', second: '--saffron' },
+  { name: 'fly', label: '3D', to: 'fly', weight: 1, colour: '--spirit-line', second: '--white' },
 ];
 
 /** Scrolls to the top of a part of the page, without leaving a # in the address. */
@@ -169,6 +171,7 @@ export default function FlyMode() {
       // A work's leg fills as the camera turns to it, so the first is full from the start.
       leg.style.setProperty('--fill', Math.min(1, Math.max(0, at - i + 1)).toFixed(3));
       leg.classList.toggle('is-here', i === here);
+      leg.classList.toggle('is-on', at - i + 1 > 0.02);
     });
   };
   useEffect(() => {
@@ -337,6 +340,7 @@ export default function FlyMode() {
   };
 
   const coarse = window.matchMedia('(pointer: coarse)').matches;
+  const narrow = window.matchMedia('(max-width: 760px)').matches;
   const forward = (on) => () => motion.set({ flyForward: on });
   const holdKey = (on) => (e) => {
     if (e.key === ' ' || e.key === 'Enter') {
@@ -358,23 +362,22 @@ export default function FlyMode() {
       )}
 
       {createPortal(
-        <nav className="fly-map" ref={meter} aria-label="Parts of this page">
-          {LEGS.map((leg) => (
-            <a key={leg.name} className={`fly-map__leg fly-map__leg--${leg.name}`} href={`#${leg.to}`} onClick={jump(leg.to)}>
-              <span className="fly-map__name">{leg.label}</span>
-              {/* The filled part: the same name again in black on the leg's colour, cut off
-                  at how far the leg has filled, so the letters change as the colour passes. */}
-              <span className="fly-map__fill" aria-hidden="true">
-                <span className="fly-map__name">{leg.label}</span>
-              </span>
-            </a>
-          ))}
-          {/* Black under blue, so it shows on the red ground and over the black footer. */}
-          <svg className="fly-map__on" viewBox="0 0 20 14" focusable="false" aria-hidden="true">
-            <path className="fly-map__on-rim" d="M4 4l6 6 6-6" />
-            <path className="fly-map__on-line" d="M4 4l6 6 6-6" />
-          </svg>
-        </nav>,
+        <Roadmap
+          innerRef={meter}
+          label="Parts of this page"
+          slim={narrow}
+          arrow
+          legs={LEGS.map((leg) => ({
+            key: leg.name,
+            label: leg.label,
+            weight: leg.weight,
+            colour: leg.colour,
+            second: leg.second,
+            className: `fly-map__leg--${leg.name}`,
+            href: `#${leg.to}`,
+            onPress: jump(leg.to),
+          }))}
+        />,
         document.body,
       )}
 
@@ -382,22 +385,20 @@ export default function FlyMode() {
         flyTour &&
         tourWorks.length > 0 &&
         createPortal(
-          <nav className="fly-map fly-map--flight" ref={flightMap} aria-label="Works on the tour">
-            {tourWorks.map((title, i) => (
-              <button
-                key={title}
-                type="button"
-                className="fly-map__leg"
-                style={{ '--leg': `var(${WORK_COLOURS[i % WORK_COLOURS.length]})`, flexGrow: title.length }}
-                onClick={() => window.dispatchEvent(new CustomEvent('field:goto', { detail: i }))}
-              >
-                <span className="fly-map__name">{title}</span>
-                <span className="fly-map__fill" aria-hidden="true">
-                  <span className="fly-map__name">{title}</span>
-                </span>
-              </button>
-            ))}
-          </nav>,
+          <Roadmap
+            innerRef={flightMap}
+            className="fly-map--flight"
+            onDraw={showTour}
+            label="Works on the tour"
+            slim={narrow}
+            legs={tourWorks.map((title, i) => ({
+              key: title,
+              label: title,
+              colour: WORK_COLOURS[i % WORK_COLOURS.length],
+              second: WORK_COLOURS[(i + 1) % WORK_COLOURS.length],
+              onPress: () => window.dispatchEvent(new CustomEvent('field:goto', { detail: i })),
+            }))}
+          />,
           document.body,
         )}
 
