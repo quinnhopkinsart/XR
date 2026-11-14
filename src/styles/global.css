@@ -1116,7 +1116,7 @@ html.title-leads .field.is-ready {
   position: fixed;
   top: 4.75rem;
   bottom: 4.5rem;
-  right: max(calc(var(--gutter) / 2 - 24px), 0px, env(safe-area-inset-right));
+  right: max(calc(var(--gutter) / 2 - 29px), 0px, env(safe-area-inset-right));
   z-index: 9;
   pointer-events: none;
   transition: opacity 0.5s var(--ease);
@@ -1131,13 +1131,15 @@ html.title-leads .field.is-ready {
   fill: none;
 }
 
+/* The line's black is the site's own see-through line colour, so it sits in the page the
+   way the masthead's rule does. It darkens only where a leg has filled */
 .fly-map path.fly-map__line {
-  fill: var(--ink);
+  fill: var(--line);
 }
 
 .fly-map__hair {
-  stroke: var(--ink);
-  stroke-width: 1.6;
+  stroke: var(--line);
+  stroke-width: 2.2;
   stroke-linecap: round;
 }
 
@@ -1160,6 +1162,11 @@ html.title-leads .field.is-ready {
   pointer-events: none;
 }
 
+.fly-map__fill--edge {
+  stroke: var(--ink);
+  stroke-opacity: 0.6;
+}
+
 /* A divided circle is the ground's colour, a black ring, until the page reaches its leg;
    then its two halves take the leg's two colours */
 .fly-map path.fly-map__half,
@@ -1170,8 +1177,19 @@ html.title-leads .field.is-ready {
 
 .fly-map__ring {
   fill: none;
-  stroke: var(--ink);
+  stroke: var(--line);
   stroke-width: 2;
+  transition: stroke 0.3s var(--ease);
+}
+
+/* A circle the page has reached, or one under the pointer, has a full black ring */
+.fly-map__leg--intro .fly-map__ring,
+.fly-map.at-works .fly-map__leg--works .fly-map__ring,
+.fly-map.at-fly .fly-map__leg--fly .fly-map__ring,
+.fly-map__leg.is-on .fly-map__ring,
+.fly-map__leg:hover .fly-map__ring,
+.fly-map__leg:focus-visible .fly-map__ring {
+  stroke: var(--ink);
 }
 
 .fly-map__bead > * {

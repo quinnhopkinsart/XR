@@ -14,20 +14,24 @@ import { useEffect, useId, useRef, useState } from 'react';
 // the top of the screen to the bottom, and thin, with the section's title popping out on
 // hover so the line can stay thin. Then he asked for it to look like a Woodland spirit
 // line. Keep it one slim flowing black line, never blocks, and keep the type off it until
-// it is asked for.
+// it is asked for. Its black is the site's own line colour (`--line`, see-through black,
+// as on the masthead's rule), which Quinn asked for so it matches the site and stays
+// subtle: the line ahead is faint, and it darkens only where a leg has filled.
 //
 // Sizes are in pixels: the line is drawn to the height its CSS gives it. `wide` is the
 // black line's width, the same all the way down (Quinn asked for a steady even thickness
-// with only the ends tapered; the first drawing swelled and thinned), `core` the width of the colour inside
+// with only the ends tapered; the first drawing swelled and thinned; he then had it made
+// a bit fatter and smoother), `core` the width of the colour inside
 // it, `sway` how far the S swings to each side, `bead` a circle's radius, `hair` the
 // length of the short hairs, `type` the size of the names, `pad` the room at the two
 // ends, `point` the length of the taper at the foot. `slim` is for phones, where the
 // margin is narrow.
-const FULL = { wide: 5.5, core: 2.4, sway: 11, bead: 6.5, hair: 6, type: 11, pad: 12, point: 46 };
-const SLIM = { wide: 4.5, core: 2, sway: 4, bead: 5, hair: 4, type: 10, pad: 9, point: 34 };
+const FULL = { wide: 8.5, core: 3.8, sway: 11, bead: 8, hair: 6, type: 11, pad: 12, point: 76 };
+const SLIM = { wide: 6, core: 2.8, sway: 4, bead: 6, hair: 4, type: 10, pad: 9, point: 52 };
 // About one whole S for every `PERIOD` pixels of length, always a whole number of them.
 const PERIOD = 380;
-const STEP = 4;
+// How far apart the points of the drawn curve are: close, so it reads as one smooth line.
+const STEP = 2;
 
 /**
  * legs: [{ key, label, weight, colour, second, className, href, onPress }]
@@ -94,7 +98,8 @@ export default function Roadmap({ legs, slim = false, arrow = false, className =
   // point over its last stretch.
   const half = (y) => {
     const taper = Math.min(1, y / lead, (total - y) / s.point);
-    return (s.wide / 2) * Math.max(0, taper) ** 0.7;
+    // A long, rounded taper that eases into the full width with no shoulder.
+    return (s.wide / 2) * Math.sin((Math.PI / 2) * Math.max(0, taper)) ** 0.8;
   };
   const side = (y, sign) => {
     const slope = (x(y + 1) - x(y - 1)) / 2;
@@ -151,6 +156,9 @@ export default function Roadmap({ legs, slim = false, arrow = false, className =
                 {/* Unseen and much wider than the line: what the pointer presses. */}
                 <path className="fly-map__reach" d={leg.d} strokeWidth={width} />
                 {/* The colour inside the black line, kept inside its shape. */}
+                {/* Where a leg has filled, the line itself darkens from the site's faint line
+                    colour toward black, so the colour has an edge to sit in. */}
+                <path className="fly-map__fill fly-map__fill--edge" d={leg.d} pathLength="1" strokeWidth={s.wide + 2} clipPath={`url(#${id}-body)`} />
                 <path className="fly-map__fill" d={leg.d} pathLength="1" strokeWidth={s.core} clipPath={`url(#${id}-body)`} />
                 {/* A divided circle, as on a spirit line: two halves and the line between them. */}
                 <g className="fly-map__bead" transform={`translate(${cx.toFixed(2)} ${cy.toFixed(2)}) rotate(-32)`}>
