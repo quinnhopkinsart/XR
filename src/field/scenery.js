@@ -76,8 +76,10 @@ const FIELD_WOBBLE = 0.2;
 // out to the edge of the line's colour round them; `rim` is how wide that ring of the
 // line's colour is and `edge` how wide the orb's own outline inside it, both as shares of
 // the radius, and what is left in the middle is the orb's fill. Every `smile`th orb is a
-// smiley face, which Quinn asked for (it was every third; he wanted fewer): its fill is the first colour of `face` (yellow) and
-// its eyes and smile the second. `taper` is how long the line takes to swell to a bead and narrow again (a share of the
+// smiley face, which Quinn asked for (it was every third; he wanted fewer): its fill is the first colour of `face` (yellow), its
+// eyes and smile the second and its outline the third (purple: Quinn did not like the
+// smileys on white). Smileys keep at least `apart` clear of every work's zone, so nobody
+// reads one as part of a work or as a comment on it, which Quinn asked for. `taper` is how long the line takes to swell to a bead and narrow again (a share of the
 // bead's size: smaller is rounder, larger is more of a spindle).
 // Quinn first asked for a subtle pulse and wave, then for more sine wave motion and more
 // meander than the first version had (wave 1.6, no sway, meander 5): the pulse stays
@@ -109,7 +111,8 @@ const SPIRIT = {
   edge: 0.23,
   taper: 0.62,
   smile: 7,
-  face: ['--saffron', '--black'],
+  apart: 16,
+  face: ['--saffron', '--black', '--tag-purple'],
   colour: '--spirit-line',
   fills: ['--saffron', '--tag-purple', '--field-pink', '--black', '--white', '--tag-teal', '--oxblood', '--tag-green'],
 };
@@ -470,6 +473,16 @@ export function buildScenery({ zones, token, random, view }) {
       fill: SPIRIT.fills[i % SPIRIT.fills.length],
     });
   }
+  // Which beads are smileys: one in `smile`, chosen from the beads that sit well clear of
+  // every work (or the clearest ones, if too few do), spread out along the line.
+  const clear = beads.map((b) => {
+    const at = spiritPath.getPointAt(b.u);
+    return Math.min(...zones.map((z) => at.distanceTo(z.centre.clone().setY(z.lift)) - Math.max(z.radius, z.height / 2)));
+  });
+  const wanted = Math.max(1, Math.round(SPIRIT.orbs / SPIRIT.smile));
+  let open = beads.map((_, i) => i).filter((i) => clear[i] >= SPIRIT.apart);
+  if (open.length < wanted) open = beads.map((_, i) => i).sort((a, b) => clear[b] - clear[a]).slice(0, wanted).sort((a, b) => a - b);
+  const smileys = new Set(Array.from({ length: wanted }, (_, k) => open[Math.floor(((k + 0.5) * open.length) / wanted)]));
   /** How thick the line is at a point `u` (0 to 1) of the way round: its own thickness,
       rising in a smooth hump to each bead's size and falling away again. */
   const swell = (u) => {
@@ -564,11 +577,11 @@ export function buildScenery({ zones, token, random, view }) {
   const orbs = beads.map((b, i) => {
     const on = spiritPath.getPointAt(b.u);
     const card = new THREE.Group();
-    const smiley = i % SPIRIT.smile === 1;
+    const smiley = smileys.has(i);
     const fill = smiley ? SPIRIT.face[0] : SPIRIT.fills[i % SPIRIT.fills.length];
     let edge = SPIRIT.fills[(i + 2 + (i % 3)) % SPIRIT.fills.length];
     if (edge === fill) edge = SPIRIT.fills[(i + 1) % SPIRIT.fills.length];
-    if (smiley && (edge === SPIRIT.face[0] || edge === SPIRIT.face[1])) edge = '--tag-purple';
+    if (smiley) edge = SPIRIT.face[2];
     const inner = 1 - SPIRIT.rim - SPIRIT.edge;
     if (smiley) {
       // Two eyes and a smile on the fill. The card copies the camera's turn, so the face
@@ -635,6 +648,11 @@ export function buildScenery({ zones, token, random, view }) {
   const to = new THREE.Vector3();
   // The tour begins at the work straight ahead of where the flight starts.
   const ahead0 = zones.reduce((a, z, i) => (Math.abs(z.centre.x) < Math.abs(zones[a].centre.x) ? i : a), 0);
+  /** How far the gaze has turned to the next work, for a share of the way there. */
+  const turned = (share) => {
+    const f = THREE.MathUtils.clamp((share - 0.2) / 0.6, 0, 1);
+    return f * f * f * (f * (f * 6 - 15) + 10);
+  };
   const tour = {
     length: long,
     start: marks[ahead0].at,
@@ -646,7 +664,9 @@ export function buildScenery({ zones, token, random, view }) {
       const at = marks[(ahead0 + k) % marks.length].at;
       return at + Math.round((s - at) / long) * long;
     },
-    /** How far round the tour `s` is, in works passed: 1.5 is half way from the second to the third. */
+    /** How far round the tour `s` is, in works: 1 is at the second work, 1.5 is when the
+        gaze has turned half way from the second to the third. It follows the gaze, not the
+        distance, so the roadmap names the work the camera is looking at. */
     where(s) {
       const here = wrap(s) * long;
       let i = marks.length - 1;
@@ -654,7 +674,8 @@ export function buildScenery({ zones, token, random, view }) {
       const a = marks[i];
       const b = marks[(i + 1) % marks.length];
       const gap = (b.at - a.at + long) % long || long;
-      return ((i - ahead0 + marks.length) % marks.length) + ((here - a.at + long) % long) / gap;
+      // Wrapped, so arriving back at the first work reads as 0, never as a full round.
+      return (((i - ahead0 + marks.length) % marks.length) + turned(((here - a.at + long) % long) / gap)) % marks.length;
     },
     poseAt(s, eye, look) {
       path.getPointAt(wrap(s), eye);
@@ -666,8 +687,7 @@ export function buildScenery({ zones, token, random, view }) {
       const a = marks[i];
       const b = marks[(i + 1) % marks.length];
       const gap = (b.at - a.at + long) % long || long;
-      const f = THREE.MathUtils.clamp((((here - a.at + long) % long) / gap - 0.2) / 0.6, 0, 1);
-      const k = f * f * f * (f * (f * 6 - 15) + 10);
+      const k = turned(((here - a.at + long) % long) / gap);
       from.copy(a.look).sub(eye).normalize();
       to.copy(b.look).sub(eye).normalize();
       if (from.dot(to) < -0.95) to.x += 0.2; // nearly opposite: pick a side to turn through
