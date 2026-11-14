@@ -117,6 +117,44 @@ function recolor(root, colour) {
 }
 
 /**
+ * Makes a model a neon tube: its own surface in a pale, unlit core colour, with two shells
+ * of the glow colour pushed out round it, a solid rim and a wide soft halo. The field has
+ * no bloom pass, so the glow is drawn. `NEON` is how far each shell stands off, in the
+ * model's own units, and how solid the halo is.
+ */
+const NEON = { rim: 0.03, halo: 0.1, soft: 0.38 };
+function neon(root, core, glow) {
+  const tube = new THREE.MeshBasicMaterial({ color: new THREE.Color(core), toneMapped: false });
+  const shell = (push, opacity) => {
+    const material = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(glow),
+      side: THREE.BackSide,
+      transparent: opacity < 1,
+      opacity,
+      depthWrite: opacity >= 1,
+      toneMapped: false,
+    });
+    material.onBeforeCompile = (shader) => {
+      shader.uniforms.neonPush = { value: push };
+      shader.vertexShader = `uniform float neonPush;\n${shader.vertexShader}`.replace(
+        '#include <begin_vertex>',
+        '#include <begin_vertex>\n  transformed += normalize(normal) * neonPush;',
+      );
+    };
+    material.customProgramCacheKey = () => `neon-${push}`;
+    return material;
+  };
+  const rim = shell(NEON.rim, 1);
+  const halo = shell(NEON.halo, NEON.soft);
+  const meshes = [];
+  root.traverse((o) => o.isMesh && meshes.push(o));
+  for (const o of meshes) {
+    o.material = tube;
+    o.add(new THREE.Mesh(o.geometry, rim), new THREE.Mesh(o.geometry, halo));
+  }
+}
+
+/**
  * Turns one model spec from a project.js into a sculpture: its parts, where each sat
  * in the original (relative to the sculpture's centre), and the scale that brings the
  * whole to unit size.
@@ -150,6 +188,7 @@ function sculptureFrom(gltf, spec, maxParts) {
       const part = toPart(copy);
       if (isFront(mesh.name) || isFront(mesh.parent?.name)) {
         if (spec.recolor) recolor(part.pivot, token(spec.recolor, '#000000'));
+        if (spec.neon) neon(part.pivot, token(spec.neon[0], '#ffffff'), token(spec.neon[1], '#ff0000'));
         part.home = new THREE.Vector3();
         // A drawing on a plane (a cut-out texture), as against modelled wire or tube.
         mesh.geometry.computeBoundingBox();
@@ -198,6 +237,7 @@ function sculptureFrom(gltf, spec, maxParts) {
 
   for (const part of parts) {
     if (spec.recolor) recolor(part.pivot, token(spec.recolor, '#000000'));
+    if (spec.neon) neon(part.pivot, token(spec.neon[0], '#ffffff'), token(spec.neon[1], '#ff0000'));
     part.home = part.centre.clone().sub(centre);
   }
   return [
