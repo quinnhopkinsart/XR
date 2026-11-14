@@ -15,8 +15,8 @@
 // from, in turn, rising to the ones that hang high and dropping to the ones below. Its
 // waves run slowly along it.
 //
-// Behind all the works runs one large spirit line: a thick light-blue line that loops round
-// the outside of the ring of works, meandering, with orbs strung on it like beads on a
+// Round all the works runs one large spirit line: a thick light-blue line that goes round
+// each work in turn, over one and under the next, and crosses the gaps between them, with orbs strung on it like beads on a
 // string: the line swells round each one and narrows again in one smooth curve, so the
 // bead's rim is the line itself. Two sine waves move along it, one up and
 // down and one in and out, so it snakes, and its thickness swells and eases in a gentle
@@ -60,9 +60,11 @@ const FIELD_LINE = 0.1;
 // far the line's corners are rounded off (0 keeps them sharp).
 const TRAIL = { dash: 0.9, gap: 0.8, thick: 0.16, height: 1.1, length: 13, speed: 1.6, under: 3.2, frame: 1.3, swing: 0.15, smooth: 9, colour: '--black' };
 const FIELD_WOBBLE = 0.2;
-// The spirit line. `behind` is how far outside a zone it passes, `thick` its radius,
-// `meander` how far it strays side to side and up and down from the straight way round,
-// `bends` roughly how many such bends there are in the loop. Two sine waves move along
+// The spirit line. It goes round each work: `clear` is how far it stays from a work's
+// sides, from its top or foot, and how far behind the middle of the work it runs. `thick`
+// is its radius, `meander` how far it strays in and out and up and down between works and
+// round the back of the ring, `bends` roughly how many such bends a whole loop of
+// meandering would have. Two sine waves move along
 // it: `wave` is the height of the one that lifts and drops it, `waves` how many of them
 // there are round the loop, `drift` how fast they move (turns of the wave a second);
 // `sway`, `sways` and `slide` are the same for the one that swings it in toward the centre
@@ -74,9 +76,11 @@ const FIELD_WOBBLE = 0.2;
 // bead's size: smaller is rounder, larger is more of a spindle).
 // Quinn first asked for a subtle pulse and wave, then for more sine wave motion and more
 // meander than the first version had (wave 1.6, no sway, meander 5): the pulse stays
-// gentle, the waves are plain to see.
+// gentle, the waves are plain to see. He then asked for larger orbs with more colour
+// inside (they were 1.8 to 3.2 with a 0.76 core), and for the line to go round the models
+// and fill the space between them, where it had only passed behind each one.
 const SPIRIT = {
-  behind: 11,
+  clear: [7, 6, 4],
   thick: 0.85,
   meander: 9,
   bends: 15,
@@ -90,8 +94,8 @@ const SPIRIT = {
   beats: 9,
   beat: 0.12,
   orbs: 20,
-  orb: [1.8, 3.2],
-  core: 0.76,
+  orb: [3.2, 5.4],
+  core: 0.86,
   taper: 0.85,
   colour: '--spirit-line',
   fills: ['--saffron', '--field-pink', '--tag-teal', '--white', '--oxblood'],
@@ -372,39 +376,66 @@ export function buildScenery({ zones, token, random, view }) {
   }
   group.add(dashes);
 
-  // The spirit line. Its way round: behind each zone in turn, out past the zone's far side
-  // and at most of its height, then on round the back of the ring to close the loop. Points
-  // between those swing in and out and up and down, so it meanders.
+  // The spirit line. Its way round: it goes round each work in turn, not straight behind
+  // it. Seen from the centre, it comes in at one side of a work, runs up that side, over
+  // the top and down the other, like an arch over the work, or the same upside down, like
+  // a cradle under it: over one work and under the next, so it weaves, with a work that
+  // hangs high always arched over and a work sunk low always cradled. It runs just behind
+  // the sculptures, clear of them by `clear`. Between two works it crosses the gap on a
+  // slant, from the foot of one to the head of the next, and swings toward the centre on
+  // the way, which fills the empty space between them. Round the back of the ring, where
+  // there are no works, it meanders in and out and up and down to close the loop.
   const span = Math.PI * 2;
-  const angles = zones.map((z) => Math.atan2(z.centre.x, -z.centre.z)); // 0 is straight ahead
-  const outAt = (a) => {
-    // Its distance out and its height at a compass angle: taken from the zones either
-    // side of that angle, and from the nearest zone alone round the back.
-    let r = 0;
-    let y = 0;
-    let weight = 0;
-    zones.forEach((z, i) => {
-      let d = Math.abs(a - angles[i]) % span;
-      d = Math.min(d, span - d);
-      const w = 1 / (0.02 + d * d);
-      r += (Math.hypot(z.centre.x, z.centre.z) + z.radius * 0.6 + SPIRIT.behind) * w;
-      y += z.lift * 0.8 * w;
-      weight += w;
-    });
-    return { r: r / weight, y: y / weight };
-  };
+  const up = new THREE.Vector3(0, 1, 0);
+  const order = zones
+    .map((z) => ({ z, a: Math.atan2(z.centre.x, -z.centre.z) })) // 0 is straight ahead
+    .sort((p, q) => p.a - q.a);
   const knots = [];
-  const steps = SPIRIT.bends * 2;
-  for (let i = 0; i < steps; i += 1) {
-    const a = (i / steps) * span - Math.PI;
-    const { r, y } = outAt(a);
-    const swing = i % 2 ? 1 : -1;
-    knots.push(
-      new THREE.Vector3(Math.sin(a), 0, -Math.cos(a))
-        .multiplyScalar(r + swing * SPIRIT.meander * (0.5 + random() * 0.5))
-        .setY(y + swing * SPIRIT.meander * (random() - 0.2)),
-    );
-  }
+  let over = true;
+  let last = null; // where the line left the work before, and how high
+  order.forEach(({ z, a }, i) => {
+    const outward = new THREE.Vector3(Math.sin(a), 0, -Math.cos(a));
+    const across = new THREE.Vector3(Math.cos(a), 0, Math.sin(a)); // left to right, seen from the centre
+    const arch = z.lift > 0 ? true : z.lift < 0 ? false : over;
+    if (z.lift === 0) over = !over;
+    const side = z.width / 2 + SPIRIT.clear[0];
+    const top = z.height / 2 + SPIRIT.clear[1];
+    const middle = z.centre.clone().setY(z.lift).addScaledVector(outward, SPIRIT.clear[2]);
+    const at = (deg) => {
+      const t = THREE.MathUtils.degToRad(deg);
+      return middle
+        .clone()
+        .addScaledVector(across, Math.cos(t) * side)
+        .addScaledVector(up, Math.sin(t) * top * (arch ? 1 : -1));
+    };
+    const round = [208, 155, 90, 25, -28].map(at);
+    if (last) {
+      // The crossing between two works: half way, swung in toward the centre.
+      const mid = last.clone().lerp(round[0], 0.5);
+      mid.addScaledVector(new THREE.Vector3(mid.x, 0, mid.z).normalize(), -SPIRIT.meander * 0.8);
+      knots.push(mid);
+    }
+    knots.push(...round);
+    last = round[round.length - 1];
+    if (i === order.length - 1) {
+      // Round the back, from the last work to the first.
+      const from = Math.atan2(last.x, -last.z);
+      const first = knots[0];
+      const to = Math.atan2(first.x, -first.z) + span;
+      const steps = Math.max(4, Math.round(((to - from) / span) * SPIRIT.bends * 2));
+      for (let k = 1; k < steps; k += 1) {
+        const f = k / steps;
+        const b = from + (to - from) * f;
+        const swing = k % 2 ? 1 : -1;
+        const r = THREE.MathUtils.lerp(Math.hypot(last.x, last.z), Math.hypot(first.x, first.z), f);
+        knots.push(
+          new THREE.Vector3(Math.sin(b), 0, -Math.cos(b))
+            .multiplyScalar(r + swing * SPIRIT.meander * (0.5 + random() * 0.5))
+            .setY(THREE.MathUtils.lerp(last.y, first.y, f) + swing * SPIRIT.meander * (0.4 + random() * 0.6)),
+        );
+      }
+    }
+  });
   const spiritPath = new THREE.CatmullRomCurve3(knots, true, 'catmullrom', 0.5);
   const spiritTime = { value: 0 };
   const long2 = spiritPath.getLength();
