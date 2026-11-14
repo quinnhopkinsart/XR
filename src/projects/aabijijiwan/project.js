@@ -14,6 +14,13 @@ const cover =
 // Listed on the home grid since November 13, 2026, on Quinn's call. The description names
 // Kaswentha, the Two Row Wampum belt, at his request.
 
+// The floating background shows the sculpture too, at Quinn's request (November 14, 2026).
+// aabijijiwan-field.glb is the viewer's model made lighter for the home page: 30% of the
+// triangles and a 1024 px wood texture (gltf-transform simplify, resize, draco). Its mirror
+// materials are less metallic than the viewer's, because the field has no surroundings for
+// a mirror to reflect and a full mirror draws black there.
+import fieldModel from './models/aabijijiwan-field.glb?url';
+
 // Text, status and the hidden flag live in content.json beside this file.
 export default {
   // This work's page on the portfolio: noodinstudio.com/project.html?slug=<this>.
@@ -27,5 +34,8 @@ export default {
 
   cover,
 
-  models: [],
+  // The model's four materials are its four parts, so it stays in one piece.
+  // flight: in the landing page's free camera it hangs high and three times its page size,
+  // large overhead, as the real one hangs in the atrium (Quinn's request).
+  models: [{ src: fieldModel, split: true, flight: { scale: 3, lift: 17 } }],
 };

@@ -5,7 +5,8 @@
 // there), with the work's title under them. There is no floor, by Quinn's choice.
 //
 // Far off, all flat shapes in the site's colours:
-//   - large round colour fields
+//   - large colour fields: round but uneven, like a shape cut by hand, each with a thick
+//     outline of one even width in a second colour
 //   - four-pointed stars, higher up
 //   - stick pine trees in groves, all standing at one level, further out than the camera
 //     can fly: flat and very simple, a few black lines, like a drawing on the horizon
@@ -26,7 +27,21 @@ export const SCENERY = {
   groves: { count: 8, near: 100, far: 150, trees: [3, 7], height: [9, 20] },
 };
 
-const FIELD_COLOURS = ['--saffron', '--oxblood', '--tag-purple', '--tag-teal', '--tag-green', '--ground-deep', '--black'];
+// Colour fields: [fill, outline]. `FIELD_LINE` is the outline's width against the field's
+// radius, `FIELD_WOBBLE` how far the edge strays from a circle.
+const FIELD_COLOURS = [
+  ['--saffron', '--black'],
+  ['--oxblood', '--saffron'],
+  ['--tag-purple', '--black'],
+  ['--tag-teal', '--oxblood'],
+  ['--black', '--saffron'],
+  ['--tag-green', '--black'],
+  ['--ground-deep', '--tag-purple'],
+  ['--saffron', '--tag-teal'],
+  ['--oxblood', '--black'],
+];
+const FIELD_LINE = 0.1;
+const FIELD_WOBBLE = 0.2;
 const STAR_COLOURS = ['--white', '--white', '--saffron'];
 const MARK_COLOURS = ['--black', '--black', '--white', '--saffron'];
 
@@ -35,6 +50,41 @@ function mark(n) {
   const bars = [];
   for (let i = 0; i < n; i += 1) bars.push(new THREE.PlaneGeometry(1, 0.16).rotateZ((i * Math.PI) / n + (n === 3 ? Math.PI / 2 : 0)));
   return mergeGeometries(bars);
+}
+
+/**
+ * A colour field's shape: a closed, uneven round, about one unit in radius, different every
+ * time. Returns two flat geometries: the fill, and an outline of one even width all the
+ * way round, lying just outside it.
+ */
+function blob(random) {
+  const waves = [2, 3, 4, 5].map((n) => ({ n, amp: (random() - 0.5) * 2 * (FIELD_WOBBLE / (n - 0.6)), phase: random() * Math.PI * 2 }));
+  const count = 96;
+  const edge = [];
+  for (let i = 0; i < count; i += 1) {
+    const a = (i / count) * Math.PI * 2;
+    const r = 1 + waves.reduce((sum, w) => sum + Math.sin(a * w.n + w.phase) * w.amp, 0);
+    edge.push(new THREE.Vector2(Math.cos(a) * r, Math.sin(a) * r));
+  }
+  const fill = new THREE.ShapeGeometry(new THREE.Shape(edge));
+
+  // The outline: each edge point pushed straight out from the edge by the same distance.
+  const positions = [];
+  const index = [];
+  for (let i = 0; i < count; i += 1) {
+    const before = edge[(i + count - 1) % count];
+    const after = edge[(i + 1) % count];
+    const along = after.clone().sub(before).normalize();
+    const p = edge[i];
+    positions.push(p.x, p.y, 0, p.x + along.y * FIELD_LINE, p.y - along.x * FIELD_LINE, 0);
+    const a = i * 2;
+    const b = ((i + 1) % count) * 2;
+    index.push(a, a + 1, b + 1, a, b + 1, b);
+  }
+  const line = new THREE.BufferGeometry();
+  line.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  line.setIndex(index);
+  return { fill, line };
 }
 
 /** A four-pointed star with sides that curve in. Two units point to point. */
@@ -96,8 +146,8 @@ function label(title, token) {
 }
 
 /**
- * zones: [{ title, centre: Vector3, radius, floor }] from field.js (`floor` is the level
- * just under the sculptures).
+ * zones: [{ title, centre: Vector3, radius, height, lift, floor }] from field.js (`lift`
+ * is how high the zone hangs, `floor` the level just under its sculptures).
  * Returns { group, zones: [Group], facing: [Object3D], upright: [Object3D] }: the titles
  * grow in as the flight begins, everything in `facing` is turned to the camera each frame,
  * and everything in `upright` is turned to it round its own trunk only.
@@ -133,16 +183,19 @@ export function buildScenery({ zones, token, random }) {
     return g;
   });
   const clearOfZones = (p) =>
-    zones.every((z) => Math.hypot(p.x - z.centre.x, p.z - z.centre.z) > z.radius + 4 || Math.abs(p.y) > 12);
+    zones.every((z) => Math.hypot(p.x - z.centre.x, p.z - z.centre.z) > z.radius + 4 || Math.abs(p.y - z.lift) > z.height / 2 + 6);
 
   // Colour fields: far off, facing the centre.
-  const disc = new THREE.CircleGeometry(1, 64);
   for (let i = 0; i < SCENERY.fields.count; i += 1) {
-    const m = new THREE.Mesh(disc, paint(FIELD_COLOURS[i % FIELD_COLOURS.length]));
+    const [fill, line] = FIELD_COLOURS[i % FIELD_COLOURS.length];
+    const shape = blob(random);
+    const m = new THREE.Group();
+    m.add(new THREE.Mesh(shape.fill, paint(fill)), new THREE.Mesh(shape.line, paint(line)));
     const around = ((i + random() * 0.7) / SCENERY.fields.count) * Math.PI * 2;
     m.position.copy(out(between([SCENERY.fields.near, SCENERY.fields.far]), around, deg(-8 + random() * 55)));
     m.scale.setScalar(between(SCENERY.fields.size));
     m.lookAt(0, 0, 0);
+    m.rotateZ(random() * Math.PI * 2);
     group.add(m);
   }
 

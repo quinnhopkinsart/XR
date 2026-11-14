@@ -308,7 +308,10 @@ export function createField(container, { models, reducedMotion }) {
 
   // Screen heights the sculptures are spread over; scrolling wraps inside it. Roughly a
   // screen each, so one sculpture reads at a time. The wrap happens well off screen.
-  const BAND = 3.2;
+  // place() lengthens it when there are more sculptures than it was first set for (`PER`
+  // screens each), so adding a work does not crowd the others.
+  let BAND = 3.2;
+  const PER = 0.64;
   const BAND_TOP = -1.0;
   // How far a split sculpture's parts sit from their true place: almost put together, just
   // a little exploded. `spread` eases every part straight out from the centre (1 = assembled),
@@ -321,6 +324,7 @@ export function createField(container, { models, reducedMotion }) {
     // Then the split sculptures, largest first, then the single pieces.
     const heroes = sculptures.filter((s) => s.hero);
     const fronts = sculptures.filter((s) => s.front);
+    BAND = Math.max(BAND, sculptures.filter((s) => !s.front).length * PER);
     // The split sculptures are spaced evenly down the page, with single pieces between.
     const others = sculptures.filter((s) => !s.hero && !s.front);
     const wholes = others.filter((s) => s.parts.length > 1).sort((a, b) => b.parts.length - a.parts.length);
@@ -388,6 +392,10 @@ export function createField(container, { models, reducedMotion }) {
         front: !!s.front,
         turn: s.turn,
         work: s.work,
+        // In the free camera a sculpture can be larger and hang higher than on the page
+        // (`flight: { scale, lift }` in project.js).
+        flightScale: s.flight?.scale || 1,
+        flightLift: s.flight?.lift || 0,
         title: s.title,
         // Single pieces tumble slowly, so every side comes round. Sculptures only rock.
         spin: steady
@@ -473,6 +481,7 @@ export function createField(container, { models, reducedMotion }) {
         cluster.h = (steady ? dims.y : longest) * size;
       }
       group.scale.setScalar(size * s.unit);
+      cluster.scale = size * s.unit;
 
       for (const { part, home, rest } of placed) {
         floaters.push({
@@ -516,6 +525,9 @@ export function createField(container, { models, reducedMotion }) {
         pagePlace.y += bob;
         c.group.position.lerp(pagePlace, mix);
         c.group.rotation.y += c.zone.yaw * mix;
+        c.group.scale.setScalar(c.scale * (1 + (c.flightScale - 1) * mix));
+      } else if (c.group.scale.x !== c.scale) {
+        c.group.scale.setScalar(c.scale);
       }
     }
     for (const f of floaters) {
@@ -539,10 +551,11 @@ export function createField(container, { models, reducedMotion }) {
     }
     const found = works.filter((z) => z.members.length);
     for (const z of found) {
-      z.width = z.members.reduce((sum, c) => sum + c.w, 0) + ZONES.gap * (z.members.length - 1);
-      z.height = Math.max(...z.members.map((c) => c.h));
+      z.width = z.members.reduce((sum, c) => sum + c.w * c.flightScale, 0) + ZONES.gap * (z.members.length - 1);
+      z.height = Math.max(...z.members.map((c) => c.h * c.flightScale));
       z.radius = Math.max(9, z.width / 2 + ZONES.pad);
-      z.floor = -z.height / 2 - 0.8;
+      z.lift = Math.max(...z.members.map((c) => c.flightLift));
+      z.floor = z.lift - z.height / 2 - 0.8; // just under the sculptures, where the title goes
     }
     // The widest zone sits straight ahead, the next ones to its right and left in turn.
     const zones = [];
@@ -561,12 +574,13 @@ export function createField(container, { models, reducedMotion }) {
       const across = new THREE.Vector3(Math.cos(a), 0, Math.sin(a));
       let x = -z.width / 2;
       for (const c of z.members) {
-        c.zone = { at: z.centre.clone().addScaledVector(across, x + c.w / 2), yaw: -a };
-        x += c.w + ZONES.gap;
+        const w = c.w * c.flightScale;
+        c.zone = { at: z.centre.clone().addScaledVector(across, x + w / 2).setY(c.flightLift), yaw: -a };
+        x += w + ZONES.gap;
       }
       z.fronts.forEach((c, j) => {
         const at = z.centre.clone().addScaledVector(across, ((j % 3) - 1) * z.radius * 0.45);
-        at.y = z.height * (-0.25 + ((j * 0.37) % 1) * 0.7);
+        at.y = z.lift + z.height * (-0.25 + ((j * 0.37) % 1) * 0.7);
         c.zone = { at, yaw: -a };
       });
     });
@@ -953,7 +967,7 @@ export function createField(container, { models, reducedMotion }) {
   Promise.all(
     models.map((spec) =>
       loader.loadAsync(spec.src).then(
-        (gltf) => (sculptureFrom(gltf, spec, maxParts) || []).map((s) => ({ ...s, work: spec.work, title: spec.title })),
+        (gltf) => (sculptureFrom(gltf, spec, maxParts) || []).map((s) => ({ ...s, work: spec.work, title: spec.title, flight: spec.flight })),
         (err) => {
           console.warn(`Floating field: could not load ${spec.src}`, err);
           return [];
