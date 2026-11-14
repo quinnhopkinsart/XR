@@ -45,8 +45,10 @@ import { fieldSupported } from './FloatingField.jsx';
 // Where scrolling on does nothing (reduced motion) the last leg fills at the foot.
 // The flight has a roadmap of its own in the same style (`fly-map--flight`), which Quinn
 // asked for: a leg for each artwork, in the order the tour passes them, each as long as
-// its title needs. A leg fills as the tour travels on from its work to the next, and the
-// work the camera is at stands wider. field.js sends the place on the tour in `field:tour`
+// its title needs. A leg fills as the camera turns to its work, so a full leg is a work
+// seen and the last full one is the work in view; that one also stands wider. (The first
+// version filled a leg on the way on from its work, and Quinn found it still said Trading
+// Post Humanism while he was looking at 13 Moon Calendar.) field.js sends the place on the tour in `field:tour`
 // events. It shows on the tour only: free roam has no line to be part way along. A press
 // on a leg sends the tour to that work (`field:goto`).
 const WORK_COLOURS = ['--saffron', '--field-pink', '--spirit-line', '--white'];
@@ -164,7 +166,8 @@ export default function FlyMode() {
     const at = tourAt.current;
     const here = Math.round(at) % legs.length;
     legs.forEach((leg, i) => {
-      leg.style.setProperty('--fill', Math.min(1, Math.max(0, at - i)).toFixed(3));
+      // A work's leg fills as the camera turns to it, so the first is full from the start.
+      leg.style.setProperty('--fill', Math.min(1, Math.max(0, at - i + 1)).toFixed(3));
       leg.classList.toggle('is-here', i === here);
     });
   };
