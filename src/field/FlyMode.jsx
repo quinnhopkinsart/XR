@@ -1,6 +1,6 @@
-import { useEffect, useRef, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import { flyStick, hasLens, motion, reducedMotion } from './motion.js';
+import { flyStick, hasLens, motion, reducedMotion, requestTilt, tiltSupported } from './motion.js';
 import { fieldSupported } from './FloatingField.jsx';
 
 // Free camera for the landing page. Two ways in:
@@ -14,9 +14,15 @@ import { fieldSupported } from './FloatingField.jsx';
 // which passes a good view of each work. Since people come in by scrolling, scrolling on
 // simply continues. "Free roam" hands the camera over for free flight; pressed again, it
 // returns to the line.
-// On touch screens a joystick moves the camera (Quinn's choice over a hold-down button):
-// push it forward, back or to a side while another finger drags to look. Other screens
-// keep the hold-down Fly button beside the keys.
+// On touch screens a joystick moves the camera in free roam (Quinn's choice over a
+// hold-down button): push it forward, back or to a side while another finger drags to
+// look. It is not shown on the tour, where a swipe does the moving. Other screens keep the
+// hold-down Fly button beside the keys. Phones also get a Tilt button: with it on, tilting
+// the phone looks around (the same `tilt` the page's Tilt button sets, and on iOS the tap
+// that grants the gyroscope).
+//
+// `FlyButton` is a second way in, for the top of the page, so the flight is one tap away
+// without scrolling to the foot.
 //
 // How much scrolling past the end it takes:
 //   wheel  pixels of wheel or trackpad travel
@@ -88,10 +94,28 @@ function Joystick() {
   );
 }
 
+// The button that opened the flight, so focus goes back to it on the way out.
+let opener = null;
+const enter = (e) => {
+  opener = e.currentTarget;
+  motion.set({ fly: true, flyTour: true });
+};
+
+/** A way into the flight from anywhere on the landing page. FlyMode must be on the page too. */
+export function FlyButton({ children = 'Fly through the works' }) {
+  if (!fieldSupported()) return null;
+  return (
+    <button type="button" className="fly-gate__btn" onClick={enter}>
+      {children}
+    </button>
+  );
+}
+
 export default function FlyMode() {
-  const { fly, flyTour, flyLens } = useSyncExternalStore(motion.subscribe, motion.get, motion.get);
+  const { fly, flyTour, flyLens, tilt } = useSyncExternalStore(motion.subscribe, motion.get, motion.get);
   const gate = useRef(null);
   const enterBtn = useRef(null);
+  const [tiltDenied, setTiltDenied] = useState(false);
   const exitBtn = useRef(null);
   const wasFlying = useRef(false);
   const supported = fieldSupported();
@@ -102,7 +126,8 @@ export default function FlyMode() {
   // While flying the page is faded out, cannot be scrolled and is out of the tab order.
   useEffect(() => {
     if (!fly) {
-      if (wasFlying.current) enterBtn.current?.focus({ preventScroll: true });
+      if (wasFlying.current) (opener?.isConnected ? opener : enterBtn.current)?.focus({ preventScroll: true });
+      opener = null;
       wasFlying.current = false;
       return undefined;
     }
@@ -200,6 +225,16 @@ export default function FlyMode() {
 
   if (!supported) return null;
 
+  const toggleTilt = async () => {
+    if (tilt) {
+      motion.set({ tilt: false });
+      return;
+    }
+    const ok = await requestTilt();
+    setTiltDenied(!ok);
+    if (ok) motion.set({ tilt: true });
+  };
+
   const coarse = window.matchMedia('(pointer: coarse)').matches;
   const forward = (on) => () => motion.set({ flyForward: on });
   const holdKey = (on) => (e) => {
@@ -211,7 +246,7 @@ export default function FlyMode() {
 
   return (
     <section className="fly-gate" ref={gate} aria-label="Free camera">
-      <button type="button" className="fly-gate__btn" ref={enterBtn} onClick={() => motion.set({ fly: true, flyTour: true })}>
+      <button type="button" className="fly-gate__btn" ref={enterBtn} onClick={enter}>
         Fly through the works
         <span className="fly-gate__bar" aria-hidden="true" />
       </button>
@@ -225,15 +260,17 @@ export default function FlyMode() {
         createPortal(
           <div className="fly-hud" role="region" aria-label="Free camera">
             <p className="fly-hud__hint" role="status">
-              {flyTour
+              {tiltDenied
+                ? 'Motion access was declined. Allow it in your browser settings to use tilt.'
+                : flyTour
                 ? coarse
-                  ? 'Swipe up to follow the line from work to work.'
+                  ? `Swipe up to follow the line from work to work.${tilt ? ' Tilt to look around.' : ''}`
                   : 'Scroll to follow the line from work to work. Drag to look aside. Esc to leave.'
                 : coarse
-                  ? 'Drag to look. Push the stick to move.'
+                  ? `${tilt ? 'Tilt or drag' : 'Drag'} to look. Push the stick to move.`
                   : 'Drag to look. Scroll, W A S D or the arrow keys to move. Esc to leave.'}
             </p>
-            {coarse && <Joystick />}
+            {coarse && !flyTour && <Joystick />}
             <div className="fly-hud__bar">
               <button type="button" className="motion__btn" ref={exitBtn} onClick={() => motion.set({ fly: false, flyTour: false })}>
                 Back to the page
@@ -246,6 +283,11 @@ export default function FlyMode() {
               >
                 Free roam
               </button>
+              {tiltSupported && (
+                <button type="button" className="motion__btn" aria-pressed={tilt} onClick={toggleTilt}>
+                  Tilt
+                </button>
+              )}
               {hasLens && (
                 <button
                   type="button"
