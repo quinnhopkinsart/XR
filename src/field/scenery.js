@@ -373,8 +373,9 @@ export function buildScenery({ zones, token, random, view }) {
   };
 
   // A zone's own colour field: the same hand-cut shape as the far ones, standing close
-  // behind the zone's sculptures and facing the centre, a little larger than the row of
-  // them. It grows in with the zone's title. Made last, so the far scenery keeps its places.
+  // behind the zone's sculptures and facing the centre. It sits behind the middle of the
+  // row and is smaller than it, so the pieces at the ends stand clear of it against the
+  // ground (Quinn found one as wide as the row too big). It grows in with the zone's title. Made last, so the far scenery keeps its places.
   for (const z of zones) {
     if (!z.backdrop) continue;
     const [fill, line] = z.backdrop;
@@ -382,7 +383,7 @@ export function buildScenery({ zones, token, random, view }) {
     const g = new THREE.Group();
     const m = new THREE.Group();
     m.add(new THREE.Mesh(shape.fill, paint(fill)), new THREE.Mesh(shape.line, paint(line)));
-    m.scale.setScalar(Math.max(z.width * 0.52, z.height * 0.85));
+    m.scale.setScalar(Math.max(z.width * 0.3, z.height * 0.6));
     const outward = new THREE.Vector3(z.centre.x, 0, z.centre.z).normalize();
     g.position.copy(z.centre).addScaledVector(outward, z.radius * 0.45 + 5).setY(z.lift);
     g.lookAt(0, z.lift, 0);
