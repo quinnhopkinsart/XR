@@ -33,6 +33,13 @@ import { fieldSupported } from './FloatingField.jsx';
 //          scroll to the bottom (trackpads keep sending it) does not open the view by accident
 //   hold   ms the bar waits before it starts to empty
 //   drain  how fast it empties, in bars a second
+//
+// The bar across the top of the screen (`fly-meter`) shows both: it fills in saffron as the
+// page is scrolled, up to `METER` of its width at the foot of the page, and there it turns
+// the spirit line's blue, with the rest of it left to fill by scrolling on. Quinn asked for
+// it: yellow down the page, blue at the 3D part, to tell people to keep scrolling. Where
+// scrolling on does nothing (reduced motion) it stays saffron and the page fills all of it.
+const METER = 0.8;
 const CHARGE = { wheel: 1200, touch: 520, rest: 160, hold: 320, drain: 1.6 };
 
 const atBottom = () => window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
@@ -106,6 +113,7 @@ const enter = (e) => {
 export default function FlyMode() {
   const { fly, flyTour, flyLens, flyHints, tilt } = useSyncExternalStore(motion.subscribe, motion.get, motion.get);
   const gate = useRef(null);
+  const meter = useRef(null);
   const enterBtn = useRef(null);
   const [tiltDenied, setTiltDenied] = useState(false);
   const exitBtn = useRef(null);
@@ -155,7 +163,11 @@ export default function FlyMode() {
     let raf = 0;
     let touchY = null;
 
-    const show = () => gate.current?.style.setProperty('--charge', Math.min(1, charge).toFixed(3));
+    const show = () => {
+      const value = Math.min(1, charge).toFixed(3);
+      gate.current?.style.setProperty('--charge', value);
+      meter.current?.style.setProperty('--charge', value);
+    };
     const loop = (now) => {
       const dt = (now - prev) / 1000;
       prev = now;
@@ -221,8 +233,35 @@ export default function FlyMode() {
       window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('touchcancel', onTouchEnd);
       gate.current?.style.setProperty('--charge', '0');
+      meter.current?.style.setProperty('--charge', '0');
     };
   }, [fly, supported]);
+
+  // The bar across the top follows the page, and turns blue at its foot.
+  useEffect(() => {
+    if (!supported) return undefined;
+    const onward = !reducedMotion; // scrolling on past the end opens the flight
+    const measure = () => {
+      const el = meter.current;
+      if (!el) return;
+      const room = document.documentElement.scrollHeight - window.innerHeight;
+      const page = room > 0 ? Math.min(1, Math.max(0, window.scrollY / room)) : 1;
+      el.style.setProperty('--page', page.toFixed(4));
+      el.style.setProperty('--share', onward ? METER : 1);
+      el.classList.toggle('is-end', onward && atBottom());
+    };
+    measure();
+    window.addEventListener('scroll', measure, { passive: true });
+    window.addEventListener('resize', measure);
+    // The page grows and shrinks ("See more", pictures loading), which moves its foot.
+    const watch = new ResizeObserver(measure);
+    watch.observe(document.body);
+    return () => {
+      window.removeEventListener('scroll', measure);
+      window.removeEventListener('resize', measure);
+      watch.disconnect();
+    };
+  }, [supported]);
 
   if (!supported) return null;
 
@@ -256,6 +295,8 @@ export default function FlyMode() {
           <span className="plate">Or keep scrolling.</span>
         </p>
       )}
+
+      {createPortal(<div className="fly-meter" ref={meter} aria-hidden="true" />, document.body)}
 
       {fly &&
         createPortal(

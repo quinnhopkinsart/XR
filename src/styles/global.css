@@ -1100,9 +1100,42 @@ html.title-leads .field.is-ready {
   right: 0;
   bottom: 0;
   height: 5px;
-  background: var(--accent);
+  background: var(--spirit-line);
   transform: scaleX(var(--charge, 0));
   transform-origin: left;
+}
+
+/* The landing page's progress bar, across the top of the screen: saffron as the page is
+   scrolled, the spirit line's blue at the foot, where scrolling on fills the rest of it
+   and opens the flight */
+.fly-meter {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 11;
+  height: 6px;
+  background: var(--panel);
+  pointer-events: none;
+  transition: opacity 0.5s var(--ease);
+}
+
+.fly-meter::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  transform: scaleX(calc(var(--page, 0) * var(--share, 1) + var(--charge, 0) * (1 - var(--share, 1))));
+  transform-origin: left;
+  transition: background-color 0.3s var(--ease);
+}
+
+.fly-meter.is-end::after {
+  background: var(--spirit-line);
+}
+
+html.is-flying .fly-meter {
+  opacity: 0;
 }
 
 .fly-gate__hint {
