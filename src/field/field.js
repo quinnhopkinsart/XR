@@ -246,6 +246,7 @@ function sculptureFrom(gltf, spec, maxParts) {
       parts,
       unit: 1 / longest,
       hero: !!spec.hero,
+      scatter: !!spec.scatter && !spec.split,
       scale: spec.scale || 1,
       turn: THREE.MathUtils.degToRad(spec.turn || 0),
     },
@@ -293,9 +294,13 @@ export function createField(container, { models, reducedMotion }) {
       scene.background = null;
       // The depth pass ignores cut-outs, so a foreground plane would blur everything
       // behind its whole rectangle. Those parts sit the pass out.
-      flatFront.forEach((o) => (o.visible = false));
+      // In flight the scattered flowers do the same: they stand close to the camera there,
+      // and their cards would smear the works behind them. On the page they stay in, so
+      // they keep their own place in the lens.
+      const out = flyMix > 0 ? flatFront.concat(scatterCut) : flatFront;
+      out.forEach((o) => (o.visible = false));
       renderBokeh(...args);
-      flatFront.forEach((o) => (o.visible = true));
+      out.forEach((o) => (o.visible = true));
       scene.background = ground;
     };
     composer.addPass(bokeh);
@@ -314,6 +319,7 @@ export function createField(container, { models, reducedMotion }) {
 
   const floaters = []; // every part
   const flatFront = []; // foreground parts drawn with a cut-out or see-through material
+  const scatterCut = []; // scattered pieces drawn with a cut-out material (the beaded flowers)
   const clusters = []; // every sculpture
   const tmp = new THREE.Vector3();
   const tmpQ = new THREE.Quaternion();
@@ -398,9 +404,12 @@ export function createField(container, { models, reducedMotion }) {
     // Then the split sculptures, largest first, then the single pieces.
     const heroes = sculptures.filter((s) => s.hero);
     const fronts = sculptures.filter((s) => s.front);
-    BAND = Math.max(BAND, sculptures.filter((s) => !s.front).length * PER);
+    // Scattered pieces (`scatter` in project.js) are small and sit among the sculptures:
+    // they take no place in the column, so they do not push the sculptures apart.
+    const scattered = sculptures.filter((s) => s.scatter);
+    BAND = Math.max(BAND, sculptures.filter((s) => !s.front && !s.scatter).length * PER);
     // The split sculptures are spaced evenly down the page, with single pieces between.
-    const others = sculptures.filter((s) => !s.hero && !s.front);
+    const others = sculptures.filter((s) => !s.hero && !s.front && !s.scatter);
     const wholes = others.filter((s) => s.parts.length > 1).sort((a, b) => b.parts.length - a.parts.length);
     const singles = others.filter((s) => s.parts.length === 1).sort(() => random() - 0.5);
     const rest = [];
@@ -415,8 +424,11 @@ export function createField(container, { models, reducedMotion }) {
     let frontIndex = 0;
     let heroIndex = 0;
     let wholeSide = 1; // sculptures alternate sides; single pieces keep to the other side
+    let scatterIndex = 0;
+    // Scattered pieces stand at these depths in turn, near enough to the focal plane to stay sharp.
+    const scatterDepths = [-2.4, 0.8, -1.2, 1.8, -3.2, -0.4, 1.2, -1.8];
 
-    [...heroes, ...rest, ...fronts].forEach((s) => {
+    [...heroes, ...rest, ...fronts, ...scattered].forEach((s) => {
       const group = new THREE.Group();
       const whole = s.parts.length > 1;
       let base;
@@ -436,6 +448,27 @@ export function createField(container, { models, reducedMotion }) {
           z,
         );
         frontIndex += 1;
+      } else if (s.scatter) {
+        // Lightly scattered: spread evenly down the whole column, to either side in turn,
+        // anywhere from near the middle to near the edge. Small (see `fill` below).
+        const n = Math.max(1, scattered.length);
+        size = 3 * k * s.scale; // refitted to the screen below
+        base = new THREE.Vector3(
+          (scatterIndex % 2 ? -1 : 1) * (mobile ? 0.12 + random() * 0.26 : 0.1 + random() * 0.34),
+          0.15 + ((scatterIndex + random() * 0.7) / n) * BAND,
+          scatterDepths[scatterIndex % scatterDepths.length],
+        );
+        s.turn = random() * Math.PI * 2; // any side to the page
+        // Cut-out cards with thin lines (strings of beads): coverage keeps the lines whole
+        // at this small size, where a plain alpha test thins them to nothing.
+        s.parts[0].pivot.traverse((o) => {
+          const m = o.isMesh && (Array.isArray(o.material) ? o.material[0] : o.material);
+          if (m && m.alphaTest > 0) {
+            m.alphaToCoverage = true;
+            scatterCut.push(o);
+          }
+        });
+        scatterIndex += 1;
       } else if (s.hero) {
         size = (mobile ? 4.6 : 8.2) * s.scale; // refitted to the screen below
         base = new THREE.Vector3(
@@ -457,13 +490,14 @@ export function createField(container, { models, reducedMotion }) {
         );
       }
       const nearness = THREE.MathUtils.clamp(1 + base.z / 8, 0, 1.9); // 1 at the focal plane
-      const steady = whole || s.front || s.hero; // these keep facing the page and only rock
+      const steady = whole || s.front || s.hero || s.scatter; // these keep facing the page and only rock (a scattered flower stays upright)
       const cluster = {
         group,
         base,
         size,
         whole,
         front: !!s.front,
+        scatter: !!s.scatter,
         turn: s.turn,
         work: s.work,
         // In the free camera a sculpture can be larger and hang higher than on the page
@@ -544,7 +578,8 @@ export function createField(container, { models, reducedMotion }) {
         // Never less than 60% of the full bounds, so a loose scene is not blown up past the screen.
         const full = new THREE.Box3().setFromObject(group).getSize(new THREE.Vector3()).multiplyScalar(0.6);
         const dims = new THREE.Vector3(body('x'), body('y'), body('z')).max(biggest).max(full);
-        const fill = whole || s.hero ? 1 : 0.6; // single pieces tumble, so they stay smaller
+        // single pieces tumble, so they stay smaller; scattered pieces are small on purpose
+        const fill = s.scatter ? (mobile ? 0.34 : 0.44) : whole || s.hero ? 1 : 0.6;
         const maxH = view.h * 0.9 * fill;
         const maxW = view.w * (mobile ? 0.92 : 0.64) * fill;
         size = Math.min(maxH / (dims.y || 1), maxW / (dims.x || 1)) * (0.94 + random() * 0.06) * s.scale;
@@ -584,6 +619,10 @@ export function createField(container, { models, reducedMotion }) {
     const scroll = window.scrollY / window.innerHeight; // in screen heights
     const mix = flyMix * flyMix * (3 - 2 * flyMix); // eased
     applyMix(mix);
+    if (bed) {
+      bed.visible = mix > 0;
+      bedGrow.value = mix;
+    }
     if (scenery && mix > 0 && t !== waveT) scenery.wave((waveT = t));
     for (const c of clusters) {
       const depthScale = (CAM_Z - c.base.z) / CAM_Z;
@@ -603,6 +642,11 @@ export function createField(container, { models, reducedMotion }) {
         c.group.position.lerp(pagePlace, mix);
         c.group.rotation.y += c.zone.yaw * mix;
         c.group.scale.setScalar(c.scale * (1 + (c.flightScale - 1) * mix));
+      } else if (c.scatter) {
+        // A scattered piece leaves the air as the flight opens: the same flowers stand in
+        // the bed along the tour's line there.
+        c.group.scale.setScalar(Math.max(c.scale * (1 - mix), 1e-6));
+        c.group.visible = mix < 0.999;
       } else if (c.group.scale.x !== c.scale) {
         c.group.scale.setScalar(c.scale);
       }
@@ -623,6 +667,9 @@ export function createField(container, { models, reducedMotion }) {
   function planZones() {
     const works = [];
     for (const c of clusters) {
+      // Scattered pieces take no zone: in flight they stay where the page has them, round
+      // the middle, so a work's small pieces do not become the widest zone and lead the tour.
+      if (c.scatter) continue;
       let zone = works.find((z) => z.work === c.work);
       if (!zone) works.push((zone = { work: c.work, title: c.title, members: [], fronts: [] }));
       (c.front ? zone.fronts : zone.members).push(c);
@@ -672,6 +719,97 @@ export function createField(container, { models, reducedMotion }) {
     return zones;
   }
 
+  // The flower bed: in flight, the scattered pieces (the beaded flowers) are planted along
+  // the tour's line, so the camera rides over a lush bed and every work is seen across
+  // flowers. Quinn asked for the flowers in the foreground on the tour, lush and vibrant,
+  // and not placed at random. So it is planted like a garden: rows that follow the line,
+  // each row in drifts of one flower at a time, low next to the line and taller further out.
+  //   rows: [across, tall]: how far a row runs from the line, toward the works (negative
+  //         is the inner side), and how tall its flowers stand. The camera rides `under`
+  //         above the line, so the tops stay below its eye and the works show over them.
+  //   step: the space between flowers along a row. drift: how far one flower runs along a
+  //         row before the next takes over. sink: how far below the line the bed is rooted.
+  //   glow: how much of their own colour the beads give off, so they stay vivid in the haze.
+  const BED = {
+    rows: [[-4.2, 2.1], [-2.4, 1.7], [2.2, 1.5], [3.7, 1.7], [5.3, 1.9], [7.1, 2.1], [9.1, 2.2], [11.4, 2.1], [14, 2.0]],
+    step: mobile ? 3 : 1.5,
+    drift: 14,
+    sink: 1.6,
+    glow: 0.4,
+  };
+  let bed = null;
+  const bedGrow = { value: 0 }; // 0 flat on the line, 1 full height: the bed grows as the flight opens
+  function plantBed(line) {
+    // One kind of flower from each scattered piece: its shape, and its material made brighter.
+    const kinds = [];
+    for (const c of clusters) {
+      if (!c.scatter) continue;
+      c.group.traverse((o) => {
+        if (!o.isMesh || kinds.some((k) => k.geometry === o.geometry)) return;
+        o.geometry.computeBoundingBox();
+        const box = o.geometry.boundingBox;
+        const material = o.material.clone();
+        material.emissive = new THREE.Color(0xffffff);
+        material.emissiveMap = material.map;
+        material.emissiveIntensity = BED.glow;
+        material.alphaToCoverage = true;
+        material.onBeforeCompile = (shader) => {
+          shader.uniforms.uGrow = bedGrow;
+          shader.vertexShader = shader.vertexShader
+            .replace('#include <common>', '#include <common>\nuniform float uGrow;')
+            .replace('#include <begin_vertex>', '#include <begin_vertex>\ntransformed *= uGrow;');
+        };
+        // A wide, flat piece (the spray) stands like a banner: it goes in the far rows only.
+        const size = box.getSize(new THREE.Vector3());
+        kinds.push({ geometry: o.geometry, material, foot: box.min.y, height: size.y, banner: Math.min(size.x, size.z) < size.y * 0.05, at: [] });
+      });
+    }
+    if (!kinds.length) return;
+    const plain = kinds.filter((k) => !k.banner);
+    const long = line.getLength();
+    const place = new THREE.Vector3();
+    const along = new THREE.Vector3();
+    const out = new THREE.Vector3();
+    const turn = new THREE.Quaternion();
+    const up = new THREE.Vector3(0, 1, 0);
+    const pick = rng(31);
+    BED.rows.forEach(([across, tall], r) => {
+      const far = r >= BED.rows.length - 2;
+      const count = Math.floor(long / BED.step);
+      for (let i = 0; i < count; i += 1) {
+        const u = (i + (r % 2) * 0.5) / count; // each row half a step on from the last
+        line.getPointAt(u % 1, place);
+        line.getTangentAt(u % 1, along);
+        // Out is away from the middle of the ring, where the works stand.
+        out.set(place.x, 0, place.z).normalize();
+        // One flower for a drift's length, a different one in the next row.
+        const drift = Math.floor((u * long) / BED.drift) + r * 3;
+        const list = far ? kinds : plain.length ? plain : kinds;
+        const kind = list[drift % list.length];
+        const size = (tall / kind.height) * (0.9 + pick() * 0.2);
+        const m = new THREE.Matrix4().compose(
+          new THREE.Vector3(place.x, place.y - BED.sink - kind.foot * size, place.z)
+            .addScaledVector(out, across + (pick() - 0.5) * 0.3)
+            .addScaledVector(along, (pick() - 0.5) * 0.3),
+          turn.setFromAxisAngle(up, pick() * Math.PI * 2),
+          new THREE.Vector3(size, size, size),
+        );
+        kind.at.push(m);
+      }
+    });
+    bed = new THREE.Group();
+    for (const kind of kinds) {
+      if (!kind.at.length) continue;
+      const mesh = new THREE.InstancedMesh(kind.geometry, kind.material, kind.at.length);
+      kind.at.forEach((m, i) => mesh.setMatrixAt(i, m));
+      mesh.frustumCulled = false; // the bed runs all round the camera
+      bed.add(mesh);
+      scatterCut.push(mesh); // cut-out cards: they sit the lens's depth pass out in flight
+    }
+    bed.visible = false;
+    scene.add(bed);
+  }
+
   /** Builds the zones' titles and the far scenery, once, the first time someone flies. */
   function ensureScenery() {
     if (scenery || !placed || !clusters.length) return;
@@ -681,6 +819,7 @@ export function createField(container, { models, reducedMotion }) {
       random: rng(23),
       view: { fov: camera.fov, aspect: camera.aspect },
     });
+    plantBed(scenery.line);
     if (motion.get().flyTour) setTour(true);
     scenery.group.visible = false;
     scene.add(scenery.group);
@@ -703,7 +842,7 @@ export function createField(container, { models, reducedMotion }) {
         camera.getWorldDirection(tmp);
         let best = -Infinity;
         for (const c of clusters) {
-          if (c.front) continue;
+          if (c.front || c.scatter) continue;
           const along = pagePlace.copy(c.group.position).sub(camera.position).dot(tmp);
           const aim = along / (pagePlace.length() || 1); // 1 when dead ahead
           if (along > 1 && aim > best) {

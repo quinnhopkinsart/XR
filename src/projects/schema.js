@@ -131,6 +131,9 @@ export function validateProject(p, folder) {
       if (m?.turn != null && typeof m.turn !== 'number') {
         errors.push(`${where}: models[${i}].turn must be a number of degrees`);
       }
+      if (m?.scatter != null && (typeof m.scatter !== 'boolean' || (m.scatter && (m.split || m.hero)))) {
+        errors.push(`${where}: models[${i}].scatter must be true or false, on a model that is not split or a hero`);
+      }
       if (m?.flight != null && (typeof m.flight !== 'object' || [m.flight.scale, m.flight.lift].some((n) => n != null && typeof n !== 'number'))) {
         errors.push(`${where}: models[${i}].flight must be { scale, lift } in numbers`);
       }
