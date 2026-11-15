@@ -1,0 +1,40 @@
+{
+  "title": "Beaded Flowers",
+  "year": "2026",
+  "status": "live",
+  "hidden": true,
+  "venue": "Digital Constellations, Banff Centre for Arts and Creativity",
+  "summary": "A field of beaded flowers to walk through. Beadwork by Robyn Adams, modelled in 3D by Quinn Hopkins.",
+  "description": [
+    "Beaded Flowers is a collaboration with Robyn Adams. Robyn beads the flowers. I model them in 3D, bead by bead, and prepare them as game assets for the worlds she builds in Unreal Engine.",
+    "We started working together at the Banff Centre during the Digital Constellations residency.",
+    "Here the flowers grow as a field. Walk the bead path through it, or open Each flower to see the eight plants one at a time: asters, coneflowers, wild rice, blueberry, prairie crocus, wolf willow, table flowers and a flat spray."
+  ],
+  "howTo": [
+    "Drag to look around. Tap or click the ground to walk there, or use the arrow keys or WASD.",
+    "Press Each flower to see one plant at a time. Drag to turn it. Previous, Next and the row of names change the flower.",
+    "Press Field to go back to the meadow.",
+    "Motion turns the wind and the drifting lights off and on."
+  ],
+  "embedNote": "Drag to look and tap the ground to walk. Each flower shows them one at a time.",
+  "credits": [
+    {
+      "role": "Beadwork",
+      "name": "Robyn Adams"
+    },
+    {
+      "role": "3D modelling and web",
+      "name": "Quinn Hopkins, Noodin Studio"
+    },
+    {
+      "role": "Began at",
+      "name": "Digital Constellations, Banff Centre for Arts and Creativity"
+    }
+  ],
+  "coverAlt": "A hazy meadow made entirely of glass beads: pink asters, yellow coneflowers and blue berries among strands of green bead grass, with points of light drifting over it.",
+  "tags": [
+    "collaboration",
+    "beadwork",
+    "game assets"
+  ]
+}

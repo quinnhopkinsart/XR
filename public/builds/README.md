@@ -159,3 +159,19 @@ Not an 8th Wall build and not AR: the web version of the projection installation
 - The trail pass has its own vertex shader (`VERT_TRAIL`). A texture drawn into is stored bottom row first, and with the screen's flip every step read the last one upside down, so each mark showed twice, mirrored. Keep the two apart.
 - The land plates are stock photographs of Montreal from the MUTEK build. Replace the two files to change them (2.353:1).
 - Tested in headless Chromium: desktop, a phone size with touch, and the camera with Chromium's fake device. Headless draws in software at about 4 frames a second, so the speed of the smoke and a real webcam and phone still need trying.
+
+## Beaded Flowers
+
+Not an 8th Wall build: a plain three.js viewer (three 0.170 vendored in `vendor/`, no build step). Beadwork by Robyn Adams, modelled in 3D by Quinn. The files here are its source.
+
+- `main.js`: the renderer, loading, the bead material and its wind, and the buttons. Two views share the canvas: Field and Each flower. The address keeps the view (`#field`, or `#asters` and so on for one flower).
+- `field.js`: the meadow. The numbers at the top set it: `SIZE` (the plants are exported about 2 m tall and stand at 0.68 of that), `EYE`, `WALK`, how many of each plant and in how many patches (`PLANT`), the bead grass (`GRASS`), the drifting lights (`MOTES`) and the line the bead path follows (`PATH`). The field is seeded, so it is the same field on every visit. Phones get about half the plants and the 1024 px textures.
+- `carousel.js`: each flower on its own. Drag turns it; Previous, Next, the row of names and the left and right arrow keys change it.
+- `flowers.js`: the eight flowers, in order, with their names and text. The text only describes what the beadwork looks like. Any teaching, story or name that belongs to a flower is Robyn's to add. "Table flowers" and "Flat spray" are working names from the file names.
+- `models/flowers.glb`: all eight plants and the bead path tile, geometry only (69 KB). They are the game assets made for Unreal Engine: each plant is a few flat cards (40 to 396 triangles) with a wind weight on every vertex (`_wind`, from the `wind_mask` vertex colour). The export's armature and wind clips are left out; the wind here is in the shader.
+- `tex/<id>.webp` is a plant's bead picture at 2048 px, `-1k` the phone version, `-n` its normal map.
+- To rebuild from the exports (`Documents\Art\2026\BLENDER MCP\BLENDER MCP`): `scripts/beaded-flowers/export_glb.py` (needs Blender's `bpy` module) turns `export/*.fbx` into the .glb, and `pad_atlas.py` turns each `atlas/T_<name>_D.png` into WebP with the bead colours spread under the clear area, so the far-off, small versions of a picture do not go dark at the edges.
+- The grass and the ground beads are drawn in code (`grassCard` and `beadTile` in `field.js`). They are stand-ins, not Robyn's beadwork.
+- The meadow's colours are the work's own, from Quinn's render (`SKY` in `main.js`). The buttons and panels copy the site's tokens into `style.css`.
+- No camera AR. Motion (wind, lights, the flower's slow turn) starts off for visitors with reduced motion turned on.
+- Tested in headless Chromium only, which draws in software. Frame rate on a real phone is not tested.
