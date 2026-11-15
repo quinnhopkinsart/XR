@@ -1,27 +1,27 @@
 // The field: a meadow of the beaded flowers, walked at eye height.
 // Everything is in metres. The plants are instanced, a few hundred of each, in patches.
 
-// The exported plants stand about 2 m tall, modelled large for the game. SIZE brings them
-// to chest height so a visitor walks among them.
-const SIZE = 0.68;
-const EYE = 1.35;          // the visitor's eye height
-const WALK = 30;           // how far from the middle a visitor can walk
-const REACH = 46;          // how far out the flowers grow
+// The plants are exported large for the game, 1.6 to 4.3 m tall. Here each is fitted to
+// its own height in metres (`tall` in PLANT), between a visitor's knee and hip, so the
+// field lies below the eye and you look out over it. A plant varies 15% either way.
+const EYE = 1.6;           // the visitor's eye height
+const WALK = 24;           // how far from the middle a visitor can walk
+const REACH = 36;          // how far out the flowers grow
 const SPEED = 2.6;         // metres a second on the keys
 
 // How many of each plant, in how many patches, and how wide a patch spreads (metres).
 // Phones get about half.
 const PLANT = {
-  'asters':         { count: 150, patches: 16, spread: 3.2 },
-  'coneflowers':    { count: 130, patches: 14, spread: 3.4 },
-  'wild-rice':      { count: 160, patches: 18, spread: 4.5 },
-  'blueberry':      { count: 150, patches: 14, spread: 3.0 },
-  'prairie-crocus': { count: 70,  patches: 12, spread: 3.6 },
-  'wolf-willow':    { count: 120, patches: 12, spread: 3.0 },
-  'table-flowers':  { count: 120, patches: 14, spread: 3.2 },
-  'spray':          { count: 14,  patches: 14, spread: 0.5 },
+  'asters':         { tall: 0.72, count: 520, patches: 24, spread: 1.7 },
+  'coneflowers':    { tall: 0.68, count: 500, patches: 22, spread: 1.8 },
+  'wild-rice':      { tall: 0.95, count: 460, patches: 24, spread: 2.0 },
+  'blueberry':      { tall: 0.58, count: 600, patches: 22, spread: 1.6 },
+  'prairie-crocus': { tall: 0.85, count: 300, patches: 20, spread: 1.9 },
+  'wolf-willow':    { tall: 0.8, count: 440, patches: 20, spread: 1.7 },
+  'table-flowers':  { tall: 0.75, count: 500, patches: 22, spread: 1.8 },
+  'spray':          { tall: 0.95, count: 40, patches: 26, spread: 0.4 },
 };
-const GRASS = 6000;        // blades of bead grass
+const GRASS = 8000;        // blades of bead grass
 const MOTES = 420;         // drifting points of light
 
 // The bead path winds through the middle. Points are x, z.
@@ -41,34 +41,42 @@ export function buildField(ctx) {
 
   const scene = new THREE.Scene();
   scene.environment = environment;
-  scene.environmentIntensity = 0.35;
-  scene.fog = new THREE.FogExp2(new THREE.Color(SKY.horizon), 0.024);
+  scene.environmentIntensity = SKY.room;
+  scene.fog = new THREE.FogExp2(new THREE.Color(SKY.haze), SKY.fog);
 
   const camera = new THREE.PerspectiveCamera(62, 1, 0.08, 220);
 
-  // Light: a low warm sun behind haze, and a soft sky.
-  const sunDir = new THREE.Vector3(-0.55, 0.32, -0.77).normalize();
-  const sun = new THREE.DirectionalLight(new THREE.Color(SKY.sun), 1.5);
+  // Light: one strong sun and a much dimmer sky, so every bead has a lit side and a
+  // shaded side. At sunset the sun is low and ahead, and the flowers are lit from behind.
+  // The sun stands a little to the left of the way the path leads from where the visitor starts.
+  const sunDir = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), SKY.sunTurn)
+    .multiplyScalar(Math.sqrt(1 - SKY.sunHeight * SKY.sunHeight));
+  sunDir.y = SKY.sunHeight;
+  const sun = new THREE.DirectionalLight(new THREE.Color(SKY.sunLight), SKY.sunPower);
   sun.position.copy(sunDir).multiplyScalar(50);
-  scene.add(sun, new THREE.HemisphereLight(new THREE.Color('#ffe9d6'), new THREE.Color('#3d6b45'), 0.95));
+  scene.add(sun, new THREE.HemisphereLight(new THREE.Color(SKY.skyLight), new THREE.Color(SKY.groundLight), SKY.skyPower));
 
-  // Sky: a dome that goes from the haze at the horizon up to a dusty rose, with the sun's glow.
+  // Sky: a dome in three bands, horizon to middle to top, with the sun and its glow.
   const sky = new THREE.Mesh(
     new THREE.SphereGeometry(180, 32, 16),
     new THREE.ShaderMaterial({
       side: THREE.BackSide, depthWrite: false, fog: false, toneMapped: false,
       uniforms: {
-        top: { value: new THREE.Color(SKY.top) }, horizon: { value: new THREE.Color(SKY.horizon) },
-        sunCol: { value: new THREE.Color(SKY.sun) }, sunDir: { value: sunDir },
+        top: { value: new THREE.Color(SKY.top) }, mid: { value: new THREE.Color(SKY.mid) }, horizon: { value: new THREE.Color(SKY.horizon) },
+        haze: { value: new THREE.Color(SKY.haze) }, sunCol: { value: new THREE.Color(SKY.sun) }, sunDir: { value: sunDir },
       },
       vertexShader: 'varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
-      fragmentShader: `varying vec3 vDir; uniform vec3 top, horizon, sunCol, sunDir;
+      fragmentShader: `varying vec3 vDir; uniform vec3 top, mid, horizon, haze, sunCol, sunDir;
         void main(){
           vec3 d = normalize(vDir);
           float h = clamp(d.y, 0.0, 1.0);
-          vec3 c = mix(horizon, top, pow(h, 0.55));
           float s = max(dot(d, sunDir), 0.0);
-          c = mix(c, sunCol, pow(s, 6.0) * 0.75 + pow(s, 60.0) * 0.5);
+          // the bands sit lower away from the sun, so the colour gathers round it
+          float lift = mix(0.55, 1.0, pow(s, 2.0));
+          vec3 c = mix(horizon, mid, smoothstep(0.0, 0.22 * lift, h));
+          c = mix(c, top, smoothstep(0.12 * lift, 0.62, h));
+          c = mix(c, haze, (1.0 - smoothstep(0.0, 0.06, h)) * 0.6);
+          c = mix(c, sunCol, clamp(pow(s, 10.0) * 0.55 + pow(s, 90.0) * 0.6 + smoothstep(0.9993, 0.9997, s), 0.0, 1.0));
           gl_FragColor = vec4(c, 1.0);
           #include <colorspace_fragment>
         }`,
@@ -99,7 +107,7 @@ export function buildField(ctx) {
   }
   const ground = new THREE.Mesh(
     new THREE.CircleGeometry(170, 48).rotateX(-Math.PI / 2),
-    new THREE.MeshStandardMaterial({ map: beadTile(), roughness: 0.6, color: '#7fa87c' }),
+    new THREE.MeshStandardMaterial({ map: beadTile(), roughness: 0.6, color: '#6f9a70' }),
   );
   scene.add(ground);
 
@@ -133,6 +141,7 @@ export function buildField(ctx) {
   const start = curve.getPointAt(0.42), ahead = curve.getPointAt(0.5);
 
   // The flowers, in patches.
+  const heightOf = (id) => { const g = geometries[id]; g.computeBoundingBox(); return g.boundingBox.max.y; };
   const m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
   for (const [id, cfg] of Object.entries(PLANT)) {
     const count = Math.round(cfg.count * (small ? 0.5 : 1));
@@ -142,9 +151,9 @@ export function buildField(ctx) {
       centres.push([Math.cos(a) * r, Math.sin(a) * r]);
     }
     // A few of each beside the path near the start, so every flower is met on the walk.
-    for (let i = 0; i < 2; i++) {
-      const p = curve.getPointAt(0.3 + rand() * 0.4);
-      centres.push([p.x + (rand() < 0.5 ? -1 : 1) * (2.5 + rand() * 3), p.z + gauss() * 2]);
+    for (let i = 0; i < 5; i++) {
+      const p = curve.getPointAt(0.25 + rand() * 0.5);
+      centres.push([p.x + (rand() < 0.5 ? -1 : 1) * (1.3 + rand() * 2.6), p.z + gauss() * 1.4]);
     }
     const mesh = new THREE.InstancedMesh(geometries[id], materials[id], count);
     let placed = 0, tries = 0;
@@ -152,8 +161,8 @@ export function buildField(ctx) {
       const c = centres[Math.floor(rand() * centres.length)];
       const x = c[0] + gauss() * cfg.spread, z = c[1] + gauss() * cfg.spread;
       if (Math.hypot(x, z) > REACH) continue;
-      if (nearPath(x, z) < (id === 'spray' ? 2.4 : 1.5)) continue;
-      const s = SIZE * (0.78 + rand() * 0.5);
+      if (nearPath(x, z) < 1.1) continue;
+      const s = (cfg.tall / heightOf(id)) * (0.85 + rand() * 0.3);
       q4.setFromAxisAngle(up, rand() * Math.PI * 2);
       m4.compose(new THREE.Vector3(x, 0, z), q4, new THREE.Vector3(s, s, s));
       mesh.setMatrixAt(placed++, m4);
@@ -219,7 +228,7 @@ export function buildField(ctx) {
       const a = rand() * Math.PI * 2, r = Math.pow(rand(), 0.8) * (REACH - 2);
       const x = Math.cos(a) * r, z = Math.sin(a) * r;
       if (nearPath(x, z) < 0.75) continue;
-      const w = 0.5 + rand() * 0.4, h = 0.22 + rand() * 0.36;
+      const w = 0.4 + rand() * 0.3, h = 0.12 + rand() * 0.2;   // ankle to shin
       q4.setFromAxisAngle(up, rand() * Math.PI * 2);
       m4.compose(new THREE.Vector3(x, 0, z), q4, new THREE.Vector3(w, h, w));
       mesh.setMatrixAt(placed++, m4);
@@ -244,7 +253,7 @@ export function buildField(ctx) {
     geo.setAttribute('seed', new THREE.BufferAttribute(seed, 1));
     motes = new THREE.Points(geo, new THREE.ShaderMaterial({
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
-      uniforms: { uTime: ctx.wind.time, uSize: { value: 1 }, uCol: { value: new THREE.Color(SKY.sun) } },
+      uniforms: { uTime: ctx.wind.time, uSize: { value: 1 }, uCol: { value: new THREE.Color(SKY.motes) } },
       vertexShader: `attribute float seed; uniform float uTime, uSize; varying float vA;
         void main(){
           vec3 p = position;
@@ -264,7 +273,7 @@ export function buildField(ctx) {
 
   // ---- The visitor ------------------------------------------------------------------
   const pos = new THREE.Vector3(start.x, EYE, start.z);
-  let yaw = Math.atan2(-(ahead.x - start.x), -(ahead.z - start.z)), pitch = -0.04;
+  let yaw = Math.atan2(-(ahead.x - start.x), -(ahead.z - start.z)), pitch = -0.16;
   let goal = null;                         // where a tap sent the visitor
   const keys = new Set();
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
@@ -333,7 +342,7 @@ export function buildField(ctx) {
     camera.position.copy(pos);
     camera.rotation.set(pitch, yaw, 0, 'YXZ');
     sky.position.copy(pos);
-    renderer.setClearColor(SKY.horizon, 1);
+    renderer.setClearColor(SKY.haze, 1);
     renderer.render(scene, camera);
   }
   function resize(w, h) {

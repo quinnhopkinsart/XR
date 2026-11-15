@@ -20,9 +20,24 @@ const framed = window.top !== window.self;
 const small = Math.min(screen.width, screen.height) < 700 || matchMedia('(hover:none)').matches;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// The colours of the meadow are the work's own, from Quinn's render of it: a hazy warm
-// sky over green. The buttons and panels keep the site's palette (style.css).
-export const SKY = { top: '#b98f8b', horizon: '#f6dcc0', sun: '#fff1d0', ground: '#1f4a2a' };
+// The sky and its light. "sunset" is the one people see; add ?sky=blue to the address to
+// see the field under a clear blue sky instead. Each sets the sky's three colours (top,
+// middle, horizon), the haze, where the sun stands (sunHeight: 0 on the horizon, 1 overhead; sunTurn: its compass direction in radians)
+// and how hard it lights the beads against the light from the rest of the sky.
+// These are the work's own colours. The buttons and panels keep the site's palette (style.css).
+const SKIES = {
+  sunset: {
+    top: '#2b2470', mid: '#e0457b', horizon: '#ffa23a', sun: '#ffd27a', haze: '#e8825a', fog: 0.02,
+    sunHeight: 0.14, sunTurn: 0.75, sunLight: '#ffb868', sunPower: 4.4,
+    skyLight: '#c9a0ff', groundLight: '#5a3350', skyPower: 1.0, room: 0.2, motes: '#ffd98a',
+  },
+  blue: {
+    top: '#2f86e6', mid: '#7cc0f7', horizon: '#d9eefc', sun: '#ffffff', haze: '#cfe6f7', fog: 0.014,
+    sunHeight: 0.62, sunTurn: 0.75, sunLight: '#fff4dc', sunPower: 3.4,
+    skyLight: '#9ccfff', groundLight: '#35603c', skyPower: 0.75, room: 0.18, motes: '#ffffff',
+  },
+};
+export const SKY = SKIES[new URLSearchParams(location.search).get('sky')] || SKIES.sunset;
 
 const loaderEl = document.getElementById('loader');
 const fail = (msg) => { document.getElementById('loader-text').textContent = msg; };
@@ -79,9 +94,13 @@ export function addWind(material) {
           vec3 wRoot = vec3(0.0);
         #endif
         float wPhase = wRoot.x * 0.35 + wRoot.z * 0.27;
-        float wLean = sin(uTime * 1.3 + wPhase + position.y * 0.8) * 0.6 + sin(uTime * 2.9 + wPhase * 1.7) * 0.25;
-        transformed.x += wLean * _wind * uWind * 0.07;
-        transformed.z += cos(uTime * 1.1 + wPhase) * _wind * uWind * 0.04;`);
+        // a slow gust that crosses the field, a sway on top of it, and a quick flutter at the tips
+        float wGust = 0.55 + 0.45 * sin(uTime * 0.45 + wRoot.x * 0.11 - wRoot.z * 0.07);
+        float wLean = sin(uTime * 1.3 + wPhase + position.y * 0.8) * 0.7 + sin(uTime * 3.1 + wPhase * 1.7 + position.x * 2.0) * 0.22;
+        float wAmt = _wind * _wind * uWind * wGust;
+        transformed.x += (wLean + 0.6) * wAmt * 0.16;
+        transformed.z += cos(uTime * 1.1 + wPhase) * wAmt * 0.09;
+        transformed.y -= abs(wLean) * wAmt * 0.03;`);
   };
   return material;
 }
@@ -92,10 +111,12 @@ function beadMaterial(id) {
   return addWind(new THREE.MeshStandardMaterial({
     map: texture(`${id}${small ? '-1k' : ''}.webp`, true),
     normalMap: texture(`${id}-n.webp`, false),
-    normalScale: new THREE.Vector2(1, 1),
-    roughness: 0.42,
+    // The normal maps are baked for Unreal (green points down), which is what three
+    // expects of a model whose UVs run glTF's way, so the scale stays positive.
+    normalScale: new THREE.Vector2(1.5, 1.5),
+    roughness: 0.3,
     metalness: 0,
-    envMapIntensity: 0.6,
+    envMapIntensity: 1,
     side: THREE.DoubleSide,
     alphaTest: 0.4,
     alphaToCoverage: true,

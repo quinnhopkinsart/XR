@@ -6,23 +6,28 @@ export function buildCarousel(ctx, flowers, onChange) {
 
   const scene = new THREE.Scene();
   scene.environment = environment;
-  scene.environmentIntensity = 0.4;
+  scene.environmentIntensity = SKY.room + 0.1;
   scene.background = null;
   const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
 
-  const sun = new THREE.DirectionalLight(new THREE.Color(SKY.sun), 1.5);
-  sun.position.set(-3, 5, 4);
-  scene.add(sun, new THREE.HemisphereLight(new THREE.Color('#ffe9d6'), new THREE.Color('#3d6b45'), 1.0));
+  // Lit like the field: a strong low sun from behind and to one side, a dim sky, and a
+  // small light from the front so the beads facing the visitor still read.
+  const sun = new THREE.DirectionalLight(new THREE.Color(SKY.sunLight), SKY.sunPower);
+  sun.position.set(-4, 1.2 + SKY.sunHeight * 6, -3);
+  const front = new THREE.DirectionalLight(new THREE.Color('#ffffff'), 1.2);
+  front.position.set(2, 3, 5);
+  scene.add(sun, front, new THREE.HemisphereLight(new THREE.Color(SKY.skyLight), new THREE.Color(SKY.groundLight), SKY.skyPower + 0.25));
 
-  // The same haze as the field, as a backdrop: light at the bottom, dusty rose at the top.
+  // The same sky as the field, as a backdrop: the horizon's colour low, the top's high.
   const backdrop = new THREE.Mesh(
     new THREE.PlaneGeometry(2, 2),
     new THREE.ShaderMaterial({
       depthTest: false, depthWrite: false, toneMapped: false,
-      uniforms: { top: { value: new THREE.Color(SKY.top) }, low: { value: new THREE.Color(SKY.horizon) } },
+      uniforms: { top: { value: new THREE.Color(SKY.top) }, mid: { value: new THREE.Color(SKY.mid) }, low: { value: new THREE.Color(SKY.horizon) } },
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
-      fragmentShader: `varying vec2 vUv; uniform vec3 top, low;
-        void main(){ gl_FragColor = vec4(mix(low, top, smoothstep(0.25, 1.0, vUv.y)), 1.0);
+      fragmentShader: `varying vec2 vUv; uniform vec3 top, mid, low;
+        void main(){ vec3 c = mix(low, mid, smoothstep(0.0, 0.45, vUv.y)); c = mix(c, top, smoothstep(0.35, 1.0, vUv.y));
+          gl_FragColor = vec4(c, 1.0);
           #include <colorspace_fragment>
         }`,
     }),
@@ -33,7 +38,7 @@ export function buildCarousel(ctx, flowers, onChange) {
   // The round the flower stands on.
   const disc = new THREE.Mesh(
     new THREE.CircleGeometry(1, 64).rotateX(-Math.PI / 2),
-    new THREE.MeshStandardMaterial({ color: SKY.ground, roughness: 0.7 }),
+    new THREE.MeshStandardMaterial({ color: '#16331f', roughness: 0.7 }),
   );
   scene.add(disc);
 
@@ -155,7 +160,7 @@ export function buildCarousel(ctx, flowers, onChange) {
       if (slide >= 1) { leaving.group.visible = false; leaving.group.position.x = 0; leaving = null; }
     }
     disc.visible = slide >= 1 || !motion;
-    renderer.setClearColor(SKY.horizon, 1);
+    renderer.setClearColor(SKY.haze, 1);
     renderer.render(scene, camera);
   }
   function resize(w, h) {
