@@ -85,30 +85,96 @@ export function buildField(ctx) {
   sky.renderOrder = -1;
   scene.add(sky);
 
-  // Ground: packed green beads, drawn once on a small canvas and repeated.
-  function beadTile() {
-    const c = document.createElement('canvas'); c.width = c.height = 256;
-    const g = c.getContext('2d');
-    g.fillStyle = '#143820'; g.fillRect(0, 0, 256, 256);
-    const greens = ['#2d7a3d', '#3c9148', '#256b38', '#4aa256', '#1f5f33', '#6bb04c'];
-    const r = seeded(7);
-    const step = 16;
-    for (let y = -1; y < 17; y++) for (let x = -1; x < 17; x++) {
-      const cx = x * step + (y % 2 ? step / 2 : 0) + 8, cy = y * step * 0.88 + 8;
-      const grad = g.createRadialGradient(cx - 2, cy - 2.5, 1, cx, cy, 7.4);
-      const col = greens[Math.floor(r() * greens.length)];
-      grad.addColorStop(0, '#d9f2c8'); grad.addColorStop(0.25, col); grad.addColorStop(1, '#0f2a18');
-      g.fillStyle = grad; g.beginPath(); g.arc(cx, cy, 7.2, 0, Math.PI * 2); g.fill();
+  // Ground: beads packed edge to edge, drawn in the shader, so there is no picture to
+  // repeat, no seams and no gaps between rows. Each bead takes one colour. Most are
+  // greens; patches of beige and brown beads read as bare dirt, and smaller patches of
+  // grey and beige as rock. Where the patches fall comes from `land`, a small map of the
+  // field made once here (red: dirt, green: rock), which the grass reads too, so grass
+  // grows thin on dirt and not at all on rock.
+  const LAND = { size: 96, cells: 128, bead: 0.05 };       // metres across, map cells, metres a bead
+  const land = (() => {
+    const r = seeded(4242), G = 64, lattice = new Float32Array(G * G * 2);
+    for (let i = 0; i < lattice.length; i++) lattice[i] = r();
+    const at = (ch, x, y) => lattice[(((y % G) + G) % G * G + ((x % G) + G) % G) * 2 + ch];
+    const smooth = (ch, x, y) => {
+      const x0 = Math.floor(x), y0 = Math.floor(y), fx = x - x0, fy = y - y0;
+      const ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy);
+      return (at(ch, x0, y0) * (1 - ux) + at(ch, x0 + 1, y0) * ux) * (1 - uy) + (at(ch, x0, y0 + 1) * (1 - ux) + at(ch, x0 + 1, y0 + 1) * ux) * uy;
+    };
+    const n = LAND.cells, data = new Uint8Array(n * n * 4);
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      const u = x / n, v = y / n;
+      // dirt in broad patches about 10 m across, rock in small ones about 3 m across
+      const dirt = smooth(0, u * 9, v * 9) * 0.65 + smooth(0, u * 23 + 7, v * 23 + 3) * 0.35;
+      const rock = smooth(1, u * 30, v * 30) * 0.7 + smooth(1, u * 61 + 5, v * 61 + 9) * 0.3;
+      const i = (y * n + x) * 4;
+      data[i] = dirt * 255; data[i + 1] = rock * 255; data[i + 3] = 255;
     }
-    const t = new THREE.CanvasTexture(c);
-    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(360, 360);
-    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
-    return t;
-  }
-  const ground = new THREE.Mesh(
-    new THREE.CircleGeometry(170, 48).rotateX(-Math.PI / 2),
-    new THREE.MeshStandardMaterial({ map: beadTile(), roughness: 0.6, color: '#6f9a70' }),
-  );
+    const tex = new THREE.DataTexture(data, n, n, THREE.RGBAFormat);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.magFilter = tex.minFilter = THREE.LinearFilter; tex.needsUpdate = true;
+    // The same map for placing things: 0 to 1 for dirt and for rock at a place in the field.
+    const read = (ch, x, z) => {
+      const px = (((x / LAND.size + 0.5) % 1) + 1) % 1 * n, py = (((z / LAND.size + 0.5) % 1) + 1) % 1 * n;
+      return data[(Math.min(n - 1, Math.floor(py)) * n + Math.min(n - 1, Math.floor(px))) * 4 + ch] / 255;
+    };
+    return { tex, dirt: (x, z) => read(0, x, z), rock: (x, z) => read(1, x, z) };
+  })();
+  const DIRT_AT = 0.61, ROCK_AT = 0.68;                    // how much of the map counts as dirt and as rock
+  const colours = (list) => list.map((c) => new THREE.Color(c));
+  const groundMat = new THREE.MeshStandardMaterial({ roughness: 0.5 });
+  groundMat.onBeforeCompile = (shader) => {
+    Object.assign(shader.uniforms, {
+      uLand: { value: land.tex },
+      uGreen: { value: colours(['#2d7a3d', '#3c9148', '#256b38', '#4aa256', '#1f5f33', '#6bb04c']) },
+      uEarth: { value: colours(['#d9c4a0', '#c7a97e', '#8a6540', '#6b4a2e', '#4d3320', '#a8845a']) },   // beige, then browns
+      uStone: { value: colours(['#8d8a84', '#6f6c68', '#b9b3a8', '#d9c4a0']) },                         // greys and a beige
+    });
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vGround;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvGround = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', `#include <common>
+        varying vec3 vGround;
+        uniform sampler2D uLand; uniform vec3 uGreen[6]; uniform vec3 uEarth[6]; uniform vec3 uStone[4];
+        float beadHash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }`)
+      .replace('#include <map_fragment>', `
+        // Find the bead this point is on: the nearest centre in a honeycomb of centres.
+        vec2 bp = vGround.xz / ${LAND.bead.toFixed(3)};
+        const float ROW = 0.8660254;
+        float row0 = floor(bp.y / ROW);
+        vec2 centre = vec2(0.0); float best = 1e9;
+        for (int j = -1; j <= 1; j++) {
+          float row = row0 + float(j);
+          float shift = mod(row, 2.0) * 0.5;
+          float col0 = floor(bp.x - shift);
+          for (int i = -1; i <= 1; i++) {
+            vec2 c = vec2(col0 + float(i) + 0.5 + shift, (row + 0.5) * ROW);
+            float d = distance(bp, c);
+            if (d < best) { best = d; centre = c; }
+          }
+        }
+        float h = beadHash(centre), h2 = beadHash(centre + 17.3);
+        // What the land is under this bead. A little chance per bead frays the patch edges.
+        vec2 landAt = texture2D(uLand, centre * ${LAND.bead.toFixed(3)} / ${LAND.size.toFixed(1)} + 0.5).rg;
+        float isDirt = step(${DIRT_AT}, landAt.r + (h2 - 0.5) * 0.14);
+        float isRock = step(${ROCK_AT}, landAt.g + (h2 - 0.5) * 0.08);
+        vec3 bead = uGreen[int(h * 5.999)];
+        // a stray green bead stays in the dirt, a stray earth bead in the grass
+        vec3 earth = uEarth[int(fract(h * 13.0) * 5.999)];
+        bead = mix(bead, earth, max(isDirt * step(0.06, h2), step(0.985, h2)));
+        bead = mix(bead, uStone[int(fract(h * 7.0) * 3.999)], isRock);
+        // The bead's own roundness: darker at its rim, a small highlight up and to one side.
+        float rim = smoothstep(0.2, 0.56, best);
+        float glint = smoothstep(0.2, 0.0, distance(bp, centre + vec2(-0.14, -0.16)));
+        vec3 near = bead * (1.0 - rim * 0.42) + glint * 0.16;
+        // Far off, where a bead is smaller than a pixel, show the land's colour without the beads.
+        vec2 landFar = texture2D(uLand, vGround.xz / ${LAND.size.toFixed(1)} + 0.5).rg;
+        vec3 far = mix(uGreen[0] * 0.5 + uGreen[1] * 0.5, uEarth[1] * 0.4 + uEarth[2] * 0.6, smoothstep(${DIRT_AT} - 0.05, ${DIRT_AT} + 0.05, landFar.r));
+        far = mix(far, uStone[0], smoothstep(${ROCK_AT} - 0.04, ${ROCK_AT} + 0.04, landFar.g)) * 0.82;
+        float px = max(fwidth(bp.x), fwidth(bp.y));
+        diffuseColor.rgb = mix(near, far, smoothstep(0.35, 1.1, px));`);
+  };
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(170, 48).rotateX(-Math.PI / 2), groundMat);
   scene.add(ground);
 
   // The path: the bead path tile laid end to end along a curve.
@@ -228,6 +294,9 @@ export function buildField(ctx) {
       const a = rand() * Math.PI * 2, r = Math.pow(rand(), 0.8) * (REACH - 2);
       const x = Math.cos(a) * r, z = Math.sin(a) * r;
       if (nearPath(x, z) < 0.75) continue;
+      // thin on dirt, none on rock
+      if (land.rock(x, z) > ROCK_AT - 0.02) continue;
+      if (land.dirt(x, z) > DIRT_AT - 0.02 && rand() < 0.88) continue;
       const w = 0.4 + rand() * 0.3, h = 0.12 + rand() * 0.2;   // ankle to shin
       q4.setFromAxisAngle(up, rand() * Math.PI * 2);
       m4.compose(new THREE.Vector3(x, 0, z), q4, new THREE.Vector3(w, h, w));
@@ -276,6 +345,7 @@ export function buildField(ctx) {
   let yaw = Math.atan2(-(ahead.x - start.x), -(ahead.z - start.z)), pitch = -0.16;
   let goal = null;                         // where a tap sent the visitor
   const keys = new Set();
+  const stick = { x: 0, y: 0 };            // -1 to 1 each way, set by the joystick in main.js
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
   const floor = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hit = new THREE.Vector3();
 
@@ -334,6 +404,8 @@ export function buildField(ctx) {
     if (keys.has('ArrowLeft')) turn += 1;
     if (keys.has('ArrowRight')) turn -= 1;
     yaw += turn * 1.6 * dt;
+    // the joystick on touch screens: up walks forward, sideways steps sideways
+    if (stick.x || stick.y) { fw -= stick.y; sd += stick.x; goal = null; }
     if (fw || sd) { pos.addScaledVector(f, fw * SPEED * dt).addScaledVector(r, sd * SPEED * dt); keepIn(pos); }
     if (goal) {
       const d = pos.distanceTo(goal);
@@ -352,5 +424,5 @@ export function buildField(ctx) {
     motes.material.uniforms.uSize.value = renderer.getPixelRatio() * h / 800;
   }
 
-  return { update, resize, pointer, key, wheel, clearKeys: () => keys.clear(), scene, camera };
+  return { update, resize, pointer, key, wheel, clearKeys: () => keys.clear(), setStick: (x, y) => { stick.x = x; stick.y = y; }, scene, camera };
 }

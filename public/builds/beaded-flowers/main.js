@@ -153,6 +153,7 @@ function setMode(next, flowerId) {
   modeField.setAttribute('aria-pressed', String(mode === 'field'));
   modeFlowers.setAttribute('aria-pressed', String(mode === 'flowers'));
   carouselEl.hidden = mode !== 'flowers';
+  if (field) field.setStick(0, 0);
   hint.classList.remove('gone');
   clearTimeout(hintTimer);
   canvas.setAttribute('aria-label', mode === 'field'
@@ -219,6 +220,35 @@ canvas.addEventListener('wheel', (e) => {
   if (view && view.wheel(e)) { e.preventDefault(); touched(); }
 }, { passive: false });
 if (framed) canvas.addEventListener('pointerleave', () => canvas.blur());
+
+// The joystick: touch screens only, in the field. One thumb walks, the other drags to look.
+// It is its own element with its own pointer, so both work at once.
+const stickEl = document.getElementById('stick');
+const knob = stickEl.querySelector('.stick__knob');
+let stickId = null;
+function moveStick(e) {
+  const r = stickEl.getBoundingClientRect(), reach = r.width / 2 - 18;
+  let x = e.clientX - (r.left + r.width / 2), y = e.clientY - (r.top + r.height / 2);
+  const d = Math.hypot(x, y);
+  if (d > reach) { x *= reach / d; y *= reach / d; }
+  knob.style.transform = `translate(${x}px, ${y}px)`;
+  if (field) field.setStick(x / reach, y / reach);
+}
+function dropStick(e) {
+  if (e.pointerId !== stickId) return;
+  stickId = null;
+  knob.style.transform = '';
+  if (field) field.setStick(0, 0);
+}
+stickEl.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  stickId = e.pointerId;
+  try { stickEl.setPointerCapture(e.pointerId); } catch { /* a pointer that has already gone */ }
+  moveStick(e); touched();
+});
+stickEl.addEventListener('pointermove', (e) => { if (e.pointerId === stickId) moveStick(e); });
+stickEl.addEventListener('pointerup', dropStick);
+stickEl.addEventListener('pointercancel', dropStick);
 
 function resize() {
   const w = window.innerWidth, h = window.innerHeight;

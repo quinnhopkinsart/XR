@@ -103,6 +103,15 @@ button.active,button[aria-pressed="true"],button[aria-expanded="true"]{backgroun
 .picks::-webkit-scrollbar{display:none}
 .picks button{white-space:nowrap;flex:0 0 auto}
 
+/* The joystick: touch screens, field view. */
+.stick{display:none;position:fixed;left:var(--pad);bottom:max(20px,env(safe-area-inset-bottom));width:116px;height:116px;border-radius:50%;
+  border:2px solid var(--black);background:var(--veil);touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.stick__knob{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:var(--black);pointer-events:none}
+@media (hover:none) and (pointer:coarse){
+  [data-mode="field"] .stick{display:block}
+  [data-mode="field"] .hint{bottom:calc(max(20px,env(safe-area-inset-bottom)) + 132px)}
+}
+
 @media (max-width:760px){
   #carousel{left:var(--pad);right:var(--pad);width:auto}
   .card{padding:.9rem 1rem;font-size:.9rem;max-height:34dvh;overflow:auto}
