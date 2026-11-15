@@ -246,6 +246,7 @@ function sculptureFrom(gltf, spec, maxParts) {
       parts,
       unit: 1 / longest,
       hero: !!spec.hero,
+      scatter: !!spec.scatter && !spec.split,
       scale: spec.scale || 1,
       turn: THREE.MathUtils.degToRad(spec.turn || 0),
     },
@@ -398,9 +399,12 @@ export function createField(container, { models, reducedMotion }) {
     // Then the split sculptures, largest first, then the single pieces.
     const heroes = sculptures.filter((s) => s.hero);
     const fronts = sculptures.filter((s) => s.front);
-    BAND = Math.max(BAND, sculptures.filter((s) => !s.front).length * PER);
+    // Scattered pieces (`scatter` in project.js) are small and sit among the sculptures:
+    // they take no place in the column, so they do not push the sculptures apart.
+    const scattered = sculptures.filter((s) => s.scatter);
+    BAND = Math.max(BAND, sculptures.filter((s) => !s.front && !s.scatter).length * PER);
     // The split sculptures are spaced evenly down the page, with single pieces between.
-    const others = sculptures.filter((s) => !s.hero && !s.front);
+    const others = sculptures.filter((s) => !s.hero && !s.front && !s.scatter);
     const wholes = others.filter((s) => s.parts.length > 1).sort((a, b) => b.parts.length - a.parts.length);
     const singles = others.filter((s) => s.parts.length === 1).sort(() => random() - 0.5);
     const rest = [];
@@ -415,8 +419,11 @@ export function createField(container, { models, reducedMotion }) {
     let frontIndex = 0;
     let heroIndex = 0;
     let wholeSide = 1; // sculptures alternate sides; single pieces keep to the other side
+    let scatterIndex = 0;
+    // Scattered pieces stand at these depths in turn, near enough to the focal plane to stay sharp.
+    const scatterDepths = [-2.4, 0.8, -1.2, 1.8, -3.2, -0.4, 1.2, -1.8];
 
-    [...heroes, ...rest, ...fronts].forEach((s) => {
+    [...heroes, ...rest, ...fronts, ...scattered].forEach((s) => {
       const group = new THREE.Group();
       const whole = s.parts.length > 1;
       let base;
@@ -436,6 +443,24 @@ export function createField(container, { models, reducedMotion }) {
           z,
         );
         frontIndex += 1;
+      } else if (s.scatter) {
+        // Lightly scattered: spread evenly down the whole column, to either side in turn,
+        // anywhere from near the middle to near the edge. Small (see `fill` below).
+        const n = Math.max(1, scattered.length);
+        size = 3 * k * s.scale; // refitted to the screen below
+        base = new THREE.Vector3(
+          (scatterIndex % 2 ? -1 : 1) * (mobile ? 0.12 + random() * 0.26 : 0.1 + random() * 0.34),
+          0.15 + ((scatterIndex + random() * 0.7) / n) * BAND,
+          scatterDepths[scatterIndex % scatterDepths.length],
+        );
+        s.turn = random() * Math.PI * 2; // any side to the page
+        // Cut-out cards with thin lines (strings of beads): coverage keeps the lines whole
+        // at this small size, where a plain alpha test thins them to nothing.
+        s.parts[0].pivot.traverse((o) => {
+          const m = o.isMesh && (Array.isArray(o.material) ? o.material[0] : o.material);
+          if (m && m.alphaTest > 0) m.alphaToCoverage = true;
+        });
+        scatterIndex += 1;
       } else if (s.hero) {
         size = (mobile ? 4.6 : 8.2) * s.scale; // refitted to the screen below
         base = new THREE.Vector3(
@@ -457,13 +482,14 @@ export function createField(container, { models, reducedMotion }) {
         );
       }
       const nearness = THREE.MathUtils.clamp(1 + base.z / 8, 0, 1.9); // 1 at the focal plane
-      const steady = whole || s.front || s.hero; // these keep facing the page and only rock
+      const steady = whole || s.front || s.hero || s.scatter; // these keep facing the page and only rock (a scattered flower stays upright)
       const cluster = {
         group,
         base,
         size,
         whole,
         front: !!s.front,
+        scatter: !!s.scatter,
         turn: s.turn,
         work: s.work,
         // In the free camera a sculpture can be larger and hang higher than on the page
@@ -544,7 +570,8 @@ export function createField(container, { models, reducedMotion }) {
         // Never less than 60% of the full bounds, so a loose scene is not blown up past the screen.
         const full = new THREE.Box3().setFromObject(group).getSize(new THREE.Vector3()).multiplyScalar(0.6);
         const dims = new THREE.Vector3(body('x'), body('y'), body('z')).max(biggest).max(full);
-        const fill = whole || s.hero ? 1 : 0.6; // single pieces tumble, so they stay smaller
+        // single pieces tumble, so they stay smaller; scattered pieces are small on purpose
+        const fill = s.scatter ? (mobile ? 0.34 : 0.44) : whole || s.hero ? 1 : 0.6;
         const maxH = view.h * 0.9 * fill;
         const maxW = view.w * (mobile ? 0.92 : 0.64) * fill;
         size = Math.min(maxH / (dims.y || 1), maxW / (dims.x || 1)) * (0.94 + random() * 0.06) * s.scale;
@@ -623,6 +650,9 @@ export function createField(container, { models, reducedMotion }) {
   function planZones() {
     const works = [];
     for (const c of clusters) {
+      // Scattered pieces take no zone: in flight they stay where the page has them, round
+      // the middle, so a work's small pieces do not become the widest zone and lead the tour.
+      if (c.scatter) continue;
       let zone = works.find((z) => z.work === c.work);
       if (!zone) works.push((zone = { work: c.work, title: c.title, members: [], fronts: [] }));
       (c.front ? zone.fronts : zone.members).push(c);

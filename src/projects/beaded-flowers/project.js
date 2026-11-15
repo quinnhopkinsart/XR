@@ -8,6 +8,19 @@
 // The cover is Quinn's Blender render of the bead meadow.
 import cover from './cover.jpg';
 
+// The floating background shows the flowers too, lightly scattered among the sculptures,
+// at Quinn's request (November 14, 2026). One small .glb per flower, each with its bead
+// picture and normal map inside, made from the viewer's files by
+// scripts/beaded-flowers/build_field_models.py.
+import asters from './models/asters.glb?url';
+import coneflowers from './models/coneflowers.glb?url';
+import wildRice from './models/wild-rice.glb?url';
+import blueberry from './models/blueberry.glb?url';
+import prairieCrocus from './models/prairie-crocus.glb?url';
+import wolfWillow from './models/wolf-willow.glb?url';
+import tableFlowers from './models/table-flowers.glb?url';
+import spray from './models/spray.glb?url';
+
 // Text, status and the hidden flag live in content.json beside this file.
 export default {
   kind: '3D environment',
@@ -18,5 +31,11 @@ export default {
 
   cover,
 
-  // No models for the floating background: Quinn curates the field, so ask before adding any.
+  // scatter: small, upright, spread lightly down the page instead of standing as one large
+  // sculpture. Scattered pieces have no zone in the landing page's free camera: they stay
+  // round the middle there.
+  models: [asters, coneflowers, wildRice, blueberry, prairieCrocus, wolfWillow, tableFlowers, spray].map((src) => ({
+    src,
+    scatter: true,
+  })),
 };
