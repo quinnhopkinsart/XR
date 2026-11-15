@@ -715,5 +715,7 @@ export function buildScenery({ zones, token, random, view }) {
     zoneGroups.push(g);
   }
 
-  return { group, zones: zoneGroups, links, facing, upright, wave, tour };
+  // `line`: the rounded line the tour rides, a closed curve, and `under`, how far below the
+  // camera it runs, for field.js to plant the flower bed along it.
+  return { group, zones: zoneGroups, links, facing, upright, wave, tour, line: path, under: TRAIL.under };
 }

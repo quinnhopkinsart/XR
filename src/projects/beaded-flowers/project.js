@@ -32,8 +32,8 @@ export default {
   cover,
 
   // scatter: small, upright, spread lightly down the page instead of standing as one large
-  // sculpture. Scattered pieces have no zone in the landing page's free camera: they stay
-  // round the middle there.
+  // sculpture. In the landing page's free camera they have no zone of their own: the same
+  // flowers are planted as a bed along the tour's line (`BED` in src/field/field.js).
   models: [asters, coneflowers, wildRice, blueberry, prairieCrocus, wolfWillow, tableFlowers, spray].map((src) => ({
     src,
     scatter: true,
