@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Beaded Flowers | Noodin Studio XR</title>
+<meta name="description" content="Beaded Flowers: beadwork by Robyn Adams, modelled in 3D by Quinn Hopkins. Walk through a field of the flowers, or look at each one on its own.">
+<meta name="theme-color" content="#ff3314">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Sora:wght@200;300;400;500&display=swap">
+<link rel="stylesheet" href="./style.css">
+<script>
+  // Inside the work page the page itself carries the title and the text.
+  if (window.top !== window.self) document.documentElement.classList.add('framed');
+</script>
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three.module.js",
+  "three/addons/": "./vendor/jsm/"
+} }
+</script>
+</head>
+<body data-mode="field">
+<canvas id="stage" tabindex="0" aria-label="3D view of a field of beaded flowers. Drag to look around, tap the ground to walk there, or use the arrow keys."></canvas>
+
+<header class="title">
+  <a class="back" href="/xr/beaded-flowers" target="_top">&larr; Noodin XR</a>
+  <h1><span class="plate">Beaded Flowers</span></h1>
+  <p><span class="plate">Robyn Adams and Quinn Hopkins</span></p>
+</header>
+
+<div id="loader" role="status" aria-live="polite">
+  <div class="bar"><span id="bar-fill"></span></div>
+  <p id="loader-text">Loading 0%</p>
+</div>
+
+<div class="tools">
+  <div class="modes" role="group" aria-label="View">
+    <button type="button" id="mode-field" aria-pressed="true">Field</button>
+    <button type="button" id="mode-flowers" aria-pressed="false">Each flower</button>
+  </div>
+  <button type="button" id="motion" aria-pressed="true">Motion</button>
+  <button type="button" id="about-btn" aria-expanded="false" aria-controls="about">About</button>
+  <button type="button" id="fs">Full screen</button>
+</div>
+
+<aside id="about" hidden>
+  <button type="button" class="close" id="about-close">Close</button>
+  <h2>Beaded Flowers</h2>
+  <p class="meta">Beadwork by Robyn Adams. 3D models by Quinn Hopkins, Noodin Studio.</p>
+  <p>Robyn Adams beads these flowers. I modelled them in 3D, bead by bead, and prepared them as game assets for the worlds she builds in Unreal Engine. We started working together at the Banff Centre during the Digital Constellations residency.</p>
+  <p>Here the flowers grow as a field you can walk through. Each plant in the field is a few flat cards carrying a picture of its beads, the same assets a game engine uses, so the whole field runs in a browser.</p>
+</aside>
+
+<!-- Each flower on its own -->
+<section id="carousel" aria-roledescription="carousel" aria-label="The flowers, one at a time" hidden>
+  <div class="card" id="card" aria-live="polite">
+    <p class="count" id="card-count"></p>
+    <h2 id="card-name"></h2>
+    <p id="card-text"></p>
+    <p class="meta" id="card-meta"></p>
+  </div>
+  <div class="steps">
+    <button type="button" id="prev" aria-label="Previous flower">&larr; <span>Previous</span></button>
+    <button type="button" id="next" aria-label="Next flower"><span>Next</span> &rarr;</button>
+  </div>
+  <nav class="picks" id="picks" aria-label="Choose a flower"></nav>
+</section>
+
+<p class="hint" id="hint">
+  <span class="for-field"><span class="hint-mouse">Drag to look. Click the ground to walk there. Arrow keys or WASD move.</span><span class="hint-touch">Drag to look. Tap the ground to walk there.</span></span>
+  <span class="for-flowers"><span class="hint-mouse">Drag to turn the flower. Arrow keys change flowers.</span><span class="hint-touch">Drag to turn the flower.</span></span>
+</p>
+
+<script type="module" src="./main.js"></script>
+<noscript><p class="nojs">This viewer needs JavaScript and WebGL.</p></noscript>
+</body>
+</html>
