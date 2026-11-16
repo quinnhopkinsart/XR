@@ -105,6 +105,9 @@ export function validateProject(p, folder) {
       errors.push(`${where}: launch.embed only works with type "build"`);
     }
   }
+  if (p.makingOf != null && typeof p.makingOf !== 'function') {
+    errors.push(`${where}: makingOf must be () => import('./MakingOf.jsx')`);
+  }
   if (p.portfolio != null && !SLUG.test(p.portfolio)) {
     errors.push(`${where}: portfolio "${p.portfolio}" must be the work's slug on the portfolio, lowercase-with-dashes`);
   }

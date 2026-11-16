@@ -841,6 +841,164 @@ html.title-leads .field.is-ready {
   margin: 1.5rem 0 0;
 }
 
+/* Making-of on a work page (src/projects/beaded-flowers/MakingOf.jsx). Pictures and loops sit
+   on black panels, since the renders have a near-black ground of their own; captions sit
+   under the panel in the label style. */
+
+.work__main {
+  min-width: 0;
+}
+
+.making {
+  margin-top: 2.5rem;
+}
+
+.making__kicker {
+  margin-bottom: 0.75rem;
+}
+
+.making__prose {
+  max-width: none;
+}
+
+.making__prose > p,
+.making__prose .section > p,
+.steps__text p {
+  max-width: 68ch;
+}
+
+.making__fig {
+  margin: 1.5rem 0 0;
+}
+
+.making__fig figcaption {
+  margin-top: 0.6rem;
+}
+
+.making__media {
+  background: var(--panel);
+}
+
+.making__media img,
+.making__media video {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Two columns, one on phones */
+.making__pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0 1.25rem;
+  align-items: start;
+}
+
+@media (min-width: 700px) {
+  .making__pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+  /* The loop's panel grows to the height of the taller picture beside it */
+  .making__pair .making__fig {
+    display: flex;
+    flex-direction: column;
+  }
+  .making__pair .making__media {
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+}
+
+/* The numbered steps with a picture or loop beside each: text on one side, media on the
+   other, stacked on phones */
+.steps--media li {
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+  grid-template-areas:
+    'n t'
+    'n m';
+  gap: 0.5rem 0;
+  padding: 1.25rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.steps--media li::before {
+  grid-area: n;
+}
+
+.steps--media .steps__text {
+  grid-area: t;
+}
+
+.steps--media .making__fig {
+  grid-area: m;
+  margin: 0.5rem 0 0;
+}
+
+.steps__text strong {
+  font: 600 var(--step-0) / 1.3 var(--font-display);
+  color: var(--heading);
+}
+
+.steps__text p {
+  margin: 0.4rem 0 0;
+}
+
+@media (min-width: 760px) {
+  .steps--media li {
+    grid-template-columns: 2.5rem minmax(0, 1fr) minmax(0, 1.15fr);
+    grid-template-areas: 'n t m';
+    gap: 0 1.5rem;
+  }
+  .steps--media .making__fig {
+    margin: 0;
+  }
+}
+
+/* A figure straight from the numbers, on a black chip because accent text needs a dark ground */
+.steps__text .making__stat {
+  display: inline-block;
+  margin-top: 0.75rem;
+  padding: 0.4rem 0.7rem;
+  background: var(--panel);
+  color: var(--accent);
+  font: 500 var(--step--1) / 1.3 var(--font-display);
+}
+
+/* 2 x 2 cards: picture, title, one line */
+.making__cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 520px) {
+  .making__cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.making__cards li {
+  padding-bottom: 1rem;
+  background: var(--panel);
+  color: var(--on-panel);
+}
+
+.making__cards h3 {
+  margin: 0.9rem 1rem 0.3rem;
+  font: 500 var(--step-0) / 1.25 var(--font-display);
+  color: var(--on-panel-strong);
+}
+
+.making__cards p {
+  margin: 0 1rem;
+  font-size: var(--step--1);
+}
+
 /* Embedded build */
 
 .embed {

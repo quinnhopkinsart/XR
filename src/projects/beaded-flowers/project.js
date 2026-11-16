@@ -31,6 +31,10 @@ export default {
 
   cover,
 
+  // The making-of: the story of how the flowers were built, after the description on the work
+  // page (MakingOf.jsx, with its pictures and loops in making-of/). Loaded only on this page.
+  makingOf: () => import('./MakingOf.jsx'),
+
   // scatter: small, upright, spread lightly down the page instead of standing as one large
   // sculpture. In the landing page's free camera they have no zone of their own: the same
   // flowers are planted as a bed along the tour's line (`BED` in src/field/field.js).
