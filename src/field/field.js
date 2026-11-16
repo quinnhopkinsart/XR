@@ -32,9 +32,9 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { flyStick, hasLens, motion } from './motion.js';
+import { LensPass } from './lens.js';
 import { buildScenery } from './scenery.js';
 
 // Where the page keeps the camera. The layout is worked out from this distance, never from
@@ -62,10 +62,17 @@ const ZONES = { out: 70, step: 52, gap: 2.5, pad: 4 };
 // Haze: where it starts and where it is complete, on the page and in flight. `far` is how
 // far the camera draws in flight.
 const HAZE = { page: [17, 46], flight: [90, 380], far: 700 };
-// The lens (desktop only): how quickly things soften away from what is in focus, on the
-// page and in flight, where distances are several times longer. In flight the focus
-// follows the work the camera is looking at.
-const LENS = { page: 0.0011, flight: 0.0002, maxblur: 0.009 };
+// The lens (desktop only, lens.js). `aperture` is how fast things soften as they leave the
+// focus, in screen widths per unit of (distance - focus) / distance; `back` and `near` cap the
+// blur behind and in front of it, `tol` is the share of that ratio kept sharp (the depth of
+// field), `boost` brightens bright discs a little, as a real lens does. In flight the
+// distances are several times longer, the works stand in zones with their titles a few units
+// toward the middle, and Quinn found the blur hid them: wider sharp range, softer ends, and
+// a gentler blur in front so the foreground never covers a work.
+const LENS = {
+  page: { aperture: 0.025, back: 0.009, near: 0.007, tol: 0.08, boost: 0.5 },
+  flight: { aperture: 0.02, back: 0.011, near: 0.004, tol: 0.11, boost: 0.6 },
+};
 
 const SPIN = 0.35; // radians a second, for parts a model lists under `spin`
 
@@ -276,35 +283,25 @@ export function createField(container, { models, reducedMotion }) {
   // Haze: sculptures further back sink into the ground colour.
   scene.fog = new THREE.Fog(ground, HAZE.page[0], HAZE.page[1]);
 
-  // Lens: sharp at the focal plane (z = 0), softer in front of it and behind.
+  // Lens: sharp at the focal plane (z = 0) on the page, and wherever it is pointed in flight.
+  // The scene is drawn into a target that keeps its depth, which the lens reads (lens.js).
   let composer = null;
-  let bokeh = null;
+  let dof = null;
   if (lens) {
     composer = new EffectComposer(
       renderer,
-      new THREE.WebGLRenderTarget(1, 1, { samples: 4, type: THREE.HalfFloatType }),
+      new THREE.WebGLRenderTarget(1, 1, {
+        samples: 4,
+        type: THREE.HalfFloatType,
+        depthTexture: new THREE.DepthTexture(1, 1),
+      }),
     );
     composer.setPixelRatio(renderer.getPixelRatio());
     composer.addPass(new RenderPass(scene, camera));
-    bokeh = new BokehPass(scene, camera, { focus: CAM_Z, aperture: LENS.page, maxblur: LENS.maxblur });
-    // With the lens on, the canvas paints the ground itself: the blur needs an opaque
-    // frame. The depth pass must not see that colour, so it is lifted while it runs.
+    // With the lens on, the canvas paints the ground itself: the blur needs an opaque frame.
     scene.background = ground;
-    const renderBokeh = bokeh.render.bind(bokeh);
-    bokeh.render = (...args) => {
-      scene.background = null;
-      // The depth pass ignores cut-outs, so a foreground plane would blur everything
-      // behind its whole rectangle. Those parts sit the pass out.
-      // In flight the scattered flowers do the same: they stand close to the camera there,
-      // and their cards would smear the works behind them. On the page they stay in, so
-      // they keep their own place in the lens.
-      const out = flyMix > 0 ? flatFront.concat(scatterCut) : flatFront;
-      out.forEach((o) => (o.visible = false));
-      renderBokeh(...args);
-      out.forEach((o) => (o.visible = true));
-      scene.background = ground;
-    };
-    composer.addPass(bokeh);
+    dof = new LensPass(camera);
+    composer.addPass(dof);
     composer.addPass(new OutputPass());
   }
 
@@ -319,8 +316,6 @@ export function createField(container, { models, reducedMotion }) {
   const loader = new GLTFLoader().setDRACOLoader(draco);
 
   const floaters = []; // every part
-  const flatFront = []; // foreground parts drawn with a cut-out or see-through material
-  const scatterCut = []; // scattered pieces drawn with a cut-out material (the beaded flowers)
   const clusters = []; // every sculpture
   const tmp = new THREE.Vector3();
   const tmpQ = new THREE.Quaternion();
@@ -350,7 +345,10 @@ export function createField(container, { models, reducedMotion }) {
   let flyMix = 0; // 0 on the page, 1 in flight: sculptures in their zones, haze drawn back
   let shownMix = -1;
   let waveT = -1; // the time the line to follow was last drawn for
-  let focus = CAM_Z; // how far away the lens is focused, in flight
+  let focus = CAM_Z; // how far away the lens is focused on the tour
+  const flyAim = new THREE.Vector2(0.5, 0.5); // where the pointer is on screen in flight, y up
+  const plateAt = new THREE.Vector3();
+  let lensClock = performance.now(); // the lens eases by time, so a slow frame does not slow the focus
   let touring = false; // riding the dashed line by scrolling
   let tourS = 0; // how far along the line the camera is
   let tourTo = 0; // how far along the visitor has scrolled it
@@ -380,7 +378,6 @@ export function createField(container, { models, reducedMotion }) {
     camera.updateProjectionMatrix();
     if (composer) {
       composer.setSize(w, h);
-      bokeh.uniforms.aspect.value = camera.aspect;
     }
     const height = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * CAM_Z;
     view = { w: height * camera.aspect, h: height };
@@ -464,10 +461,7 @@ export function createField(container, { models, reducedMotion }) {
         // at this small size, where a plain alpha test thins them to nothing.
         s.parts[0].pivot.traverse((o) => {
           const m = o.isMesh && (Array.isArray(o.material) ? o.material[0] : o.material);
-          if (m && m.alphaTest > 0) {
-            m.alphaToCoverage = true;
-            scatterCut.push(o);
-          }
+          if (m && m.alphaTest > 0) m.alphaToCoverage = true;
         });
         scatterIndex += 1;
       } else if (s.hero) {
@@ -545,7 +539,9 @@ export function createField(container, { models, reducedMotion }) {
       if (s.front) {
         group.traverse((o) => {
           const m = o.isMesh && (Array.isArray(o.material) ? o.material[0] : o.material);
-          if (m && (m.transparent || m.alphaTest > 0)) flatFront.push(o);
+          // A see-through plane must not write depth over its whole rectangle, or the lens
+          // would treat the empty part as a wall. Cut-outs (alphaTest) write only where drawn.
+          if (m && m.transparent && !(m.alphaTest > 0)) m.depthWrite = false;
         });
       } else {
         // As large as the screen allows with the whole sculpture still in view, so it is
@@ -805,7 +801,6 @@ export function createField(container, { models, reducedMotion }) {
       kind.at.forEach((m, i) => mesh.setMatrixAt(i, m));
       mesh.frustumCulled = false; // the bed runs all round the camera
       bed.add(mesh);
-      scatterCut.push(mesh); // cut-out cards: they sit the lens's depth pass out in flight
     }
     bed.visible = false;
     scene.add(bed);
@@ -835,9 +830,13 @@ export function createField(container, { models, reducedMotion }) {
         o.rotation.y = Math.atan2(camera.position.x - o.position.x, camera.position.z - o.position.z);
       }
     }
-    if (bokeh) {
-      // In flight the lens focuses on the work nearest the middle of the view, and eases
-      // from one to the next.
+    if (dof) {
+      const now = performance.now();
+      const dt = Math.min((now - lensClock) / 1000, 0.1);
+      lensClock = now;
+      // On the tour the lens holds the work nearest the middle of the view and eases from one
+      // to the next. It focuses between the work and its title plate, which hangs a few units
+      // toward the middle of the ring, so the two read sharp together.
       let target = CAM_Z;
       if (mix > 0) {
         camera.getWorldDirection(tmp);
@@ -849,22 +848,33 @@ export function createField(container, { models, reducedMotion }) {
           if (along > 1 && aim > best) {
             best = aim;
             target = along;
+            const plate = scenery?.links.find((p) => p.userData.work === c.work);
+            if (plate) {
+              const onPlate = plate.getWorldPosition(plateAt).sub(camera.position).dot(tmp);
+              if (onPlate > 1) target = (along + onPlate) / 2;
+            }
           }
         }
       }
-      focus += (target - focus) * (mix > 0 && shownMix > 0 ? 0.05 : 1);
-      bokeh.uniforms.focus.value = THREE.MathUtils.lerp(CAM_Z, focus, mix);
+      focus += (target - focus) * (mix > 0 && shownMix > 0 ? 1 - Math.exp(-dt * 3.2) : 1);
+      dof.focus.explicit = THREE.MathUtils.lerp(CAM_Z, focus, mix);
+      // In free roam the focus follows the pointer, like an autofocus: whatever is under it
+      // comes sharp and the rest softens. Quinn asked for this.
+      dof.focus.mouse = flying && !touring && mix > 0.5;
+      dof.focus.rate = 1 - Math.exp(-dt * 9);
+      dof.focus.point.copy(flyAim);
     }
     if (mix === shownMix) return;
     shownMix = mix;
-    if (bokeh) bokeh.uniforms.aperture.value = THREE.MathUtils.lerp(LENS.page, LENS.flight, mix);
+    if (dof) {
+      for (const key of Object.keys(LENS.page)) dof.lens[key] = THREE.MathUtils.lerp(LENS.page[key], LENS.flight[key], mix);
+    }
     scene.fog.near = THREE.MathUtils.lerp(HAZE.page[0], HAZE.flight[0], mix);
     scene.fog.far = THREE.MathUtils.lerp(HAZE.page[1], HAZE.flight[1], mix);
     const far = mix > 0 ? HAZE.far : 100;
     if (camera.far !== far) {
       camera.far = far;
       camera.updateProjectionMatrix();
-      if (bokeh) bokeh.uniforms.farClip.value = far;
     }
     if (scenery) {
       scenery.group.visible = mix > 0;
@@ -970,10 +980,11 @@ export function createField(container, { models, reducedMotion }) {
 
   /** In flight the visitor can switch the depth of field off. The page always has it. */
   function setLens() {
-    if (!bokeh) return;
+    if (!dof) return;
     const on = !flying || motion.get().flyLens;
-    if (bokeh.enabled === on) return;
-    bokeh.enabled = on;
+    if (dof.enabled === on) return;
+    dof.enabled = on;
+    if (on) dof.snap = true; // it was not following while off: go straight to the focus
     if (!running) render();
   }
 
@@ -1126,6 +1137,7 @@ export function createField(container, { models, reducedMotion }) {
     drag = { id: e.pointerId, x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, moved: false, touch: e.pointerType === 'touch' };
   };
   const onFlyMove = (e) => {
+    if (e.pointerType !== 'touch') flyAim.set(e.clientX / window.innerWidth, 1 - e.clientY / window.innerHeight);
     if (!drag) {
       // Over a title the cursor says it is a link.
       if (e.pointerType !== 'touch') {
@@ -1407,6 +1419,7 @@ export function createField(container, { models, reducedMotion }) {
       }
     });
     draco.dispose();
+    dof?.dispose();
     composer?.dispose();
     renderer.dispose();
     renderer.domElement.remove();

@@ -135,6 +135,73 @@ function Joystick() {
   );
 }
 
+// The controls in flight are icons, not words (Quinn's request): drawn here as inline SVGs,
+// never typed as text characters, which phones draw from whatever symbol font they carry.
+// Each button carries its name for screen readers and as a tooltip (`data-tip`).
+const Icon = ({ children }) => (
+  <svg className="hud-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    {children}
+  </svg>
+);
+const ICONS = {
+  back: (
+    <Icon>
+      <path d="M19 12H5M11 5l-7 7 7 7" />
+    </Icon>
+  ),
+  roam: (
+    <Icon>
+      <path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3" />
+    </Icon>
+  ),
+  fly: (
+    <Icon>
+      <path d="M6 12l6-6 6 6M6 19l6-6 6 6" />
+    </Icon>
+  ),
+  reset: (
+    <Icon>
+      <path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1M3.5 4v5h5" />
+    </Icon>
+  ),
+  focus: (
+    <Icon>
+      <path d="M4 9V6a2 2 0 0 1 2-2h3M15 4h3a2 2 0 0 1 2 2v3M20 15v3a2 2 0 0 1-2 2h-3M9 20H6a2 2 0 0 1-2-2v-3" />
+      <circle cx="12" cy="12" r="2.6" />
+    </Icon>
+  ),
+  tilt: (
+    <Icon>
+      <g transform="rotate(-18 12 12)">
+        <rect x="7.5" y="3" width="9" height="18" rx="2" />
+        <path d="M11 18h2" />
+      </g>
+    </Icon>
+  ),
+  help: (
+    <Icon>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.6 9.5a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.2.9-1.2 1.8M12 17h.01" />
+    </Icon>
+  ),
+};
+
+/** One round icon button. `pressed` makes it a toggle (saffron when on). */
+function HudButton({ label, icon, pressed, className = '', ...rest }) {
+  return (
+    <button
+      type="button"
+      className={`hud-btn ${className}`.trim()}
+      aria-label={label}
+      aria-pressed={pressed}
+      data-tip={label}
+      {...rest}
+    >
+      {ICONS[icon]}
+    </button>
+  );
+}
+
 // The button that opened the flight, so focus goes back to it on the way out.
 let opener = null;
 const enter = (e) => {
@@ -414,83 +481,84 @@ export default function FlyMode() {
 
       {fly &&
         createPortal(
-          <div className="fly-hud" role="region" aria-label="Free camera">
-            {/* The Instructions button hides this line. A declined tilt still shows its message. */}
-            <p className="fly-hud__hint" role="status" hidden={!flyHints && !tiltDenied}>
-              {tiltDenied
-                ? 'Motion access was declined. Allow it in your browser settings to use tilt.'
-                : flyTour
-                ? coarse
-                  ? `Swipe left or right to go from work to work. Tap a title to open the work.${tilt ? ' Tilt to look around.' : ''}`
-                  : 'Scroll to follow the line from work to work. Click a title to open the work. Esc to leave.'
-                : coarse
-                  ? `${tilt ? 'Tilt or drag' : 'Drag'} to look. Push the stick to move.`
-                  : 'Drag to look. Scroll, W A S D or the arrow keys to move. Esc to leave.'}
-            </p>
-            {coarse && !flyTour && <Joystick />}
-            <div className="fly-hud__bar">
-              <button type="button" className="motion__btn" ref={exitBtn} onClick={() => motion.set({ fly: false, flyTour: false })}>
-                Back to the page
-              </button>
-              <button
-                type="button"
-                className="motion__btn"
-                aria-pressed={!flyTour}
-                onClick={() => motion.set({ flyTour: !flyTour })}
-              >
-                Free roam
-              </button>
-              {tiltSupported && (
-                <button type="button" className="motion__btn" aria-pressed={tilt} onClick={toggleTilt}>
-                  Tilt
-                </button>
-              )}
-              {hasLens && (
-                <button
-                  type="button"
-                  className="motion__btn"
-                  aria-pressed={flyLens}
-                  onClick={() => motion.set({ flyLens: !flyLens })}
-                >
-                  Depth of field
-                </button>
-              )}
-              <button
-                type="button"
-                className="motion__btn"
-                aria-pressed={flyHints}
-                onClick={() => motion.set({ flyHints: !flyHints })}
-              >
-                Instructions
-              </button>
-              <button
-                type="button"
-                className="motion__btn"
-                onClick={() => motion.set({ flyHome: motion.get().flyHome + 1 })}
-              >
-                Reset view
-              </button>
-              {!coarse && (
-                <button
-                  type="button"
-                  className="motion__btn fly-hud__go"
-                  onPointerDown={(e) => {
-                    e.currentTarget.setPointerCapture?.(e.pointerId);
-                    motion.set({ flyForward: true });
-                  }}
-                  onPointerUp={forward(false)}
-                  onPointerCancel={forward(false)}
-                  onLostPointerCapture={forward(false)}
-                  onBlur={forward(false)}
-                  onKeyDown={holdKey(true)}
-                  onKeyUp={holdKey(false)}
-                  onContextMenu={(e) => e.preventDefault()}
-                >
-                  Fly<span className="visually-hidden"> forward, hold down</span>
-                </button>
-              )}
+          <>
+            {/* Leaving sits alone at the top left, apart from the controls. */}
+            <HudButton
+              label="Back to the page"
+              icon="back"
+              className="fly-back"
+              ref={exitBtn}
+              onClick={() => motion.set({ fly: false, flyTour: false })}
+            />
+            <div className="fly-hud" role="region" aria-label="Free camera">
+              {/* The help button hides this line. A declined tilt still shows its message. */}
+              <p className="fly-hud__hint" role="status" hidden={!flyHints && !tiltDenied}>
+                {tiltDenied
+                  ? 'Motion access was declined. Allow it in your browser settings to use tilt.'
+                  : flyTour
+                  ? coarse
+                    ? `Swipe left or right to go from work to work. Tap a title to open the work.${tilt ? ' Tilt to look around.' : ''}`
+                    : 'Scroll to follow the line from work to work. Click a title to open the work. Esc to leave.'
+                  : coarse
+                    ? `${tilt ? 'Tilt or drag' : 'Drag'} to look. Push the stick to move.`
+                    : `Drag to look. Scroll, W A S D or the arrow keys to move.${hasLens && flyLens ? ' Point at something to focus on it.' : ''} Esc to leave.`}
+              </p>
+              {coarse && !flyTour && <Joystick />}
+              <div className="fly-hud__bar">
+                {/* Where the camera goes */}
+                <div className="hud-group" role="group" aria-label="Camera">
+                  <HudButton
+                    label={flyTour ? 'Free roam' : 'Follow the line'}
+                    icon="roam"
+                    pressed={!flyTour}
+                    onClick={() => motion.set({ flyTour: !flyTour })}
+                  />
+                  {!coarse && (
+                    <HudButton
+                      label="Fly forward, hold down"
+                      icon="fly"
+                      className="hud-btn--hold"
+                      onPointerDown={(e) => {
+                        e.currentTarget.setPointerCapture?.(e.pointerId);
+                        motion.set({ flyForward: true });
+                      }}
+                      onPointerUp={forward(false)}
+                      onPointerCancel={forward(false)}
+                      onLostPointerCapture={forward(false)}
+                      onBlur={forward(false)}
+                      onKeyDown={holdKey(true)}
+                      onKeyUp={holdKey(false)}
+                      onContextMenu={(e) => e.preventDefault()}
+                    />
+                  )}
+                  <HudButton label="Reset view" icon="reset" onClick={() => motion.set({ flyHome: motion.get().flyHome + 1 })} />
+                </div>
+                {/* How it looks */}
+                {(hasLens || tiltSupported) && (
+                  <div className="hud-group" role="group" aria-label="View">
+                    {hasLens && (
+                      <HudButton
+                        label="Depth of field"
+                        icon="focus"
+                        pressed={flyLens}
+                        onClick={() => motion.set({ flyLens: !flyLens })}
+                      />
+                    )}
+                    {tiltSupported && <HudButton label="Tilt to look" icon="tilt" pressed={tilt} onClick={toggleTilt} />}
+                  </div>
+                )}
+                {/* Help */}
+                <div className="hud-group">
+                  <HudButton
+                    label="Instructions"
+                    icon="help"
+                    pressed={flyHints}
+                    onClick={() => motion.set({ flyHints: !flyHints })}
+                  />
+                </div>
+              </div>
             </div>
-          </div>,
+          </>,
           document.body,
         )}
     </section>

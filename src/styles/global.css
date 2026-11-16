@@ -1528,19 +1528,127 @@ html.is-flying .field.is-ready {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 6px;
+  align-items: center;
+  gap: 12px;
 }
 
-.fly-hud__bar .motion__btn {
+/* The flight's controls are icons in three groups: where the camera goes, how it looks, and
+   help. Each group is one black capsule, so the groups read as separate things and the
+   buttons in a group as one tool. A saffron button is a switch that is on. */
+.hud-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--ground);
+  border-radius: 999px;
+  background: var(--panel);
+  box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.6);
   pointer-events: auto;
   touch-action: none;
+}
+
+.hud-btn {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--on-panel);
   -webkit-touch-callout: none;
 }
 
-.fly-hud__go:active {
+.hud-btn:hover {
+  background: rgb(255 255 255 / 0.1);
+}
+
+.hud-btn[aria-pressed='true'],
+.hud-btn--hold:active {
   background: var(--accent);
-  border-color: var(--accent);
   color: var(--on-accent);
+}
+
+.hud-btn:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.hud-icon {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The name of a button, over it on hover or keyboard focus */
+.hud-btn::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  padding: 0.3rem 0.6rem;
+  background: var(--panel);
+  color: var(--on-panel-strong);
+  font: 500 var(--step--1) var(--font-display);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition: opacity 0.15s var(--ease), transform 0.15s var(--ease);
+  pointer-events: none;
+}
+
+.hud-btn:hover::after,
+.hud-btn:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@media (hover: none) {
+  .hud-btn::after {
+    display: none;
+  }
+}
+
+/* Leaving: alone at the top left, a black disc with a white arrow, so it is not mistaken for
+   a switch */
+.fly-back {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  z-index: 30;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--ground);
+  background: var(--panel);
+  color: var(--on-panel-strong);
+  box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.6);
+  touch-action: none;
+}
+
+.fly-back:hover {
+  background: var(--panel);
+  border-color: var(--accent);
+}
+
+.fly-back::after {
+  top: 50%;
+  bottom: auto;
+  left: calc(100% + 10px);
+  transform: translate(4px, -50%);
+}
+
+.fly-back:hover::after,
+.fly-back:focus-visible::after {
+  transform: translate(0, -50%);
 }
 
 /* The joystick, on touch screens: a black disc with a saffron knob, at the left above the
