@@ -51,9 +51,10 @@ const FLY = { speed: 13, boost: 2.5, turn: 1.3, look: 0.0042, wheel: 0.022, reac
 // Quinn's phone: both directions are turned round here, in the one place.
 const TILT_LOOK = { yaw: -0.7, pitch: -0.45 };
 // The tour: scrolling carries the camera along the dashed line (scenery.js). `wheel` and
-// `swipe` are units along the line per pixel scrolled or swiped, `keys` units a second for
+// `swipe` are units along the line per pixel scrolled or swiped, `flick` how many pixels a
+// sideways swipe must travel to turn to the next work, `keys` units a second for
 // the keys and the joystick, `ease` how quickly the camera catches up (higher is tighter).
-const TOUR = { wheel: 0.035, swipe: 0.12, keys: 16, ease: 2.6 };
+const TOUR = { wheel: 0.035, swipe: 0.12, keys: 16, ease: 2.6, flick: 36 };
 // Zones: `out` is the least distance from the centre to a zone, `step` the angle between
 // neighbours in degrees, `gap` the space between sculptures in one zone and between two
 // zones, `pad` the clear space round a zone's sculptures.
@@ -1113,7 +1114,8 @@ export function createField(container, { models, reducedMotion }) {
     e.preventDefault();
     const px = e.deltaMode === 1 ? e.deltaY * 32 : e.deltaMode === 2 ? e.deltaY * window.innerHeight : e.deltaY;
     if (touring) {
-      tourTo += px * TOUR.wheel;
+      // A sideways scroll on a trackpad moves the tour too, the same way a sideways swipe does.
+      tourTo += (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : px) * TOUR.wheel;
       return;
     }
     // Scrolling down carries on forward, the way it brought the visitor in.
@@ -1140,10 +1142,19 @@ export function createField(container, { models, reducedMotion }) {
     if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 6) drag.moved = true;
     if (!drag.moved) return;
     if (touring) {
-      // On the tour a finger scrolls the line, as it scrolls a page: swipe up to go on.
-      // A mouse has the wheel for that, so its drag looks aside.
-      if (drag.touch) tourTo -= dy * TOUR.swipe;
-      else {
+      // On the tour a finger moves along the line. Quinn watched visitors swipe left and
+      // right there, as through a carousel, far more than up and down, so both work: the
+      // first movement of a swipe settles which way it goes (`axis`), and the camera
+      // follows the finger. Swipe left or up to go on, right or down to go back. A sideways
+      // swipe then settles on the next work when the finger lifts (onFlyUp). A mouse has
+      // the wheel for moving, so its drag looks aside.
+      if (drag.touch) {
+        if (!drag.axis) {
+          drag.axis = Math.abs(e.clientX - drag.x0) > Math.abs(e.clientY - drag.y0) ? 'x' : 'y';
+          drag.from = scenery ? Math.round(scenery.tour.where(tourTo)) : 0; // the work in view when the swipe began
+        }
+        tourTo -= (drag.axis === 'x' ? dx : dy) * TOUR.swipe;
+      } else {
         glance.yaw = THREE.MathUtils.clamp(glance.yaw + dx * FLY.look, -1.2, 1.2);
         glance.pitch = THREE.MathUtils.clamp(glance.pitch + dy * FLY.look, -0.9, 0.9);
       }
@@ -1156,7 +1167,16 @@ export function createField(container, { models, reducedMotion }) {
   const onFlyUp = (e) => {
     if (!drag || e.pointerId !== drag.id) return;
     const tapped = !drag.moved && e.type === 'pointerup';
+    const swipe = drag;
     drag = null;
+    if (touring && scenery && swipe.touch && swipe.axis === 'x') {
+      // A sideways swipe turns the page: it lands on the next work, or the one before, like
+      // a carousel. A short one (under `TOUR.flick` pixels) goes back to the work it left.
+      const across = e.clientX - swipe.x0;
+      const n = scenery.tour.works.length;
+      const step = Math.abs(across) < TOUR.flick ? 0 : across < 0 ? 1 : -1;
+      tourTo = scenery.tour.stop((((swipe.from + step) % n) + n) % n, tourTo);
+    }
     if (!tapped) return;
     // A tap on a work's title opens its page; FlyMode.jsx does the navigating.
     const work = pickTitle(e.clientX, e.clientY);

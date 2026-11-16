@@ -19,7 +19,8 @@ import Roadmap from './Roadmap.jsx';
 // returns to the line.
 // On touch screens a joystick moves the camera in free roam (Quinn's choice over a
 // hold-down button): push it forward, back or to a side while another finger drags to
-// look. It is not shown on the tour, where a swipe does the moving. Other screens keep the
+// look. It is not shown on the tour, where a swipe does the moving (left and right turn to
+// the next work or the one before, like a carousel; up and down scroll along the line). Other screens keep the
 // hold-down Fly button beside the keys. Phones also get a Tilt button: with it on, tilting
 // the phone looks around (the same `tilt` the page's Tilt button sets, and on iOS the tap
 // that grants the gyroscope).
@@ -420,7 +421,7 @@ export default function FlyMode() {
                 ? 'Motion access was declined. Allow it in your browser settings to use tilt.'
                 : flyTour
                 ? coarse
-                  ? `Swipe up to follow the line from work to work. Tap a title to open the work.${tilt ? ' Tilt to look around.' : ''}`
+                  ? `Swipe left or right to go from work to work. Tap a title to open the work.${tilt ? ' Tilt to look around.' : ''}`
                   : 'Scroll to follow the line from work to work. Click a title to open the work. Esc to leave.'
                 : coarse
                   ? `${tilt ? 'Tilt or drag' : 'Drag'} to look. Push the stick to move.`
