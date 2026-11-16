@@ -20,15 +20,19 @@
   "credits": [
     {
       "role": "Beadwork",
-      "name": "Robyn Adams"
+      "name": "Robyn Adams, Red River Métis (Manitoba Métis Federation), robynadams.ca"
     },
     {
-      "role": "3D modelling and web",
+      "role": "3D, sprites, rigs and Unreal setup",
       "name": "Quinn Hopkins, Noodin Studio"
     },
     {
-      "role": "Began at",
-      "name": "Digital Constellations, Banff Centre for Arts and Creativity"
+      "role": "Made during",
+      "name": "Digital Constellations, Banff Centre"
+    },
+    {
+      "role": "Tools",
+      "name": "Blender 5.2, Unreal Engine 5.8"
     }
   ],
   "coverAlt": "A hazy meadow made entirely of glass beads: pink asters, yellow coneflowers and blue berries among strands of green bead grass, with points of light drifting over it.",

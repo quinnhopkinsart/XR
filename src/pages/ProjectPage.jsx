@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { Fragment, Suspense, lazy, useEffect, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getProject } from '../projects/registry.js';
 import { breakable, legacyExpired } from '../projects/launch.js';
@@ -18,9 +18,26 @@ const formatDate = (iso) =>
     day: 'numeric',
   });
 
+// A bare web address in a credit (robynadams.ca) becomes a link. Credits stay plain text in
+// content.json, so the dashboard keeps editing them as before.
+const BARE_ADDRESS = /(\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:ca|com|org|net|studio)\b)/gi;
+const withLinks = (text) =>
+  text.split(BARE_ADDRESS).map((part, i) =>
+    i % 2 ? (
+      <a key={i} href={`https://www.${part.replace(/^www\./i, '')}`}>
+        {part}
+      </a>
+    ) : (
+      <Fragment key={i}>{part}</Fragment>
+    ),
+  );
+
 export default function ProjectPage() {
   const { slug } = useParams();
   const p = getProject(slug);
+
+  // A work can carry a making-of: `makingOf: () => import('./MakingOf.jsx')` in its project.js.
+  const MakingOf = useMemo(() => (p?.makingOf ? lazy(p.makingOf) : null), [p]);
 
   useEffect(() => {
     if (p) document.title = `${p.title} | ${site.title}`;
@@ -38,6 +55,21 @@ export default function ProjectPage() {
   const embedded = canLaunch && p.launch.type === 'build' && p.launch.embed;
   const launchLabel = embedded ? 'Open full screen' : 'Open the work';
   const eventsNote = p.bookable || copy.eventsNote;
+
+  const creditsBlock =
+    p.credits.length > 0 ? (
+      <section className="section">
+        <h2 className="label">Credits</h2>
+        <dl className="credits">
+          {p.credits.map((c) => (
+            <div key={`${c.role}-${c.name}`}>
+              <dt>{c.role}</dt>
+              <dd>{withLinks(c.name)}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+    ) : null;
 
   return (
     <article className="work">
@@ -96,56 +128,53 @@ export default function ProjectPage() {
       )}
 
       <div className="work__body">
-        <div className="prose">
-          {p.description.map((para, i) => (
-            <p key={i}>{para}</p>
-          ))}
+        <div className="work__main">
+          <div className="prose">
+            {p.description.map((para, i) => (
+              <p key={i}>{para}</p>
+            ))}
 
-          {/* Every work page carries the events block. A work's own `bookable` sentence
-              replaces the site-wide one from copy.json. */}
-          {eventsNote && (
-            <section className="section">
-              <h2 className="label">For events</h2>
-              <p>
-                {eventsNote} <a href={inquiryUrl(p.title)}>Get in touch</a>.
-              </p>
-            </section>
-          )}
+            {/* Every work page carries the events block. A work's own `bookable` sentence
+                replaces the site-wide one from copy.json. */}
+            {eventsNote && (
+              <section className="section">
+                <h2 className="label">For events</h2>
+                <p>
+                  {eventsNote} <a href={inquiryUrl(p.title)}>Get in touch</a>.
+                </p>
+              </section>
+            )}
 
-          {p.howTo.length > 0 && (
-            <section className="section">
-              <h2 className="label">How to try it</h2>
-              <ol className="steps">
-                {p.howTo.map((step, i) => (
-                  <li key={i}>{step}</li>
-                ))}
-              </ol>
-            </section>
-          )}
+            {p.howTo.length > 0 && (
+              <section className="section">
+                <h2 className="label">How to try it</h2>
+                <ol className="steps">
+                  {p.howTo.map((step, i) => (
+                    <li key={i}>{step}</li>
+                  ))}
+                </ol>
+              </section>
+            )}
 
-          {p.targets.length > 0 && (
-            <section className="section">
-              <h2 className="label">Image targets</h2>
-              <p className="note">
-                Away from the installation, open a target on another screen or print it, then point
-                your phone at it.
-              </p>
-              <TargetGallery targets={p.targets} />
-            </section>
-          )}
+            {p.targets.length > 0 && (
+              <section className="section">
+                <h2 className="label">Image targets</h2>
+                <p className="note">
+                  Away from the installation, open a target on another screen or print it, then point
+                  your phone at it.
+                </p>
+                <TargetGallery targets={p.targets} />
+              </section>
+            )}
 
-          {p.credits.length > 0 && (
-            <section className="section">
-              <h2 className="label">Credits</h2>
-              <dl className="credits">
-                {p.credits.map((c) => (
-                  <div key={`${c.role}-${c.name}`}>
-                    <dt>{c.role}</dt>
-                    <dd>{c.name}</dd>
-                  </div>
-                ))}
-              </dl>
-            </section>
+            {!MakingOf && creditsBlock}
+          </div>
+
+          {/* The making-of closes the page's text, so the credits come after it. */}
+          {MakingOf && (
+            <Suspense fallback={null}>
+              <MakingOf credits={creditsBlock} />
+            </Suspense>
           )}
         </div>
 
