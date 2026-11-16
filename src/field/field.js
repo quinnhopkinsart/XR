@@ -70,8 +70,8 @@ const HAZE = { page: [17, 46], flight: [90, 380], far: 700 };
 // toward the middle, and Quinn found the blur hid them: wider sharp range, softer ends, and
 // a gentler blur in front so the foreground never covers a work.
 const LENS = {
-  page: { aperture: 0.025, back: 0.009, near: 0.007, tol: 0.08, boost: 0.5 },
-  flight: { aperture: 0.02, back: 0.011, near: 0.004, tol: 0.11, boost: 0.6 },
+  page: { aperture: 0.025, back: 0.0075, near: 0.006, tol: 0.08, boost: 0.5 },
+  flight: { aperture: 0.02, back: 0.009, near: 0.0035, tol: 0.11, boost: 0.6 },
 };
 
 const SPIN = 0.35; // radians a second, for parts a model lists under `spin`
@@ -284,10 +284,14 @@ export function createField(container, { models, reducedMotion }) {
   scene.fog = new THREE.Fog(ground, HAZE.page[0], HAZE.page[1]);
 
   // Lens: sharp at the focal plane (z = 0) on the page, and wherever it is pointed in flight.
-  // The scene is drawn into a target that keeps its depth, which the lens reads (lens.js).
+  // It is off until the visitor turns it on (`flyLens` in motion.js): depth of field costs a
+  // second full-screen target and a wide blur every frame, which many machines cannot spare,
+  // and blur is harder to read for some people. So nothing is built until it is switched on.
+  // The scene is then drawn into a target that keeps its depth, which the lens reads (lens.js).
   let composer = null;
   let dof = null;
-  if (lens) {
+  function buildLens() {
+    if (!lens || composer) return;
     composer = new EffectComposer(
       renderer,
       new THREE.WebGLRenderTarget(1, 1, {
@@ -298,11 +302,13 @@ export function createField(container, { models, reducedMotion }) {
     );
     composer.setPixelRatio(renderer.getPixelRatio());
     composer.addPass(new RenderPass(scene, camera));
-    // With the lens on, the canvas paints the ground itself: the blur needs an opaque frame.
-    scene.background = ground;
     dof = new LensPass(camera);
+    dof.enabled = false; // setLens switches it on
     composer.addPass(dof);
     composer.addPass(new OutputPass());
+    const size = renderer.getSize(new THREE.Vector2());
+    composer.setSize(size.x, size.y);
+    setLensParams(flyMix);
   }
 
   // Lit pieces take the site's palette: saffron from above, oxblood from below.
@@ -822,6 +828,12 @@ export function createField(container, { models, reducedMotion }) {
     shownMix = -1;
   }
 
+  /** The lens's blur for how far into flight it is. */
+  function setLensParams(mix) {
+    if (!dof) return;
+    for (const key of Object.keys(LENS.page)) dof.lens[key] = THREE.MathUtils.lerp(LENS.page[key], LENS.flight[key], mix);
+  }
+
   /** Sets the haze, the draw distance and the zones' titles for how far into flight it is. */
   function applyMix(mix) {
     if (scenery) {
@@ -830,7 +842,7 @@ export function createField(container, { models, reducedMotion }) {
         o.rotation.y = Math.atan2(camera.position.x - o.position.x, camera.position.z - o.position.z);
       }
     }
-    if (dof) {
+    if (dof?.enabled) {
       const now = performance.now();
       const dt = Math.min((now - lensClock) / 1000, 0.1);
       lensClock = now;
@@ -866,9 +878,7 @@ export function createField(container, { models, reducedMotion }) {
     }
     if (mix === shownMix) return;
     shownMix = mix;
-    if (dof) {
-      for (const key of Object.keys(LENS.page)) dof.lens[key] = THREE.MathUtils.lerp(LENS.page[key], LENS.flight[key], mix);
-    }
+    setLensParams(mix);
     scene.fog.near = THREE.MathUtils.lerp(HAZE.page[0], HAZE.flight[0], mix);
     scene.fog.far = THREE.MathUtils.lerp(HAZE.page[1], HAZE.flight[1], mix);
     const far = mix > 0 ? HAZE.far : 100;
@@ -884,7 +894,7 @@ export function createField(container, { models, reducedMotion }) {
 
   function render(t = performance.now() / 1000) {
     layout(t);
-    if (composer) composer.render();
+    if (composer && dof.enabled) composer.render();
     else renderer.render(scene, camera);
   }
 
@@ -978,12 +988,16 @@ export function createField(container, { models, reducedMotion }) {
     render(t);
   }
 
-  /** In flight the visitor can switch the depth of field off. The page always has it. */
+  /** Depth of field follows the visitor's switch, on the page and in flight. Off by default. */
   function setLens() {
-    if (!dof) return;
-    const on = !flying || motion.get().flyLens;
-    if (dof.enabled === on) return;
+    if (!lens) return;
+    const on = motion.get().flyLens;
+    if (on) buildLens();
+    if (!dof || dof.enabled === on) return;
     dof.enabled = on;
+    // The blur needs an opaque frame, so the canvas paints the ground itself then. Without it
+    // the canvas stays see-through, so the page's own ground and the title's dimming show.
+    scene.background = on ? ground : null;
     if (on) dof.snap = true; // it was not following while off: go straight to the focus
     if (!running) render();
   }
@@ -1362,6 +1376,7 @@ export function createField(container, { models, reducedMotion }) {
   });
   setTilt(motion.get().tilt);
   setFly(motion.get().fly);
+  setLens();
 
   window.addEventListener('resize', resize);
   window.addEventListener('pointermove', onMove, { passive: true });

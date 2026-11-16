@@ -101,7 +101,7 @@ const COC_FRAG = /* glsl */ `
 `;
 
 const GATHER_FRAG = /* glsl */ `
-  #define TAPS 48
+  #define TAPS 32
   uniform sampler2D tCoc;
   uniform vec2 uRes;
   uniform float uRadius;

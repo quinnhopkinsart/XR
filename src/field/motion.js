@@ -9,8 +9,8 @@
 //   flyHome      a count; each change puts the flying camera back at its start
 //   flyTour      in the free camera, scrolling carries the camera along the dashed line
 //                from work to work, in place of flying freely
-//   flyLens      depth of field in the free camera (remembered between visits). Only
-//                screens that have the lens show its button: see `hasLens`
+//   flyLens      depth of field, on the page and in flight (off by default, remembered
+//                between visits). Only screens that have the lens show its button: see `hasLens`
 //   flyHints     the line of instructions in the free camera is shown (remembered
 //                between visits)
 
@@ -53,7 +53,7 @@ let state = {
   flyForward: false,
   flyHome: 0,
   flyTour: false,
-  flyLens: read('noodin-lens') !== 'off',
+  flyLens: read('noodin-lens-v2') === 'on', // off until chosen: it costs speed and some find blur hard to read
   flyHints: read('noodin-hints') !== 'off',
 };
 
@@ -74,7 +74,7 @@ export const motion = {
     state = { ...state, ...patch };
     if ('userPaused' in patch) write('noodin-motion', state.userPaused ? 'paused' : 'playing');
     if ('tilt' in patch) write('noodin-tilt', state.tilt ? 'on' : 'off');
-    if ('flyLens' in patch) write('noodin-lens', state.flyLens ? 'on' : 'off');
+    if ('flyLens' in patch) write('noodin-lens-v2', state.flyLens ? 'on' : 'off');
     if ('flyHints' in patch) write('noodin-hints', state.flyHints ? 'on' : 'off');
     listeners.forEach((fn) => fn(state));
   },
