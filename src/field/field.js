@@ -284,10 +284,10 @@ export function createField(container, { models, reducedMotion }) {
   scene.fog = new THREE.Fog(ground, HAZE.page[0], HAZE.page[1]);
 
   // Lens: sharp at the focal plane (z = 0) on the page, and wherever it is pointed in flight.
-  // It is off until the visitor turns it on (`flyLens` in motion.js): depth of field costs a
-  // second full-screen target and a wide blur every frame, which many machines cannot spare,
-  // and blur is harder to read for some people. So nothing is built until it is switched on.
-  // The scene is then drawn into a target that keeps its depth, which the lens reads (lens.js).
+  // The page has it. In flight it is off until the visitor turns it on (`flyLens` in
+  // motion.js): out among the works it costs a wide blur every frame that many machines cannot
+  // spare, and blur is harder to read for some people. Nothing is built where it is off.
+  // The scene is drawn into a target that keeps its depth, which the lens reads (lens.js).
   let composer = null;
   let dof = null;
   function buildLens() {
@@ -988,10 +988,10 @@ export function createField(container, { models, reducedMotion }) {
     render(t);
   }
 
-  /** Depth of field follows the visitor's switch, on the page and in flight. Off by default. */
+  /** The page always has depth of field. In flight it follows the visitor's switch, off by default. */
   function setLens() {
     if (!lens) return;
-    const on = motion.get().flyLens;
+    const on = !flying || motion.get().flyLens;
     if (on) buildLens();
     if (!dof || dof.enabled === on) return;
     dof.enabled = on;

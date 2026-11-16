@@ -9,8 +9,9 @@
 //   flyHome      a count; each change puts the flying camera back at its start
 //   flyTour      in the free camera, scrolling carries the camera along the dashed line
 //                from work to work, in place of flying freely
-//   flyLens      depth of field, on the page and in flight (off by default, remembered
-//                between visits). Only screens that have the lens show its button: see `hasLens`
+//   flyLens      depth of field in the free camera (off by default, remembered between
+//                visits); the page itself always has it. Only screens that have the lens
+//                show its button: see `hasLens`
 //   flyHints     the line of instructions in the free camera is shown (remembered
 //                between visits)
 
@@ -53,7 +54,7 @@ let state = {
   flyForward: false,
   flyHome: 0,
   flyTour: false,
-  flyLens: read('noodin-lens-v2') === 'on', // off until chosen: it costs speed and some find blur hard to read
+  flyLens: read('noodin-lens-v2') === 'on', // off in flight until chosen: it costs speed and some find blur hard to read
   flyHints: read('noodin-hints') !== 'off',
 };
 
