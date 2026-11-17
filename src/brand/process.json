@@ -58,7 +58,7 @@
         {
           "name": "Claude",
           "role": "AI coding partner",
-          "text": "I built this site with Claude, working from my own 3D files and what I know HTML, CSS and JavaScript can do. I keep sacred knowledge out of it, and it writes no Anishinaabemowin.",
+          "text": "I built this site with Claude, working from my own 3D files and what I know HTML, CSS and JavaScript can do.",
           "url": "https://claude.ai"
         },
         {
