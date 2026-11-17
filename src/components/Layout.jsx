@@ -33,14 +33,22 @@ export default function Layout() {
         <Outlet />
       </main>
 
+      {/* Matches the portfolio's footer (site.footer), plus Tools. A link to the page
+          you are on is marked aria-current, as on the portfolio. */}
       <footer className="footer">
-        <span>
-          {site.name} by {site.artist}, Tkaronto
-        </span>
+        <span>{site.footerNote}</span>
         <span className="footer__links">
-          <Link to="/tools">Tools</Link>
-          <a href={site.instagram}>Instagram</a>
-          <a href={site.contact}>Get in touch</a>
+          {site.footer.map(({ label, href, to }) =>
+            to ? (
+              <NavLink key={label} to={to}>
+                {label}
+              </NavLink>
+            ) : (
+              <a key={label} href={href} rel={href.startsWith('http') ? 'noopener' : undefined}>
+                {label}
+              </a>
+            ),
+          )}
         </span>
       </footer>
 

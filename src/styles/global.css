@@ -347,6 +347,7 @@ main {
 .work__aside :focus-visible,
 .embed__bar :focus-visible,
 .footer :focus-visible,
+.tool :focus-visible,
 .stage__close:focus-visible {
   outline-color: var(--white);
 }
@@ -1895,14 +1896,8 @@ html.is-flying .field.is-ready {
   align-self: flex-start;
 }
 
-/* Links on a black panel: white on hover and a white focus ring, since the
-   site-wide black ones vanish on black */
-.tool a:hover,
-.footer a:hover {
+/* Links on a black card turn white on hover, as in the footer, since the
+   site-wide hover colour is black */
+.tool a:hover {
   color: var(--on-panel-strong);
-}
-
-.tool a:focus-visible,
-.footer a:focus-visible {
-  outline-color: var(--on-panel-strong);
 }
