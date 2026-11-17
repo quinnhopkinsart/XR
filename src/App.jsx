@@ -5,7 +5,7 @@ import Home from './pages/Home.jsx';
 import ProjectPage from './pages/ProjectPage.jsx';
 import LaunchPage from './pages/LaunchPage.jsx';
 import NotFound from './pages/NotFound.jsx';
-import Tools from './pages/Tools.jsx';
+import Process from './pages/Process.jsx';
 import { site } from './brand/site.js';
 
 // The dashboard loads only when someone opens /admin.
@@ -36,7 +36,9 @@ export default function App() {
         <Route index element={<Home />} />
         <Route path={`${site.workPath}/:slug`} element={<ProjectPage />} />
         <Route path="/ar/:slug" element={<ArAlias />} />
-        <Route path="/tools" element={<Tools />} />
+        <Route path="/process" element={<Process />} />
+        {/* The page was called Tools for its first day. */}
+        <Route path="/tools" element={<Navigate to="/process" replace />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

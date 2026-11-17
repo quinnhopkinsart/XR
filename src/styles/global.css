@@ -204,7 +204,7 @@ main {
   .masthead__logo img {
     height: 36px;
   }
-  /* Tools to the left of the logo, Main site to the right, so neither runs under it */
+  /* Process to the left of the logo, Main site to the right, so neither runs under it */
   .masthead__nav {
     flex: 1;
     justify-content: space-between;
@@ -1787,16 +1787,16 @@ html.is-flying .field.is-ready {
   padding: 0 1.2rem;
 }
 
-/* Tools page (/tools, Tools.jsx, text in src/brand/tools.json): one row per step a work
-   passes through, numbered, with that step's tools as black cards. */
+/* Process page (/process, Process.jsx, text in src/brand/process.json): one row per step
+   a work passes through, numbered, with that step's tools as black cards. */
 
-.tools__steps {
+.process__steps {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.tools__step {
+.process__step {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 1.5rem 3rem;
@@ -1804,7 +1804,7 @@ html.is-flying .field.is-ready {
   border-top: 1px solid var(--line);
 }
 
-.tools__head {
+.process__head {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1812,7 +1812,7 @@ html.is-flying .field.is-ready {
 }
 
 /* The step's number, set like the type on a card with no cover */
-.tools__num {
+.process__num {
   padding: 0.04em 0.12em 0.06em;
   margin-left: -0.12em;
   font: 100 var(--step-3) / 0.9 var(--font-display);
@@ -1820,25 +1820,25 @@ html.is-flying .field.is-ready {
   color: var(--heading);
 }
 
-.tools__note {
+.process__note {
   max-width: 28ch;
   margin: 0;
   font: 300 var(--step-0) / 1.5 var(--font-display);
 }
 
 @media (min-width: 900px) {
-  .tools__step {
+  .process__step {
     grid-template-columns: 15rem minmax(0, 1fr);
   }
   /* The step's name stays in view while its cards scroll past */
-  .tools__head {
+  .process__head {
     position: sticky;
     top: 6rem;
     align-self: start;
   }
 }
 
-.tools__grid {
+.process__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
   gap: clamp(1rem, 2vw, 1.5rem);

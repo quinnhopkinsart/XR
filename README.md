@@ -56,7 +56,7 @@ scripts/
 Routes:
 
 - `/` lists every work, with filters by type.
-- `/tools` lists the tools I make the works with, step by step. Its text and links are in `src/brand/tools.json`.
+- `/process` shows how I make the works, step by step, with the tools I use at each step. Its text and links are in `src/brand/process.json`. `/tools`, its first address, redirects there.
 - `/xr/<slug>` is the work page: description, how to try it, targets, credits, launch button and QR code.
 - `/xr/<slug>/launch` opens a React experience full screen.
 - `/builds/<slug>/index.html` serves a self-hosted build directly.

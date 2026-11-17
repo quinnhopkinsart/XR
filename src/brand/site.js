@@ -26,7 +26,7 @@ export const site = {
 
   // The footer, the same as the portfolio's (its footer in every page's HTML): Shop,
   // Newsletter, Email, Instagram, XR works, AI Policy, with the copyright line beside them.
-  // "XR works" is this site, so it is left out here, and Tools (this site's own page, `to`
+  // "XR works" is this site, so it is left out here, and Process (this site's own page, `to`
   // for a route here) takes its place. Keep the shared links in step with the portfolio.
   footerNote: '© Quinn Hopkins, Noodin Studio. Tsi Tkaronto / Toronto.',
   footer: [
@@ -34,7 +34,7 @@ export const site = {
     { label: 'Newsletter', href: 'https://www.noodinstudio.com/subscribe.html' },
     { label: 'Email', href: 'mailto:quinn@noodinstudio.com' },
     { label: 'Instagram', href: 'https://www.instagram.com/noodinstudio/' },
-    { label: 'Tools', to: '/tools' },
+    { label: 'Process', to: '/process' },
     { label: 'AI Policy', href: 'https://www.noodinstudio.com/ai-policy.html' },
   ],
 };

@@ -3,7 +3,8 @@
 //
 //   dist/xr/<slug>/index.html   every work, hidden ones too (their pages still open)
 //   dist/ar/<slug>/index.html   the old catalogue addresses, pointing at the work page
-//   dist/tools/index.html       the tools page (text in src/brand/tools.json)
+//   dist/process/index.html     the Process page (text in src/brand/process.json)
+//   dist/tools/index.html       its first address, pointing at /process
 //   dist/admin/index.html       the dashboard, marked noindex
 //   dist/share/<slug>.<ext>     each work's cover under a fixed name, for link previews
 //   dist/sitemap.xml, dist/robots.txt
@@ -119,28 +120,29 @@ try {
     write(`ar/${p.slug}/index.html`, html);
   }
 
-  // The tools page, with its steps and tools as text for anything that does not run the app.
-  const tools = JSON.parse(readFileSync(resolve('src/brand/tools.json'), 'utf8'));
-  write(
-    'tools/index.html',
-    page({
-      title: `Tools | ${site.title}`,
-      description: tools.intro,
-      url: `${site.url}/tools/`,
-      image: fallbackImage,
-      body: [
-        '<h1>Tools</h1>',
-        `<p>${esc(tools.intro)}</p>`,
-        ...tools.steps.map(
-          (s) =>
-            `<h2>${esc(s.title)}</h2><p>${esc(s.note)}</p><ul>${s.tools
-              .map((t) => `<li>${esc(t.name)}: ${esc(t.text)}</li>`)
-              .join('')}</ul>`,
-        ),
-        `<p><a href="${site.url}/">All works on ${esc(site.title)}</a></p>`,
-      ].join(''),
-    }),
-  );
+  // The Process page, with its steps and tools as text for anything that does not run the
+  // app. /tools, the page's address on its first day, gets the same file, which names
+  // /process as the address to keep; the app sends it on to /process.
+  const processPage = JSON.parse(readFileSync(resolve('src/brand/process.json'), 'utf8'));
+  const processHtml = page({
+    title: `Process | ${site.title}`,
+    description: processPage.intro,
+    url: `${site.url}/process/`,
+    image: fallbackImage,
+    body: [
+      '<h1>Process</h1>',
+      `<p>${esc(processPage.intro)}</p>`,
+      ...processPage.steps.map(
+        (s) =>
+          `<h2>${esc(s.title)}</h2><p>${esc(s.note)}</p><ul>${s.tools
+            .map((t) => `<li>${esc(t.name.replace(/\u00ad/g, ''))}: ${esc(t.text)}</li>`)
+            .join('')}</ul>`,
+      ),
+      `<p><a href="${site.url}/">All works on ${esc(site.title)}</a></p>`,
+    ].join(''),
+  });
+  write('process/index.html', processHtml);
+  write('tools/index.html', processHtml);
 
   write(
     'admin/index.html',
@@ -169,7 +171,7 @@ try {
 
   const urls = [
     `${site.url}/`,
-    `${site.url}/tools/`,
+    `${site.url}/process/`,
     ...projects.map((p) => `${site.url}${site.workPath}/${p.slug}/`),
   ];
   writeFileSync(

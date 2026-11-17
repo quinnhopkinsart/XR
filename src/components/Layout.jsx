@@ -24,7 +24,7 @@ export default function Layout() {
           <img src={logo} alt="Noodin Studio XR, home" width="98" height="48" />
         </Link>
         <nav className="masthead__nav" aria-label="Main">
-          <NavLink to="/tools">Tools</NavLink>
+          <NavLink to="/process">Process</NavLink>
           <a href={site.mainSite}>Main site</a>
         </nav>
       </header>
@@ -33,7 +33,7 @@ export default function Layout() {
         <Outlet />
       </main>
 
-      {/* Matches the portfolio's footer (site.footer), plus Tools. A link to the page
+      {/* Matches the portfolio's footer (site.footer), plus Process. A link to the page
           you are on is marked aria-current, as on the portfolio. */}
       <footer className="footer">
         <span>{site.footerNote}</span>
