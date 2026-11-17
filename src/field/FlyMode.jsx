@@ -202,6 +202,116 @@ function HudButton({ label, icon, pressed, className = '', ...rest }) {
   );
 }
 
+// The zoom dial, at the top right in flight: a small black dial whose ring fills as the camera
+// zooms in, with the zoom written in its middle. It shows what a pinch or a double tap has
+// done (field.js sends `field:zoom`) and sets the zoom itself (`field:zoomto`): turn it like
+// a knob, clockwise for closer, press it to go between 1x and 2x, or use the arrow keys.
+// The ring runs three quarters of the way round, from lower left over the top to lower right.
+const DIAL = { sweep: 270, turn: 1.6, step: 1.15, tap: 2 };
+
+function ZoomDial() {
+  const [{ zoom, min, max }, setState] = useState({ zoom: 1, min: 1, max: 4 });
+  const held = useRef(null);
+
+  useEffect(() => {
+    const onZoom = (e) => setState(e.detail);
+    window.addEventListener('field:zoom', onZoom);
+    return () => window.removeEventListener('field:zoom', onZoom);
+  }, []);
+
+  const send = (z) => window.dispatchEvent(new CustomEvent('field:zoomto', { detail: Math.min(max, Math.max(min, z)) }));
+  const angle = (e) => {
+    const box = e.currentTarget.getBoundingClientRect();
+    return Math.atan2(e.clientY - (box.top + box.height / 2), e.clientX - (box.left + box.width / 2));
+  };
+  const release = (e) => {
+    const h = held.current;
+    if (!h || h.id !== e.pointerId) return;
+    held.current = null;
+    if (!h.turned && e.type === 'pointerup') send(zoom > 1.05 ? 1 : DIAL.tap);
+  };
+
+  const share = Math.log(zoom / min) / Math.log(max / min); // 0 at 1x, 1 at the most
+  const at = ((135 + DIAL.sweep * share) * Math.PI) / 180;
+  const text = `${zoom.toFixed(1).replace(/\.0$/, '')}x`;
+
+  return (
+    <div
+      className="fly-dial"
+      role="slider"
+      tabIndex={0}
+      aria-label="Zoom"
+      aria-valuemin={min}
+      aria-valuemax={max}
+      aria-valuenow={Number(zoom.toFixed(2))}
+      aria-valuetext={`${zoom.toFixed(1)} times`}
+      data-tip="Zoom"
+      onPointerDown={(e) => {
+        if (held.current) return;
+        held.current = { id: e.pointerId, from: angle(e), zoom, turned: false, sum: 0 };
+        try {
+          e.currentTarget.setPointerCapture(e.pointerId);
+        } catch {
+          /* the pointer is already gone */
+        }
+      }}
+      onPointerMove={(e) => {
+        const h = held.current;
+        if (!h || h.id !== e.pointerId) return;
+        const now = angle(e);
+        let d = now - h.from;
+        if (d > Math.PI) d -= 2 * Math.PI;
+        if (d < -Math.PI) d += 2 * Math.PI;
+        h.from = now;
+        h.sum += d;
+        if (Math.abs(h.sum) > 0.12) h.turned = true;
+        // A full turn takes the dial from one end to the other, evenly in the feel of the zoom.
+        if (h.turned) send(h.zoom * Math.pow(max / min, (h.sum / (2 * Math.PI)) * DIAL.turn));
+      }}
+      onPointerUp={release}
+      onPointerCancel={release}
+      onLostPointerCapture={release}
+      onContextMenu={(e) => e.preventDefault()}
+      onKeyDown={(e) => {
+        const to =
+          e.key === 'ArrowUp' || e.key === 'ArrowRight'
+            ? zoom * DIAL.step
+            : e.key === 'ArrowDown' || e.key === 'ArrowLeft'
+              ? zoom / DIAL.step
+              : e.key === 'Home'
+                ? min
+                : e.key === 'End'
+                  ? max
+                  : e.key === 'Enter' || e.key === ' '
+                    ? zoom > 1.05
+                      ? 1
+                      : DIAL.tap
+                    : null;
+        if (to == null) return;
+        // The arrow keys also move the camera: here they belong to the dial.
+        e.preventDefault();
+        e.stopPropagation();
+        send(to);
+      }}
+    >
+      <svg className="fly-dial__ring" viewBox="0 0 56 56" aria-hidden="true" focusable="false">
+        <circle className="fly-dial__track" cx="28" cy="28" r="22" pathLength="360" strokeDasharray={`${DIAL.sweep} 360`} transform="rotate(135 28 28)" />
+        <circle
+          className="fly-dial__fill"
+          cx="28"
+          cy="28"
+          r="22"
+          pathLength="360"
+          strokeDasharray={`${(DIAL.sweep * share).toFixed(1)} 360`}
+          transform="rotate(135 28 28)"
+        />
+        <circle className="fly-dial__mark" cx={28 + 22 * Math.cos(at)} cy={28 + 22 * Math.sin(at)} r="3.4" />
+      </svg>
+      <span className="fly-dial__value">{text}</span>
+    </div>
+  );
+}
+
 // The button that opened the flight, so focus goes back to it on the way out.
 let opener = null;
 const enter = (e) => {
@@ -490,6 +600,7 @@ export default function FlyMode() {
               ref={exitBtn}
               onClick={() => motion.set({ fly: false, flyTour: false })}
             />
+            <ZoomDial />
             <div className="fly-hud" role="region" aria-label="Free camera">
               {/* The help button hides this line. A declined tilt still shows its message. */}
               <p className="fly-hud__hint" role="status" hidden={!flyHints && !tiltDenied}>
@@ -497,11 +608,11 @@ export default function FlyMode() {
                   ? 'Motion access was declined. Allow it in your browser settings to use tilt.'
                   : flyTour
                   ? coarse
-                    ? `Swipe left or right to go from work to work. Tap a title to open the work.${tilt ? ' Tilt to look around.' : ''}`
-                    : 'Scroll to follow the line from work to work. Click a title to open the work. Esc to leave.'
+                    ? `Swipe left or right to go from work to work. Pinch or double tap to zoom. Tap a title to open the work.${tilt ? ' Tilt to look around.' : ''}`
+                    : 'Scroll to follow the line from work to work. Double click to zoom. Click a title to open the work. Esc to leave.'
                   : coarse
-                    ? `${tilt ? 'Tilt or drag' : 'Drag'} to look. Push the stick to move.`
-                    : `Drag to look. Scroll, W A S D or the arrow keys to move.${hasLens && flyLens ? ' Point at something to focus on it.' : ''} Esc to leave.`}
+                    ? `${tilt ? 'Tilt or drag' : 'Drag'} to look. Push the stick to move. Pinch or double tap to zoom.`
+                    : `Drag to look. Scroll, W A S D or the arrow keys to move. Double click to zoom.${hasLens && flyLens ? ' Point at something to focus on it.' : ''} Esc to leave.`}
               </p>
               {coarse && !flyTour && <Joystick />}
               <div className="fly-hud__bar">

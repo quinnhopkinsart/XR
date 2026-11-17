@@ -1449,10 +1449,10 @@ html.is-flying .fly-map:not(.fly-map--flight) .fly-map__leg {
   pointer-events: none;
 }
 
-/* The flight's own roadmap: a leg for each artwork on the tour, from the top of the screen
+/* The flight's own roadmap: a leg for each artwork on the tour, from under the zoom dial
    to just over the controls along the bottom */
 html.is-flying .fly-map.fly-map--flight {
-  top: 1rem;
+  top: 5.25rem; /* under the zoom dial */
   bottom: 5.75rem;
   right: 0;
   z-index: 31;
@@ -1649,6 +1649,100 @@ html.is-flying .field.is-ready {
 .fly-back:hover::after,
 .fly-back:focus-visible::after {
   transform: translate(0, -50%);
+}
+
+/* The zoom dial: alone at the top right, across from Back. A black disc whose ring fills in
+   saffron as the camera zooms in, with the zoom in its middle. It turns like a knob. */
+.fly-dial {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  z-index: 32;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--ground);
+  border-radius: 50%;
+  background: var(--panel);
+  color: var(--on-panel-strong);
+  box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.6);
+  cursor: var(--cursor-link);
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+
+.fly-dial:hover {
+  border-color: var(--accent);
+}
+
+.fly-dial:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.fly-dial__ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.fly-dial__track {
+  stroke: var(--on-panel);
+  opacity: 0.35;
+}
+
+.fly-dial__fill {
+  stroke: var(--accent);
+}
+
+.fly-dial__mark {
+  fill: var(--accent);
+  stroke: var(--panel);
+  stroke-width: 1.5;
+}
+
+.fly-dial__value {
+  font: 600 0.8rem var(--font-display);
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+/* Its name, to its left on hover or keyboard focus */
+.fly-dial::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 10px);
+  padding: 0.3rem 0.6rem;
+  background: var(--panel);
+  color: var(--on-panel-strong);
+  font: 500 var(--step--1) var(--font-display);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-4px, -50%);
+  transition: opacity 0.15s var(--ease), transform 0.15s var(--ease);
+  pointer-events: none;
+}
+
+.fly-dial:hover::after,
+.fly-dial:focus-visible::after {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+
+@media (hover: none) {
+  .fly-dial::after {
+    display: none;
+  }
 }
 
 /* The joystick, on touch screens: a black disc with a saffron knob, at the left above the

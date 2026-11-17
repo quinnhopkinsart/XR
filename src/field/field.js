@@ -50,6 +50,13 @@ const FLY = { speed: 13, boost: 2.5, turn: 1.3, look: 0.0042, wheel: 0.022, reac
 // They are negative because the first version, with them positive, looked the wrong way on
 // Quinn's phone: both directions are turned round here, in the one place.
 const TILT_LOOK = { yaw: -0.7, pitch: -0.45 };
+// Zoom in flight: the camera's own zoom, so nothing in the layout moves. Two fingers pinch it
+// (a pinch on a trackpad too), a double tap or double click goes to `tap` and back to 1, and
+// the dial at the top right (ZoomDial in FlyMode.jsx) shows and sets it; Quinn asked for all
+// three. `gap` (ms) and `near` (px) say what counts as a double tap, `keys` is the step for
+// the + and - keys, `pad` how fast a trackpad pinch goes.
+const ZOOM = { min: 1, max: 4, tap: 2, ease: 10, gap: 320, near: 36, keys: 1.25, pad: 0.012 };
+
 // The tour: scrolling carries the camera along the dashed line (scenery.js). `wheel` and
 // `swipe` are units along the line per pixel scrolled or swiped, `flick` how many pixels a
 // sideways swipe must travel to turn to the next work, `keys` units a second for
@@ -76,7 +83,7 @@ const LENS = {
 
 const SPIN = 0.35; // radians a second, for parts a model lists under `spin`
 
-const INTERACTIVE = 'a, button, input, select, textarea, iframe, label, summary, [role="button"], .fly-stick';
+const INTERACTIVE = 'a, button, input, select, textarea, iframe, label, summary, [role="button"], [role="slider"], .fly-stick';
 
 // Small seeded random so the composition is the same on every visit.
 function rng(seed = 7) {
@@ -347,6 +354,11 @@ export function createField(container, { models, reducedMotion }) {
   let pitch = 0;
   let glide = 0; // distance still to travel from the scroll wheel
   let drag = null;
+  let zoom = 1; // the camera's zoom now
+  let zoomTo = 1; // where it is easing to
+  const touches = new Map(); // fingers down on the field in flight
+  let pinch = null; // two of them: { d0: their distance apart at the start, z0: the zoom then }
+  let lastTap = null;
   let flyHome = motion.get().flyHome;
   let flyMix = 0; // 0 on the page, 1 in flight: sculptures in their zones, haze drawn back
   let shownMix = -1;
@@ -917,6 +929,13 @@ export function createField(container, { models, reducedMotion }) {
       if (Math.abs(mixTo - flyMix) < 0.002) flyMix = mixTo;
     }
 
+    const zTo = flying ? zoomTo : 1;
+    if (zoom !== zTo) {
+      zoom = reducedMotion || Math.abs(zTo - zoom) < 0.002 ? zTo : zoom + (zTo - zoom) * (1 - Math.exp(-dt * ZOOM.ease));
+      camera.zoom = zoom;
+      camera.updateProjectionMatrix();
+    }
+
     if (flying) {
       flyStep(dt);
     } else {
@@ -1102,9 +1121,36 @@ export function createField(container, { models, reducedMotion }) {
   function settle() {
     returning = false;
     flyMix = 0;
+    if (!flying && zoom !== 1) {
+      zoom = 1;
+      camera.zoom = 1;
+      camera.updateProjectionMatrix();
+    }
     camera.position.set(0, 0, CAM_Z);
     camera.lookAt(LOOK_AT);
   }
+
+  /** Sets the zoom the camera eases to, and tells the dial. */
+  function setZoom(z) {
+    z = THREE.MathUtils.clamp(z, ZOOM.min, ZOOM.max);
+    if (z === zoomTo) return;
+    zoomTo = z;
+    window.dispatchEvent(new CustomEvent('field:zoom', { detail: { zoom: z, min: ZOOM.min, max: ZOOM.max } }));
+  }
+  const onZoomTo = (e) => setZoom(e.detail);
+  const apart = () => {
+    const [a, b] = [...touches.values()];
+    return Math.hypot(a.x - b.x, a.y - b.y) || 1;
+  };
+  // Safari sends a trackpad pinch as gesture events. With fingers on the screen the pointer
+  // events above already have it, so those are left alone here, only kept from zooming the page.
+  const onGesture = (e) => {
+    e.preventDefault();
+    if (touches.size) return;
+    if (e.type === 'gesturestart') pinch = { d0: 1, z0: zoomTo };
+    else if (pinch) setZoom(pinch.z0 * e.scale);
+    if (e.type === 'gestureend') pinch = null;
+  };
 
   function flyHomeNow() {
     velocity.set(0, 0, 0);
@@ -1124,6 +1170,8 @@ export function createField(container, { models, reducedMotion }) {
       return;
     }
     if (e.target.closest?.('input, select, textarea')) return;
+    if (e.code === 'Equal' || e.code === 'NumpadAdd') setZoom(zoomTo * ZOOM.keys);
+    if (e.code === 'Minus' || e.code === 'NumpadSubtract') setZoom(zoomTo / ZOOM.keys);
     if (/^(Key[WASDQE]|Arrow(Up|Down|Left|Right)|Shift(Left|Right))$/.test(e.code)) {
       keys.add(e.code);
       if (e.code.startsWith('Arrow')) e.preventDefault();
@@ -1133,10 +1181,16 @@ export function createField(container, { models, reducedMotion }) {
   const onFlyBlur = () => {
     keys.clear();
     drag = null;
+    pinch = null;
+    touches.clear();
   };
   const onFlyWheel = (e) => {
-    if (e.ctrlKey) return; // a pinch on a trackpad: leave the browser's zoom alone
     e.preventDefault();
+    if (e.ctrlKey) {
+      // A pinch on a trackpad zooms the camera. Ctrl with + and - still zooms the browser.
+      setZoom(zoomTo * Math.exp(-e.deltaY * ZOOM.pad));
+      return;
+    }
     const px = e.deltaMode === 1 ? e.deltaY * 32 : e.deltaMode === 2 ? e.deltaY * window.innerHeight : e.deltaY;
     if (touring) {
       // A sideways scroll on a trackpad moves the tour too, the same way a sideways swipe does.
@@ -1147,11 +1201,33 @@ export function createField(container, { models, reducedMotion }) {
     glide = THREE.MathUtils.clamp(glide + px * FLY.wheel, -12, 12);
   };
   const onFlyDown = (e) => {
-    if (drag || e.target.closest?.(INTERACTIVE)) return;
+    if (e.target.closest?.(INTERACTIVE)) return;
+    if (e.pointerType === 'touch') {
+      touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (touches.size === 2) {
+        // A second finger makes it a pinch: the first finger's swipe is called off, and a
+        // sideways swipe on the tour goes back to the work it left.
+        if (drag?.axis === 'x' && touring && scenery) tourTo = scenery.tour.stop(drag.from, tourTo);
+        drag = null;
+        lastTap = null;
+        pinch = { d0: apart(), z0: zoomTo };
+      }
+      if (touches.size > 1) return;
+    }
+    if (drag) return;
     drag = { id: e.pointerId, x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, moved: false, touch: e.pointerType === 'touch' };
   };
   const onFlyMove = (e) => {
     if (e.pointerType !== 'touch') flyAim.set(e.clientX / window.innerWidth, 1 - e.clientY / window.innerHeight);
+    const finger = touches.get(e.pointerId);
+    if (finger) {
+      finger.x = e.clientX;
+      finger.y = e.clientY;
+      if (pinch && touches.size === 2) {
+        setZoom((pinch.z0 * apart()) / pinch.d0);
+        return;
+      }
+    }
     if (!drag) {
       // Over a title the cursor says it is a link.
       if (e.pointerType !== 'touch') {
@@ -1181,16 +1257,22 @@ export function createField(container, { models, reducedMotion }) {
         }
         tourTo -= (drag.axis === 'x' ? dx : dy) * TOUR.swipe;
       } else {
-        glance.yaw = THREE.MathUtils.clamp(glance.yaw + dx * FLY.look, -1.2, 1.2);
-        glance.pitch = THREE.MathUtils.clamp(glance.pitch + dy * FLY.look, -0.9, 0.9);
+        glance.yaw = THREE.MathUtils.clamp(glance.yaw + (dx * FLY.look) / zoom, -1.2, 1.2);
+        glance.pitch = THREE.MathUtils.clamp(glance.pitch + (dy * FLY.look) / zoom, -0.9, 0.9);
       }
       return;
     }
     // The view follows the hand, as in the Aabijijiwan viewer: drag right and the scene turns right.
-    yaw += dx * FLY.look;
-    pitch = THREE.MathUtils.clamp(pitch + dy * FLY.look, -FLY.pitch, FLY.pitch);
+    // Zoomed in, the same movement of the hand turns the view less, so it still follows the hand.
+    yaw += (dx * FLY.look) / zoom;
+    pitch = THREE.MathUtils.clamp(pitch + (dy * FLY.look) / zoom, -FLY.pitch, FLY.pitch);
   };
   const onFlyUp = (e) => {
+    if (touches.delete(e.pointerId) && pinch) {
+      // The pinch ends when either finger lifts; the one left starts nothing new.
+      if (!touches.size) pinch = null;
+      return;
+    }
     if (!drag || e.pointerId !== drag.id) return;
     const tapped = !drag.moved && e.type === 'pointerup';
     const swipe = drag;
@@ -1206,8 +1288,19 @@ export function createField(container, { models, reducedMotion }) {
     if (!tapped) return;
     // A tap on a work's title opens its page; FlyMode.jsx does the navigating.
     const work = pickTitle(e.clientX, e.clientY);
-    if (work) window.dispatchEvent(new CustomEvent('field:open', { detail: work }));
-    else spin(e.clientX, e.clientY);
+    if (work) {
+      window.dispatchEvent(new CustomEvent('field:open', { detail: work }));
+      return;
+    }
+    // A second tap soon after, close by: zoom to 2x, or back out if already zoomed.
+    const now = performance.now();
+    if (lastTap && now - lastTap.t < ZOOM.gap && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < ZOOM.near) {
+      lastTap = null;
+      setZoom(zoomTo > 1.05 ? 1 : ZOOM.tap);
+      return;
+    }
+    lastTap = { t: now, x: e.clientX, y: e.clientY };
+    spin(e.clientX, e.clientY);
   };
 
   // A leg of the flight's roadmap was pressed: the tour travels to that work.
@@ -1228,6 +1321,12 @@ export function createField(container, { models, reducedMotion }) {
     window[listen]('pointerup', onFlyUp);
     window[listen]('pointercancel', onFlyUp);
     window[listen]('field:goto', onTourGoto);
+    window[listen]('field:zoomto', onZoomTo);
+    for (const type of ['gesturestart', 'gesturechange', 'gestureend']) window[listen](type, onGesture, { passive: false });
+    setZoom(1);
+    pinch = null;
+    lastTap = null;
+    touches.clear();
     if (!on) touring = false;
     if (!on) document.documentElement.classList.remove('field-hover');
     keys.clear();
@@ -1361,6 +1460,7 @@ export function createField(container, { models, reducedMotion }) {
     setLens();
     if (s.flyHome !== flyHome) {
       flyHome = s.flyHome;
+      setZoom(1);
       if (flying && touring) tourTo = tourS = scenery.tour.start; // back to the first work
       else if (flying) flyHomeNow();
     }
