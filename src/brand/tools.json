@@ -1,0 +1,166 @@
+{
+  "intro": "I make my mixed reality works with these tools, from the first drawing to the link that opens on your phone.",
+  "steps": [
+    {
+      "id": "draw",
+      "title": "Draw",
+      "note": "Each work starts as a drawing or a painting. Some of those become the image targets a phone tracks.",
+      "tools": [
+        {
+          "name": "Procreate",
+          "role": "Drawing on the iPad",
+          "text": "I sketch, draw line work and test colour in Procreate before a piece goes to paint or to 3D.",
+          "url": "https://procreate.com"
+        },
+        {
+          "name": "Adobe Creative Cloud",
+          "role": "Image, video and print",
+          "text": "Photoshop and Illustrator prepare my image targets, textures and print files. After Effects and Premiere Pro cut the videos that show each work.",
+          "url": "https://www.adobe.com/creativecloud.html"
+        }
+      ]
+    },
+    {
+      "id": "model",
+      "title": "Model",
+      "note": "The drawing becomes a sculpture with depth, light and motion.",
+      "tools": [
+        {
+          "name": "Blender",
+          "role": "3D modelling and animation",
+          "text": "I model, rig, animate and bake light in Blender, then cut each model down until it loads fast on a phone.",
+          "url": "https://www.blender.org",
+          "works": [
+            "future-ancestors",
+            "the-erratics",
+            "beaded-flowers"
+          ]
+        },
+        {
+          "name": "Adobe Substance 3D",
+          "role": "Texturing",
+          "text": "I paint the surfaces in Substance 3D, so each model carries its colour and grain into the browser.",
+          "url": "https://www.adobe.com/products/substance3d.html"
+        }
+      ]
+    },
+    {
+      "id": "code",
+      "title": "Code",
+      "note": "I write the scene, the tracking and the page that holds each work.",
+      "tools": [
+        {
+          "name": "Visual Studio Code",
+          "role": "Code editor",
+          "text": "Every scene, build and page on this site was written and tested in VS Code.",
+          "url": "https://code.visualstudio.com"
+        },
+        {
+          "name": "Claude",
+          "role": "AI coding partner",
+          "text": "I built this site with Claude, working from my own 3D files and what I know HTML, CSS and JavaScript can do. I keep sacred knowledge out of it, and it writes no Anishinaabemowin.",
+          "url": "https://claude.ai"
+        },
+        {
+          "name": "JavaScript",
+          "role": "Language",
+          "text": "Every work here runs on JavaScript: the 3D scenes, the AR hooks, the floating sculptures and this site.",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+          "site": "MDN Web Docs"
+        },
+        {
+          "name": "HTML",
+          "role": "Language",
+          "text": "Each work is a web page first. HTML holds the scene, the splash screen and the buttons.",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTML",
+          "site": "MDN Web Docs"
+        },
+        {
+          "name": "CSS",
+          "role": "Language",
+          "text": "CSS sets the look of the site: the orange-red ground, the type and the cursor.",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/CSS",
+          "site": "MDN Web Docs"
+        },
+        {
+          "name": "Python",
+          "role": "Language",
+          "text": "I script Blender and batch the model work in Python: exports, texture packing and fixing normal maps.",
+          "url": "https://www.python.org",
+          "works": [
+            "the-erratics",
+            "beaded-flowers"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "run",
+      "title": "Run",
+      "note": "What the works run on, in a phone's camera or on a gallery wall.",
+      "tools": [
+        {
+          "name": "8th Wall",
+          "role": "AR engine",
+          "text": "The open source 8th Wall engine tracks the image or the ground in every AR work here. I am moving my works off 8th Wall's hosted platform and hosting them here myself.",
+          "url": "https://8thwall.org",
+          "works": "ar"
+        },
+        {
+          "name": "three.js",
+          "role": "3D in the browser",
+          "text": "The 3D views, the Aabijijiwan viewer and the sculptures floating behind this page are drawn with three.js.",
+          "url": "https://threejs.org",
+          "works": [
+            "aabijijiwan",
+            "woodland-bear",
+            "she-bends-the-light",
+            "beaded-flowers"
+          ]
+        },
+        {
+          "name": "A-Frame",
+          "role": "WebXR scenes",
+          "text": "Many of the image target works are A-Frame scenes, built on three.js and run by the 8th Wall engine.",
+          "url": "https://aframe.io",
+          "works": [
+            "stellar-narratives",
+            "13-moon-calendar",
+            "wildlife-portals-xr",
+            "future-ancestors",
+            "intertribal",
+            "root-and-stem-cover"
+          ]
+        },
+        {
+          "name": "Touch\u00adDesigner",
+          "role": "Live installation",
+          "text": "Projection installations run live in TouchDesigner, reading the people in front of the wall through a depth sensor.",
+          "url": "https://derivative.ca",
+          "works": [
+            "sacred-tags"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ship",
+      "title": "Ship",
+      "note": "How a work gets from my desk to your phone.",
+      "tools": [
+        {
+          "name": "GitHub",
+          "role": "Version control",
+          "text": "This site and every build on it live in one GitHub repository. Each change is saved there before it goes live.",
+          "url": "https://github.com"
+        },
+        {
+          "name": "AWS Amplify",
+          "role": "Hosting",
+          "text": "Amplify rebuilds the site from GitHub on every change and serves it at xr.noodin.studio.",
+          "url": "https://aws.amazon.com/amplify/"
+        }
+      ]
+    }
+  ]
+}

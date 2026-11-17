@@ -3,6 +3,7 @@
 //
 //   dist/xr/<slug>/index.html   every work, hidden ones too (their pages still open)
 //   dist/ar/<slug>/index.html   the old catalogue addresses, pointing at the work page
+//   dist/tools/index.html       the tools page (text in src/brand/tools.json)
 //   dist/admin/index.html       the dashboard, marked noindex
 //   dist/share/<slug>.<ext>     each work's cover under a fixed name, for link previews
 //   dist/sitemap.xml, dist/robots.txt
@@ -118,6 +119,29 @@ try {
     write(`ar/${p.slug}/index.html`, html);
   }
 
+  // The tools page, with its steps and tools as text for anything that does not run the app.
+  const tools = JSON.parse(readFileSync(resolve('src/brand/tools.json'), 'utf8'));
+  write(
+    'tools/index.html',
+    page({
+      title: `Tools | ${site.title}`,
+      description: tools.intro,
+      url: `${site.url}/tools/`,
+      image: fallbackImage,
+      body: [
+        '<h1>Tools</h1>',
+        `<p>${esc(tools.intro)}</p>`,
+        ...tools.steps.map(
+          (s) =>
+            `<h2>${esc(s.title)}</h2><p>${esc(s.note)}</p><ul>${s.tools
+              .map((t) => `<li>${esc(t.name)}: ${esc(t.text)}</li>`)
+              .join('')}</ul>`,
+        ),
+        `<p><a href="${site.url}/">All works on ${esc(site.title)}</a></p>`,
+      ].join(''),
+    }),
+  );
+
   write(
     'admin/index.html',
     page({
@@ -143,7 +167,11 @@ try {
     template.replace('<div id="root"></div>', `<div id="root"></div>\n    <noscript>${homeBody}</noscript>`),
   );
 
-  const urls = [`${site.url}/`, ...projects.map((p) => `${site.url}${site.workPath}/${p.slug}/`)];
+  const urls = [
+    `${site.url}/`,
+    `${site.url}/tools/`,
+    ...projects.map((p) => `${site.url}${site.workPath}/${p.slug}/`),
+  ];
   writeFileSync(
     resolve(DIST, 'sitemap.xml'),
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls

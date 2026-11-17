@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { site } from '../brand/site.js';
 import logo from '../brand/logo-on-red.png';
 import FloatingField from '../field/FloatingField.jsx';
@@ -24,6 +24,7 @@ export default function Layout() {
           <img src={logo} alt="Noodin Studio XR, home" width="98" height="48" />
         </Link>
         <nav className="masthead__nav" aria-label="Main">
+          <NavLink to="/tools">Tools</NavLink>
           <a href={site.mainSite}>Main site</a>
         </nav>
       </header>
@@ -37,6 +38,7 @@ export default function Layout() {
           {site.name} by {site.artist}, Tkaronto
         </span>
         <span className="footer__links">
+          <Link to="/tools">Tools</Link>
           <a href={site.instagram}>Instagram</a>
           <a href={site.contact}>Get in touch</a>
         </span>
